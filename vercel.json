@@ -97,7 +97,7 @@
     }
   ],
   
-  "regions": ["hnd1", "sin1", "fra1"],
+  "regions": ["hnd1"],
   
   "github": {
     "silent": true
