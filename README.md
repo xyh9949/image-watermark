@@ -1,160 +1,197 @@
-# 图片水印处理系统
+# 🖼️ Image Watermark
 
-一个基于 Next.js + Fabric.js + Sharp 的现代化图片水印处理系统，支持批量处理和跨分辨率比例统一功能。
+一个现代化的图片水印处理应用，基于 Next.js 15 + Fabric.js 构建，支持批量处理和智能水印定位。
 
-## ✨ 核心功能
+![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
+![Fabric.js](https://img.shields.io/badge/Fabric.js-6-orange?style=flat-square)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?style=flat-square&logo=tailwind-css)
 
-### 🎯 比例模式（新功能）
-- **跨分辨率一致性**：确保水印在不同分辨率图片上保持相同的相对大小和位置
-- **九宫格对齐**：支持 9 种预设位置，精确控制水印位置
-- **智能缩放**：字体大小和偏移量自动按比例调整
-- **模式切换**：像素模式 ↔ 比例模式无缝切换
+## ✨ 主要功能
 
-### 🖼️ 水印类型
-- **文字水印**：支持自定义字体、颜色、透明度、旋转、描边、阴影
-- **图片水印**：支持 PNG、JPG 等格式，可调整大小和透明度
-- **全屏水印**：平铺模式，适用于版权保护
+### 🎯 智能水印定位
+- **九宫格对齐**：9种预设位置，精确控制水印位置
+- **比例模式**：跨分辨率一致性，确保不同尺寸图片的水印效果统一
+- **像素模式**：精确像素级定位，适合单一分辨率处理
+- **实时预览**：所见即所得的水印效果预览
 
-### ⚡ 批量处理
-- **高性能处理**：基于 Fabric.js 的高效渲染引擎
-- **进度追踪**：实时显示处理进度和状态
-- **错误处理**：完善的错误恢复机制
-- **格式支持**：输出 PNG、JPEG、WebP 格式
+### 🖼️ 多种水印类型
+- **文字水印**：自定义字体、颜色、透明度、旋转、描边、阴影
+- **图片水印**：支持 PNG、JPG、WebP 格式，可调整大小和透明度
+- **全屏平铺**：重复平铺模式，适用于版权保护
 
-### 🎨 用户界面
-- **直观控制**：现代化的控制面板，支持实时预览
-- **响应式设计**：适配桌面和移动设备
-- **主题支持**：基于 shadcn/ui 的美观界面
+### ⚡ 高效批量处理
+- **并行处理**：基于 Fabric.js 的高性能渲染引擎
+- **进度监控**：实时显示处理进度和状态
+- **错误恢复**：完善的错误处理和重试机制
+- **多格式输出**：支持 PNG、JPEG、WebP 格式导出
+
+### 🎨 现代化界面
+- **响应式设计**：完美适配桌面和移动设备
+- **暗色主题**：基于 shadcn/ui 的精美界面
+- **拖拽上传**：直观的文件上传体验
+- **键盘快捷键**：提升操作效率
 
 ## 🚀 快速开始
 
-### 环境要求
-- Node.js 18+
+### 📋 环境要求
+- Node.js 18.0+
 - npm/yarn/pnpm
 
-### 安装依赖
+### 🔧 本地开发
 
 ```bash
+# 克隆项目
+git clone https://github.com/xyh9949/image-watermark.git
+cd image-watermark
+
+# 安装依赖
 npm install
-# 或
-yarn install
-# 或
-pnpm install
+
+# 启动开发服务器
+npm run dev
 ```
 
-### 启动开发服务器
+访问 [http://localhost:3000](http://localhost:3000) 开始使用。
+
+### 🏗️ 构建部署
 
 ```bash
-npm run dev
-# 或
-yarn dev
-# 或
-pnpm dev
+# 构建生产版本
+npm run build
+
+# 启动生产服务器
+npm start
 ```
 
-打开 [http://localhost:3000](http://localhost:3000) 查看应用。
+### 🐳 Docker 部署
+
+```bash
+# 构建镜像
+docker build -t image-watermark .
+
+# 运行容器
+docker run -p 3000:3000 image-watermark
+```
 
 ## 📖 使用指南
 
-### 基本使用
+### 🎯 基本操作
 
-1. **上传图片**：拖拽或点击上传一张或多张图片
-2. **配置水印**：选择水印类型，调整样式和位置
-3. **选择模式**：
-   - **像素模式**：使用绝对像素值定位（适合单一分辨率）
-   - **比例模式**：使用相对比例定位（适合多分辨率批量处理）
-4. **开始处理**：点击"开始处理"按钮
-5. **下载结果**：处理完成后自动下载
+1. **📁 上传图片**
+   - 拖拽文件到上传区域
+   - 或点击选择文件
+   - 支持 JPG、PNG、WebP 格式
 
-### 比例模式详细说明
+2. **⚙️ 配置水印**
+   - 选择水印类型（文字/图片/全屏）
+   - 调整样式参数（颜色、大小、透明度等）
+   - 选择位置（九宫格定位）
 
-比例模式是本系统的核心创新功能，解决了传统水印系统在处理不同分辨率图片时的一致性问题。
+3. **🎨 预览效果**
+   - 实时预览水印效果
+   - 支持缩放和平移查看细节
 
-#### 核心优势
-- ✅ **一致性保证**：800x600 和 4K 图片上的水印相对效果完全一致
-- ✅ **批量友好**：一次配置，适用于所有分辨率
-- ✅ **精确控制**：支持 0.1% 精度的比例调整
-- ✅ **向后兼容**：现有配置无需修改
+4. **🚀 批量处理**
+   - 点击"开始处理"按钮
+   - 查看处理进度
+   - 自动下载处理结果
 
-#### 使用步骤
-1. 在控制面板中找到"位置模式"切换开关
-2. 切换到"比例模式"
-3. 调整比例参数：
-   - **宽度比例**：5% - 100%（推荐 10% - 30%）
-   - **高度比例**：2% - 50%（推荐 5% - 15%）
-   - **偏移量**：-50% 到 50%（微调位置）
-4. 或者在像素模式下配置好后，点击"保存为比例模板"
+### 💡 高级功能
+
+#### 智能定位模式
+- **像素模式**：精确像素定位，适合单一分辨率
+- **比例模式**：相对比例定位，确保跨分辨率一致性
+
+#### 批量处理技巧
+- 建议单次处理不超过 50 张图片
+- 大图片建议降低输出质量以提升速度
+- 支持中途取消和错误重试
 
 ## 🏗️ 技术架构
 
-### 前端技术栈
-- **Next.js 15**：React 全栈框架
-- **TypeScript**：类型安全
-- **Fabric.js**：Canvas 渲染引擎
-- **Zustand**：状态管理
-- **shadcn/ui**：UI 组件库
-- **Tailwind CSS**：样式框架
+### 🛠️ 技术栈
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| Next.js | 15.x | React 全栈框架 |
+| TypeScript | 5.x | 类型安全 |
+| Fabric.js | 6.x | Canvas 渲染引擎 |
+| Zustand | 4.x | 状态管理 |
+| shadcn/ui | Latest | UI 组件库 |
+| Tailwind CSS | 3.x | 样式框架 |
 
-### 核心模块
+### 📁 项目结构
 ```
 src/app/
-├── lib/
-│   ├── canvas/
-│   │   ├── proportionUtils.ts    # 比例计算核心
-│   │   ├── fabricUtils.ts        # Fabric.js 集成
-│   │   └── positionUtils.ts      # 九宫格对齐
-│   ├── watermark/
-│   │   └── batchProcessor.ts     # 批量处理器
-│   └── stores/
-│       └── watermarkStore.ts     # 状态管理
-├── components/
-│   └── controls/
-│       └── WatermarkControls.tsx # 主控制面板
-└── types/
-    └── index.ts                  # 类型定义
+├── components/           # React 组件
+│   ├── controls/        # 控制面板组件
+│   ├── editor/          # 编辑器组件
+│   ├── upload/          # 上传组件
+│   └── preview/         # 预览组件
+├── lib/                 # 核心逻辑
+│   ├── canvas/          # Canvas 相关工具
+│   ├── stores/          # 状态管理
+│   ├── utils/           # 工具函数
+│   └── watermark/       # 水印处理核心
+├── types/               # TypeScript 类型定义
+├── hooks/               # 自定义 Hooks
+└── api/                 # API 路由
 ```
 
-## 📚 文档
+## 🔧 开发指南
 
-- [项目文档](./PROJECT_DOCS.md) - 完整的项目文档
-- [集成完成报告](./INTEGRATION_COMPLETE.md) - 九宫格对齐集成说明
-
-## 🔧 开发
-
-### 项目结构
-```
-image-watermark/
-├── src/app/                 # Next.js App Router
-│   ├── components/         # React 组件
-│   ├── lib/               # 工具函数和核心逻辑
-│   └── types/             # TypeScript 类型定义
-├── public/               # 静态资源
-└── docs/                 # 文档
+### 🚀 开发命令
+```bash
+npm run dev          # 启动开发服务器
+npm run build        # 构建生产版本
+npm run start        # 启动生产服务器
+npm run lint         # 代码检查
+npm run type-check   # 类型检查
 ```
 
-### 添加新功能
-1. 在 `src/app/types/` 中定义类型
-2. 在 `src/app/lib/` 中实现核心逻辑
-3. 在 `src/app/components/` 中创建 UI 组件
-4. 在 `__tests__/` 中添加测试
+### 📝 代码规范
+- 使用 TypeScript 确保类型安全
+- 遵循 ESLint 和 Prettier 配置
+- 组件使用函数式组件 + Hooks
+- 状态管理使用 Zustand
+- 样式使用 Tailwind CSS
 
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
 
-### 开发规范
-- 使用 TypeScript 进行类型安全开发
-- 遵循 ESLint 和 Prettier 配置
-- 为新功能添加单元测试
-- 更新相关文档
+### 🔄 贡献流程
+1. Fork 本仓库
+2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
+
+### 🐛 问题反馈
+- 使用 [GitHub Issues](https://github.com/xyh9949/image-watermark/issues) 报告 Bug
+- 提供详细的复现步骤和环境信息
+- 建议新功能或改进
 
 ## 📄 许可证
 
-MIT License
+本项目采用 [MIT License](LICENSE) 开源协议。
 
 ## 🙏 致谢
 
+感谢以下开源项目：
+
 - [Next.js](https://nextjs.org/) - React 全栈框架
-- [Fabric.js](http://fabricjs.com/) - Canvas 库
-- [shadcn/ui](https://ui.shadcn.com/) - UI 组件
-- [Sharp](https://sharp.pixelplumbing.com/) - 图像处理（计划中）
+- [Fabric.js](http://fabricjs.com/) - 强大的 Canvas 库
+- [shadcn/ui](https://ui.shadcn.com/) - 精美的 UI 组件
+- [Tailwind CSS](https://tailwindcss.com/) - 实用的 CSS 框架
+- [Zustand](https://github.com/pmndrs/zustand) - 轻量级状态管理
+
+---
+
+<div align="center">
+
+**⭐ 如果这个项目对你有帮助，请给个 Star！**
+
+[🐛 报告问题](https://github.com/xyh9949/image-watermark/issues) · [💡 功能建议](https://github.com/xyh9949/image-watermark/issues) · [📖 文档](https://github.com/xyh9949/image-watermark)
+
+</div>

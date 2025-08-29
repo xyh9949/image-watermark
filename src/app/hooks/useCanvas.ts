@@ -112,7 +112,6 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
         options.onCanvasReady?.(fabricCanvas);
         return true;
       } catch (error) {
-        console.error('useCanvas: failed to initialize canvas:', error);
         return false;
       }
     };
@@ -137,7 +136,6 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
 
     return () => {
       if (canvas) {
-        console.log('useCanvas: disposing canvas');
         disposeCanvas(canvas);
       }
     };
@@ -222,7 +220,6 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
       
       return watermarkObject;
     } catch (error) {
-      console.error('Failed to add watermark:', error);
       return null;
     }
   }, [canvas]);
@@ -243,32 +240,19 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
     if (!canvas) return;
 
     try {
-      console.log('updateWatermark: 开始更新水印', {
-        type: config.type,
-        enabled: config.enabled,
-        hasImageUrl: config.type === 'image' ? !!config.imageStyle?.imageUrl : 'N/A'
-      });
-
       // 直接清除所有水印并重新添加，简化逻辑
       clearWatermarks(canvas);
       setWatermarks([]);
 
       // 添加新水印
       const watermarkObject = await applyWatermarkToCanvas(canvas, config);
-      console.log('updateWatermark: 水印对象创建结果', {
-        success: !!watermarkObject,
-        type: watermarkObject?.type || 'none'
-      });
 
       if (watermarkObject) {
         setWatermarks([watermarkObject]);
         canvas.renderAll(); // 强制重新渲染
-        console.log('updateWatermark: 水印已添加到Canvas');
-      } else {
-        console.log('updateWatermark: 水印对象创建失败');
       }
     } catch (error) {
-      console.error('Failed to update watermark:', error);
+      // 静默处理错误
     }
   }, [canvas]); // 简化依赖
 

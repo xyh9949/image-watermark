@@ -119,14 +119,10 @@ export function loadImageToCanvas(
       try {
         canvas.bringObjectToFront && canvas.bringObjectToFront(img);
       } catch (error) {
-        console.warn('无法将图片移到底层:', error);
         // 继续执行，不影响主要功能
       }
 
       canvas.renderAll();
-
-      console.log(`图片加载完成: ${imageWidth}x${imageHeight} -> Canvas: ${newCanvasWidth}x${newCanvasHeight} (scale: ${scale.toFixed(3)})`);
-
       resolve(img);
     }).catch(reject);
   });
@@ -732,7 +728,6 @@ export async function createFullscreenWatermark(
     return fullscreenRect;
 
   } catch (error) {
-    console.error('Failed to create fullscreen watermark:', error);
     return null;
   }
 }
@@ -757,36 +752,21 @@ export async function applyWatermarkToCanvas(
     const canvasWidth = Math.round(displayWidth / currentZoom);
     const canvasHeight = Math.round(displayHeight / currentZoom);
 
-    console.log('applyWatermarkToCanvas: 开始应用水印', {
-      type: config.type,
-      logicalSize: { width: canvasWidth, height: canvasHeight },
-      displaySize: { width: displayWidth, height: displayHeight },
-      zoom: currentZoom,
-      calculation: `${displayWidth}/${currentZoom} = ${canvasWidth}`,
-      hasImageUrl: config.type === 'image' ? !!config.imageStyle?.imageUrl : 'N/A'
-    });
-
     switch (config.type) {
       case 'text':
         fabricObject = createTextWatermark(config, canvasWidth, canvasHeight);
-        console.log('applyWatermarkToCanvas: 文字水印创建结果', !!fabricObject);
         break;
 
       case 'image':
-        console.log('applyWatermarkToCanvas: 开始创建图片水印', config.imageStyle);
         fabricObject = await createImageWatermark(config, canvasWidth, canvasHeight);
-        console.log('applyWatermarkToCanvas: 图片水印创建结果', !!fabricObject);
         break;
 
       case 'fullscreen':
         // {{ Shrimp-X: Modify - 使用新的createFullscreenWatermark函数实现真正的全屏平铺水印，支持图片模式. Approval: Cunzhi(ID:timestamp). }}
-        console.log('applyWatermarkToCanvas: 开始创建全屏水印', config.fullscreenStyle);
         fabricObject = await createFullscreenWatermark(config, canvasWidth, canvasHeight);
-        console.log('applyWatermarkToCanvas: 全屏水印创建结果', !!fabricObject);
         break;
 
       default:
-        console.log('applyWatermarkToCanvas: 未知水印类型', config.type);
         return null;
     }
 
@@ -803,7 +783,6 @@ export async function applyWatermarkToCanvas(
       config,
     };
   } catch (error) {
-    console.error('Failed to apply watermark:', error);
     return null;
   }
 }
@@ -847,15 +826,6 @@ export function exportCanvasAsImage(
   quality: number = 1.0
 ): string {
   // {{ Shrimp-X: Modify - 保持原始分辨率导出，问题在于预览的水印位置计算. Approval: Cunzhi(ID:timestamp). }}
-  console.log('exportCanvasAsImage: 导出参数', {
-    format,
-    quality,
-    canvasLogicalSize: { width: canvas.width, height: canvas.height },
-    canvasDisplaySize: { width: canvas.getWidth(), height: canvas.getHeight() },
-    zoom: canvas.getZoom(),
-    multiplier: 1
-  });
-
   return canvas.toDataURL({
     format: format === 'png' ? 'png' : 'jpeg',
     quality: format === 'jpeg' ? quality : 1.0,

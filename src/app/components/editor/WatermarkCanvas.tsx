@@ -53,13 +53,13 @@ export function WatermarkCanvas({
     height: 600,
     backgroundColor: '#f8f9fa',
     onCanvasReady: (canvas) => {
-      console.log('Canvas ready:', canvas);
+      // Canvas 准备就绪
     },
     onObjectAdded: (object) => {
-      console.log('Object added:', object);
+      // 对象已添加
     },
     onSelectionChanged: (objects) => {
-      console.log('Selection changed:', objects);
+      // 选择已改变
     }
   });
 

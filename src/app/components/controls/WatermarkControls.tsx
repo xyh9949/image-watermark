@@ -87,7 +87,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
           setCurrentProcessingImage(imageName);
         },
         onImageComplete: (imageId, result) => {
-          console.log(`Image ${imageId} processed:`, result ? 'success' : 'failed');
+          // 处理完成回调
         },
         onComplete: async (results) => {
           setProcessingResults(results);
@@ -97,12 +97,10 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
           try {
             await downloadBatchResults(results);
           } catch (error) {
-            console.error('Download failed:', error);
             setProcessingError('下载失败，但处理已完成');
           }
         },
         onError: (error, imageId) => {
-          console.error('Processing error:', error, imageId);
           setProcessingError(error.message);
         },
         quality: 0.9,
