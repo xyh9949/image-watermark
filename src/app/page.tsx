@@ -1,21 +1,16 @@
 'use client';
 
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Image as ImageIcon, Settings, Download } from "lucide-react";
 import { ImageUpload } from "@/app/components/upload/ImageUpload";
 import { WatermarkCanvas } from "@/app/components/editor/WatermarkCanvas";
-import { useImageStore } from "@/app/lib/stores/imageStore";
 import { WatermarkControls } from "@/app/components/controls/WatermarkControls";
+import { StructuredData } from '@/app/components/seo/StructuredData';
 
 export default function Home() {
-  const { hasImages, getCurrentImage } = useImageStore();
-  const currentImage = getCurrentImage();
-
   return (
     <div className="h-screen flex flex-col">
-      {/* {{ Shrimp-X: Modify - 重新设计布局，使编辑器区域在滚动时保持固定. Approval: Cunzhi(ID:timestamp). }} */}
+      {/* JSON-LD 结构化数据 */}
+      <StructuredData />
 
       {/* 移动端：垂直布局 */}
       <div className="lg:hidden flex flex-col h-full">
@@ -52,7 +47,6 @@ export default function Home() {
 
       {/* 桌面端：固定编辑器布局 */}
       <div className="hidden lg:flex h-full">
-        {/* {{ Shrimp-X: Modify - 修复布局比例问题，使用正确的flex比例. Approval: Cunzhi(ID:timestamp). }} */}
         {/* 左侧：可滚动的上传区域 - 使用3/12的比例 */}
         <div className="flex-[3] border-r bg-background">
           <div className="h-full overflow-auto">
@@ -70,8 +64,6 @@ export default function Home() {
               <div className="flex items-center space-x-4">
                 <h1 className="text-2xl font-bold">图片水印编辑器</h1>
               </div>
-
-
             </div>
           </div>
 

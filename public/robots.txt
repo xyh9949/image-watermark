@@ -1,0 +1,42 @@
+# 图片水印工具 - Robots.txt
+# 指导搜索引擎爬虫的抓取行为
+
+# 允许所有搜索引擎爬虫
+User-agent: *
+
+# 允许抓取的路径
+Allow: /
+
+# 禁止抓取的路径
+Disallow: /api/
+Disallow: /_next/
+Disallow: /temp/
+Disallow: /uploads/
+Disallow: /logs/
+Disallow: /*.json$
+
+# 特殊搜索引擎配置
+
+# 百度爬虫
+User-agent: Baiduspider
+Allow: /
+Disallow: /api/
+Crawl-delay: 1
+
+# 谷歌爬虫
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Crawl-delay: 1
+
+# 必应爬虫
+User-agent: bingbot
+Allow: /
+Disallow: /api/
+Crawl-delay: 1
+
+# 站点地图位置
+Sitemap: http://localhost:3000/sitemap.xml
+
+# 生产环境请替换为实际域名
+# Sitemap: https://your-domain.com/sitemap.xml
