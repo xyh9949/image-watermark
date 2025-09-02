@@ -163,31 +163,17 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
       clearWatermarks(canvas);
       setWatermarks([]);
 
-      // {{ Shrimp-X: Modify - 修复时序问题，确保Canvas缩放完成后再触发状态更新. Approval: Cunzhi(ID:timestamp). }}
-      // 图片加载完成后，适配容器尺寸
-      setTimeout(() => {
-        if (canvasRef.current) {
-          const container = canvasRef.current.parentElement;
-          if (container) {
-            const containerWidth = container.clientWidth - 40; // 减去padding
-            const containerHeight = container.clientHeight - 40;
-
-            if (containerWidth > 0 && containerHeight > 0) {
-              const scale = Math.min(containerWidth / canvas.width, containerHeight / canvas.height, 1);
-              canvas.setZoom(scale);
-              canvas.setDimensions({
-                width: canvas.width * scale,
-                height: canvas.height * scale
-              });
-              canvas.renderAll();
-
-              // Canvas缩放完成后，重新触发currentImage状态更新
-              // 这样可以确保水印应用时使用正确的Canvas尺寸
-              setCurrentImage(prev => prev ? prev : null);
-            }
-          }
-        }
-      }, 50); // 短暂延迟确保DOM更新完成
+      // {{ Shrimp-X: Modify - 修复时序问题，确保Canvas缩放完成后再触发后续流程（返回Promise）. Approval: Cunzhi(ID:timestamp). }}
+      // 图片加载完成后，适配容器尺寸，并在完成后再继续
+      await new Promise<void>((resolve) => {
+        setTimeout(() => {
+          // 使用 cssOnly 的方式适配容器，避免修改逻辑尺寸
+          try {
+            fitToContainer();
+          } catch {}
+          resolve();
+        }, 50);
+      });
     } catch (error) {
       console.error('Failed to load image:', error);
       throw error;

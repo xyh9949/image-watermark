@@ -2,6 +2,27 @@
   "name": "image-watermark",
   "version": "0.1.0",
   "private": true,
+  "description": "一个现代化的图片水印处理应用，基于 Next.js 15 + Fabric.js 构建，支持批量处理和智能水印定位",
+  "keywords": [
+    "watermark",
+    "image-processing",
+    "nextjs",
+    "fabricjs",
+    "typescript",
+    "batch-processing",
+    "canvas",
+    "image-editor"
+  ],
+  "author": "xyh9949",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xyh9949/image-watermark.git"
+  },
+  "bugs": {
+    "url": "https://github.com/xyh9949/image-watermark/issues"
+  },
+  "homepage": "https://github.com/xyh9949/image-watermark#readme",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

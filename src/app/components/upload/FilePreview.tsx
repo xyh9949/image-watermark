@@ -95,6 +95,7 @@ export function FilePreview({
       <div className="relative aspect-square bg-muted">
         {image.url ? (
           <Image
+            key={image.url}
             src={image.url}
             alt={image.name}
             fill

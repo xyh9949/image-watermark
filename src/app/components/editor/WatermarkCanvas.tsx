@@ -30,10 +30,8 @@ export function WatermarkCanvas({
   showControls = true,
   onExport
 }: WatermarkCanvasProps) {
-  const { getCurrentImage } = useImageStore();
+  const currentImage = useImageStore(s => s.images.find(img => img.id === s.currentImageId) || null);
   const { currentConfig } = useWatermarkStore();
-  
-  const currentImage = getCurrentImage();
 
   const {
     canvasRef,
@@ -63,20 +61,29 @@ export function WatermarkCanvas({
     }
   });
 
-  // 当选中的图片改变时，加载到Canvas
+  // 当选中的图片改变时，加载到Canvas，并在完成后刷新水印
   useEffect(() => {
     if (!isReady || !currentImage) return;
 
     const loadCurrentImage = async () => {
       try {
         await loadImage(currentImage);
+        // 图片加载（含适配）完成后，立即按当前配置刷新一次水印
+        try {
+          clearAllWatermarks();
+          if (currentConfig.enabled) {
+            await addWatermark(currentConfig);
+          }
+        } catch (error) {
+          console.error('Failed to update watermark after image load:', error);
+        }
       } catch (error) {
         console.error('Failed to load image to canvas:', error);
       }
     };
 
     loadCurrentImage();
-  }, [isReady, currentImage, loadImage]);
+  }, [isReady, currentImage, loadImage, clearAllWatermarks, addWatermark, currentConfig]);
 
   // {{ Shrimp-X: Modify - 修复图片切换后水印不显示问题，移除函数依赖避免无限循环. Approval: Cunzhi(ID:timestamp). }}
   // 当水印配置改变或图片改变时，更新Canvas

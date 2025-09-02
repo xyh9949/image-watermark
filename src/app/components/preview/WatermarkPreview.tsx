@@ -28,19 +28,23 @@ export function WatermarkPreview({ isOpen, onClose }: WatermarkPreviewProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // {{ Shrimp-X: Modify - 优化Canvas清理时序，确保图片切换时正确清理和重绘. Approval: Cunzhi(ID:timestamp). }}
+    // 立即清理当前canvas内容
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setIsReady(false);
+
     const img = new Image();
     img.crossOrigin = 'anonymous';
 
     img.onload = () => {
-      // 设置Canvas尺寸
+      // 计算预览缩放比例
       const maxWidth = 600;
       const maxHeight = 400;
       const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
-      
+
+      // 设置Canvas尺寸并清理
       canvas.width = img.width * scale;
       canvas.height = img.height * scale;
-
-      // 清空Canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // 绘制图片
@@ -51,33 +55,36 @@ export function WatermarkPreview({ isOpen, onClose }: WatermarkPreviewProps) {
         const textStyle = currentConfig.textStyle;
         const position = currentConfig.position.position;
 
-        // {{ Shrimp-X: Modify - 使用自适应缩放计算字体大小和边距. Approval: Cunzhi(ID:timestamp). }}
-        // 计算自适应尺寸
+        // {{ Shrimp-X: Modify - 修复图片尺寸计算，使用原始图片尺寸而非canvas缩放尺寸. Approval: Cunzhi(ID:timestamp). }}
+        // 计算自适应尺寸 - 使用原始图片尺寸
         const imageDimensions: ImageDimensions = {
-          width: canvas.width / scale,
-          height: canvas.height / scale
+          width: img.width,
+          height: img.height
         };
 
         const scalingResult = calculateAdaptiveWatermarkSize(currentConfig, imageDimensions);
         const adaptiveFontSize = scalingResult.fontSize || textStyle.fontSize;
         const adaptiveMargin = scalingResult.marginX;
 
-        const margin = adaptiveMargin * scale;
+        // {{ Shrimp-X: Modify - 消除重复缩放，在最终绘制时应用预览缩放. Approval: Cunzhi(ID:timestamp). }}
+        // 应用预览缩放到最终绘制尺寸
+        const finalFontSize = adaptiveFontSize * scale;
+        const finalMargin = adaptiveMargin * scale;
         const offsetX = (currentConfig.position.offsetX || 0) * scale;
         const offsetY = (currentConfig.position.offsetY || 0) * scale;
 
         ctx.save();
-        ctx.font = `${textStyle.fontWeight} ${adaptiveFontSize * scale}px ${textStyle.fontFamily}`;
+        ctx.font = `${textStyle.fontWeight} ${finalFontSize}px ${textStyle.fontFamily}`;
         ctx.fillStyle = textStyle.color;
         ctx.globalAlpha = textStyle.opacity;
 
         // 计算文字尺寸
         const textMetrics = ctx.measureText(textStyle.content);
         const textWidth = textMetrics.width;
-        const textHeight = adaptiveFontSize * scale;
+        const textHeight = finalFontSize;
 
         // 使用九宫格对齐计算
-        const anchor = calculateAnchorPosition(canvas.width, canvas.height, position, margin, offsetX, offsetY);
+        const anchor = calculateAnchorPosition(canvas.width, canvas.height, position, finalMargin, offsetX, offsetY);
         const origin = getOriginFromPosition(position);
 
         let textX = anchor.anchorX;
@@ -134,6 +141,18 @@ export function WatermarkPreview({ isOpen, onClose }: WatermarkPreviewProps) {
 
           // 绘制文字
           ctx.fillText(textStyle.content, textX, textY);
+
+          // {{ Shrimp-X: Add - 添加文字水印调试信息. Approval: Cunzhi(ID:timestamp). }}
+          if (process.env.NODE_ENV === 'development') {
+            console.log('WatermarkPreview - 文字水印详情:', {
+              adaptiveFontSize,
+              finalFontSize,
+              adaptiveMargin,
+              finalMargin,
+              position: { textX, textY },
+              textSize: { textWidth, textHeight }
+            });
+          }
         }
 
         ctx.restore();
@@ -252,11 +271,25 @@ export function WatermarkPreview({ isOpen, onClose }: WatermarkPreviewProps) {
         ctx.restore();
       }
 
+      // {{ Shrimp-X: Add - 添加调试信息验证修复效果. Approval: Cunzhi(ID:timestamp). }}
+      if (process.env.NODE_ENV === 'development') {
+        console.log('WatermarkPreview - 预览渲染完成:', {
+          originalImage: { width: img.width, height: img.height },
+          previewCanvas: { width: canvas.width, height: canvas.height },
+          previewScale: scale,
+          watermarkEnabled: currentConfig.enabled,
+          watermarkType: currentConfig.type
+        });
+      }
+
       setIsReady(true);
     };
 
     img.onerror = () => {
       console.error('Failed to load image for preview');
+      // 清理Canvas并重置状态
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      setIsReady(false);
     };
 
     img.src = currentImage.url;
@@ -303,6 +336,7 @@ export function WatermarkPreview({ isOpen, onClose }: WatermarkPreviewProps) {
               <>
                 <div className="border rounded-lg p-4 bg-gray-50">
                   <canvas
+                    key={currentImage?.id}
                     ref={canvasRef}
                     className="max-w-full h-auto border border-gray-200 rounded"
                     style={{ maxHeight: '60vh' }}
