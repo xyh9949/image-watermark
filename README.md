@@ -1,198 +1,201 @@
 # 🖼️ Image Watermark
-## 访问 [https://iw.vidocat.com](https://iw.vidocat.com/)可以进行预览
 
-一个现代化的图片水印处理应用，基于 Next.js 15 + Fabric.js 构建，支持批量处理和智能水印定位。
+**[English](README.md) | [中文](README_CN.md)**
+
+## Visit [https://iw.vidocat.com](https://iw.vidocat.com/) for live preview
+
+A modern image watermarking application built with Next.js 15 + Fabric.js, supporting batch processing and intelligent watermark positioning.
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
 ![Fabric.js](https://img.shields.io/badge/Fabric.js-6-orange?style=flat-square)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?style=flat-square&logo=tailwind-css)
 
-## ✨ 主要功能
+## ✨ Key Features
 
-### 🎯 智能水印定位
-- **九宫格对齐**：9种预设位置，精确控制水印位置
-- **比例模式**：跨分辨率一致性，确保不同尺寸图片的水印效果统一
-- **像素模式**：精确像素级定位，适合单一分辨率处理
-- **实时预览**：所见即所得的水印效果预览
+### 🎯 Smart Watermark Positioning
+- **Nine-Grid Alignment**: 9 preset positions for precise watermark control
+- **Ratio Mode**: Cross-resolution consistency, ensuring uniform watermark effects across different image sizes
+- **Pixel Mode**: Precise pixel-level positioning, suitable for single resolution processing
+- **Real-time Preview**: WYSIWYG watermark effect preview
 
-### 🖼️ 多种水印类型
-- **文字水印**：自定义字体、颜色、透明度、旋转、描边、阴影
-- **图片水印**：支持 PNG、JPG、WebP 格式，可调整大小和透明度
-- **全屏平铺**：重复平铺模式，适用于版权保护
+### 🖼️ Multiple Watermark Types
+- **Text Watermark**: Customizable font, color, transparency, rotation, stroke, and shadow
+- **Image Watermark**: Supports PNG, JPG, WebP formats with adjustable size and transparency
+- **Full-screen Tiling**: Repeating tile mode, suitable for copyright protection
 
-### ⚡ 高效批量处理
-- **并行处理**：基于 Fabric.js 的高性能渲染引擎
-- **进度监控**：实时显示处理进度和状态
-- **错误恢复**：完善的错误处理和重试机制
-- **多格式输出**：支持 PNG、JPEG、WebP 格式导出
+### ⚡ Efficient Batch Processing
+- **Parallel Processing**: High-performance rendering engine based on Fabric.js
+- **Progress Monitoring**: Real-time display of processing progress and status
+- **Error Recovery**: Comprehensive error handling and retry mechanisms
+- **Multi-format Output**: Supports PNG, JPEG, WebP format export
 
-### 🎨 现代化界面
-- **响应式设计**：完美适配桌面和移动设备
-- **暗色主题**：基于 shadcn/ui 的精美界面
-- **拖拽上传**：直观的文件上传体验
-- **键盘快捷键**：提升操作效率
+### 🎨 Modern Interface
+- **Responsive Design**: Perfect adaptation for desktop and mobile devices
+- **Dark Theme**: Beautiful interface based on shadcn/ui
+- **Drag & Drop Upload**: Intuitive file upload experience
+- **Keyboard Shortcuts**: Enhanced operational efficiency
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 📋 环境要求
+### 📋 Requirements
 - Node.js 18.0+
 - npm/yarn/pnpm
 
-### 🔧 本地开发
+### 🔧 Local Development
 
 ```bash
-# 克隆项目
+# Clone the project
 git clone https://github.com/xyh9949/image-watermark.git
 cd image-watermark
 
-# 安装依赖
+# Install dependencies
 npm install
 
-# 启动开发服务器
+# Start development server
 npm run dev
 ```
 
-访问 [http://localhost:3000](http://localhost:3000) 开始使用。
+Visit [http://localhost:3000](http://localhost:3000) to start using.
 
-### 🏗️ 构建部署
+### 🏗️ Build & Deploy
 
 ```bash
-# 构建生产版本
+# Build production version
 npm run build
 
-# 启动生产服务器
+# Start production server
 npm start
 ```
 
-### 🐳 Docker 部署
+### 🐳 Docker Deployment
 
 ```bash
-# 构建镜像
+# Build image
 docker build -t image-watermark .
 
-# 运行容器
+# Run container
 docker run -p 3000:3000 image-watermark
 ```
 
-## 📖 使用指南
+## 📖 User Guide
 
-### 🎯 基本操作
+### 🎯 Basic Operations
 
-1. **📁 上传图片**
-   - 拖拽文件到上传区域
-   - 或点击选择文件
-   - 支持 JPG、PNG、WebP 格式
+1. **📁 Upload Images**
+   - Drag files to upload area
+   - Or click to select files
+   - Supports JPG, PNG, WebP formats
 
-2. **⚙️ 配置水印**
-   - 选择水印类型（文字/图片/全屏）
-   - 调整样式参数（颜色、大小、透明度等）
-   - 选择位置（九宫格定位）
+2. **⚙️ Configure Watermark**
+   - Select watermark type (text/image/fullscreen)
+   - Adjust style parameters (color, size, transparency, etc.)
+   - Choose position (nine-grid positioning)
 
-3. **🎨 预览效果**
-   - 实时预览水印效果
-   - 支持缩放和平移查看细节
+3. **🎨 Preview Effects**
+   - Real-time watermark effect preview
+   - Support zoom and pan to view details
 
-4. **🚀 批量处理**
-   - 点击"开始处理"按钮
-   - 查看处理进度
-   - 自动下载处理结果
+4. **🚀 Batch Processing**
+   - Click "Start Processing" button
+   - View processing progress
+   - Automatic download of processing results
 
-### 💡 高级功能
+### 💡 Advanced Features
 
-#### 智能定位模式
-- **像素模式**：精确像素定位，适合单一分辨率
-- **比例模式**：相对比例定位，确保跨分辨率一致性
+#### Smart Positioning Modes
+- **Pixel Mode**: Precise pixel positioning, suitable for single resolution
+- **Ratio Mode**: Relative ratio positioning, ensuring cross-resolution consistency
 
-#### 批量处理技巧
-- 建议单次处理不超过 50 张图片
-- 大图片建议降低输出质量以提升速度
-- 支持中途取消和错误重试
+#### Batch Processing Tips
+- Recommend processing no more than 50 images at once
+- For large images, consider reducing output quality to improve speed
+- Support mid-process cancellation and error retry
 
-## 🏗️ 技术架构
+## 🏗️ Technical Architecture
 
-### 🛠️ 技术栈
-| 技术 | 版本 | 用途 |
-|------|------|------|
-| Next.js | 15.x | React 全栈框架 |
-| TypeScript | 5.x | 类型安全 |
-| Fabric.js | 6.x | Canvas 渲染引擎 |
-| Zustand | 4.x | 状态管理 |
-| shadcn/ui | Latest | UI 组件库 |
-| Tailwind CSS | 3.x | 样式框架 |
+### 🛠️ Tech Stack
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Next.js | 15.x | React full-stack framework |
+| TypeScript | 5.x | Type safety |
+| Fabric.js | 6.x | Canvas rendering engine |
+| Zustand | 4.x | State management |
+| shadcn/ui | Latest | UI component library |
+| Tailwind CSS | 3.x | Styling framework |
 
-### 📁 项目结构
+### 📁 Project Structure
 ```
 src/app/
-├── components/           # React 组件
-│   ├── controls/        # 控制面板组件
-│   ├── editor/          # 编辑器组件
-│   ├── upload/          # 上传组件
-│   └── preview/         # 预览组件
-├── lib/                 # 核心逻辑
-│   ├── canvas/          # Canvas 相关工具
-│   ├── stores/          # 状态管理
-│   ├── utils/           # 工具函数
-│   └── watermark/       # 水印处理核心
-├── types/               # TypeScript 类型定义
-├── hooks/               # 自定义 Hooks
-└── api/                 # API 路由
+├── components/           # React components
+│   ├── controls/        # Control panel components
+│   ├── editor/          # Editor components
+│   ├── upload/          # Upload components
+│   └── preview/         # Preview components
+├── lib/                 # Core logic
+│   ├── canvas/          # Canvas-related tools
+│   ├── stores/          # State management
+│   ├── utils/           # Utility functions
+│   └── watermark/       # Watermark processing core
+├── types/               # TypeScript type definitions
+├── hooks/               # Custom Hooks
+└── api/                 # API routes
 ```
 
-## 🔧 开发指南
+## 🔧 Development Guide
 
-### 🚀 开发命令
+### 🚀 Development Commands
 ```bash
-npm run dev          # 启动开发服务器
-npm run build        # 构建生产版本
-npm run start        # 启动生产服务器
-npm run lint         # 代码检查
-npm run type-check   # 类型检查
+npm run dev          # Start development server
+npm run build        # Build production version
+npm run start        # Start production server
+npm run lint         # Code linting
+npm run type-check   # Type checking
 ```
 
-### 📝 代码规范
-- 使用 TypeScript 确保类型安全
-- 遵循 ESLint 和 Prettier 配置
-- 组件使用函数式组件 + Hooks
-- 状态管理使用 Zustand
-- 样式使用 Tailwind CSS
+### 📝 Code Standards
+- Use TypeScript for type safety
+- Follow ESLint and Prettier configurations
+- Use functional components + Hooks
+- State management with Zustand
+- Styling with Tailwind CSS
 
-## 🤝 贡献
+## 🤝 Contributing
 
-欢迎提交 Issue 和 Pull Request！
+Issues and Pull Requests are welcome!
 
-### 🔄 贡献流程
-1. Fork 本仓库
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
+### 🔄 Contribution Process
+1. Fork this repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
 
-### 🐛 问题反馈
-- 使用 [GitHub Issues](https://github.com/xyh9949/image-watermark/issues) 报告 Bug
-- 提供详细的复现步骤和环境信息
-- 建议新功能或改进
+### 🐛 Issue Reporting
+- Use [GitHub Issues](https://github.com/xyh9949/image-watermark/issues) to report bugs
+- Provide detailed reproduction steps and environment information
+- Suggest new features or improvements
 
-## 📄 许可证
+## 📄 License
 
-本项目采用 [MIT License](LICENSE) 开源协议。
+This project is licensed under the [MIT License](LICENSE).
 
-## 🙏 致谢
+## 🙏 Acknowledgments
 
-感谢以下开源项目：
+Thanks to the following open source projects:
 
-- [Next.js](https://nextjs.org/) - React 全栈框架
-- [Fabric.js](http://fabricjs.com/) - 强大的 Canvas 库
-- [shadcn/ui](https://ui.shadcn.com/) - 精美的 UI 组件
-- [Tailwind CSS](https://tailwindcss.com/) - 实用的 CSS 框架
-- [Zustand](https://github.com/pmndrs/zustand) - 轻量级状态管理
+- [Next.js](https://nextjs.org/) - React full-stack framework
+- [Fabric.js](http://fabricjs.com/) - Powerful Canvas library
+- [shadcn/ui](https://ui.shadcn.com/) - Beautiful UI components
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
+- [Zustand](https://github.com/pmndrs/zustand) - Lightweight state management
 
 ---
 
 <div align="center">
 
-**⭐ 如果这个项目对你有帮助，请给个 Star！**
+**⭐ If this project helps you, please give it a Star!**
 
-[🐛 报告问题](https://github.com/xyh9949/image-watermark/issues) · [💡 功能建议](https://github.com/xyh9949/image-watermark/issues) · [📖 文档](https://github.com/xyh9949/image-watermark)
+[🐛 Report Issues](https://github.com/xyh9949/image-watermark/issues) · [💡 Feature Requests](https://github.com/xyh9949/image-watermark/issues) · [📖 Documentation](https://github.com/xyh9949/image-watermark)
 
 </div>
