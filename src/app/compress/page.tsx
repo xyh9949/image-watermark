@@ -67,7 +67,7 @@ export default function Compress() {
         ctx?.drawImage(img, 0, 0);
 
         let quality = 0.9;
-        let outputType = file.type;
+        const outputType = file.type;
 
         if (file.type === 'image/png') {
           quality = 1.0;
@@ -196,7 +196,7 @@ export default function Compress() {
             setTimeout(() => downloadFile(file), index * 500);
           });
         } else {
-          const blob = new Blob([data], { type: 'application/zip' });
+          const blob = new Blob([data as BlobPart], { type: 'application/zip' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;

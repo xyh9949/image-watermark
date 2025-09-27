@@ -1,5 +1,4 @@
 import { CompressionStrategy, CompressionOptions, OptimizationInfo } from '@/app/types/compress';
-import { deflate } from 'pako';
 
 export class PNGOptimizer extends CompressionStrategy {
   format = 'PNG';

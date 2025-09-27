@@ -9,8 +9,7 @@ import {
   HardDrive, 
   Clock, 
   TrendingDown,
-  CheckCircle,
-  XCircle
+  CheckCircle
 } from 'lucide-react';
 import { CompressionStats } from '@/app/types/compress';
 
