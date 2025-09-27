@@ -1,6 +1,6 @@
 {
   "name": "image-watermark",
-  "version": "0.1.0",
+  "version": "1.0.3",
   "private": true,
   "description": "一个现代化的图片水印处理应用，基于 Next.js 15 + Fabric.js 构建，支持批量处理和智能水印定位",
   "keywords": [

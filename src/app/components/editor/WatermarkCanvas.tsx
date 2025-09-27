@@ -109,13 +109,16 @@ export function WatermarkCanvas({
 
   // 导出图片
   const handleExport = useCallback(() => {
-    const dataUrl = exportImage('png', 1.0);
+    // 使用JPEG格式以减小文件大小，同时保持原始分辨率
+    const dataUrl = exportImage('jpeg', 0.9);
     if (dataUrl) {
       onExport?.(dataUrl);
       
       // 创建下载链接
       const link = document.createElement('a');
-      link.download = `watermarked-${currentImage?.name || 'image'}.png`;
+      const fileName = currentImage?.name || 'image';
+      const nameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
+      link.download = `watermarked-${nameWithoutExt}.jpg`;
       link.href = dataUrl;
       link.click();
     }

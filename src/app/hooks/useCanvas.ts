@@ -248,7 +248,11 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
   const exportImage = useCallback((format: 'png' | 'jpeg' = 'png', quality: number = 1.0): string | null => {
     if (!canvas) return null;
 
-    return exportCanvasAsImage(canvas, format, quality);
+    // 对于单图导出，默认使用JPEG格式以减小文件大小，除非明确指定PNG
+    const finalFormat = format;
+    const finalQuality = format === 'jpeg' ? quality : 1.0;
+
+    return exportCanvasAsImage(canvas, finalFormat, finalQuality);
   }, [canvas]);
 
   // 调整Canvas尺寸

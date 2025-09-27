@@ -825,11 +825,35 @@ export function exportCanvasAsImage(
   format: 'png' | 'jpeg' = 'png',
   quality: number = 1.0
 ): string {
-  // {{ Shrimp-X: Modify - 保持原始分辨率导出，问题在于预览的水印位置计算. Approval: Cunzhi(ID:timestamp). }}
+  // 获取Canvas中的背景图片（通常是第一个对象）
+  const objects = canvas.getObjects();
+  const backgroundImage = objects.find(obj => obj.type === 'image') as FabricImage;
+  
+  if (backgroundImage) {
+    // 计算原始图片尺寸与当前Canvas尺寸的比例
+    const originalWidth = backgroundImage.getOriginalSize().width || backgroundImage.width || canvas.getWidth();
+    const originalHeight = backgroundImage.getOriginalSize().height || backgroundImage.height || canvas.getHeight();
+    
+    const currentWidth = canvas.getWidth();
+    const currentHeight = canvas.getHeight();
+    
+    // 计算需要的缩放倍数以恢复原始分辨率
+    const scaleX = originalWidth / currentWidth;
+    const scaleY = originalHeight / currentHeight;
+    const multiplier = Math.max(scaleX, scaleY);
+    
+    return canvas.toDataURL({
+      format: format === 'png' ? 'png' : 'jpeg',
+      quality: format === 'jpeg' ? quality : 1.0,
+      multiplier: multiplier, // 使用计算出的倍数恢复原始分辨率
+    });
+  }
+  
+  // 如果没有背景图片，使用默认导出
   return canvas.toDataURL({
     format: format === 'png' ? 'png' : 'jpeg',
     quality: format === 'jpeg' ? quality : 1.0,
-    multiplier: 1, // 保持原始分辨率导出
+    multiplier: 1,
   });
 }
 

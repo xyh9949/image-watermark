@@ -103,8 +103,8 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
         onError: (error, imageId) => {
           setProcessingError(error.message);
         },
-        quality: 0.9,
-        format: 'png'
+        quality: 0.85, // 降低质量以减小文件大小
+        format: 'jpeg' // 使用JPEG格式以减小文件大小
       });
 
     } catch (error) {

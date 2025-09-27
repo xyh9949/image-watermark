@@ -9,10 +9,10 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-
+/.kiro
 # testing
 /coverage
-
+/.vscode
 # next.js
 /.next/
 /out/

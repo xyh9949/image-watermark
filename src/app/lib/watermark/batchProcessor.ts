@@ -184,7 +184,6 @@ export class BatchWatermarkProcessor {
     const fabricImage = await this.loadImageToCanvas(imageInfo);
 
     // 调整Canvas尺寸以匹配图片原始尺寸
-    // {{ Shrimp-X: Modify - 使用图片原始尺寸设置Canvas，确保批量处理一致性. Approval: Cunzhi(ID:timestamp). }}
     const imageWidth = fabricImage.getOriginalSize().width || imageInfo.width || 800;
     const imageHeight = fabricImage.getOriginalSize().height || imageInfo.height || 600;
 
@@ -212,16 +211,16 @@ export class BatchWatermarkProcessor {
     // 渲染Canvas
     this.canvas.renderAll();
 
-    // 导出图片
-    const quality = options.quality || 0.9;
-    const format = options.format || 'png';
+    // 导出图片 - 优化文件大小
+    const quality = options.quality || 0.85; // 降低默认质量
+    const format = options.format || 'jpeg'; // 默认使用JPEG格式
 
     // 转换格式名称以符合 Fabric.js 要求
     const fabricFormat = format === 'jpg' ? 'jpeg' : format;
 
     return this.canvas.toDataURL({
       format: fabricFormat as 'png' | 'jpeg',
-      quality: quality,
+      quality: fabricFormat === 'jpeg' ? quality : 1.0, // PNG不使用质量参数
       multiplier: 1
     });
   }
@@ -336,7 +335,14 @@ export async function downloadBatchResults(results: BatchProcessingResult[], zip
     // 单张图片直接下载
     const result = successResults[0];
     const link = document.createElement('a');
-    link.download = `watermarked-${result.imageName}`;
+    
+    // 生成正确的文件名和扩展名
+    const originalName = result.imageName;
+    const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
+    const isJpeg = result.dataUrl!.startsWith('data:image/jpeg');
+    const extension = isJpeg ? '.jpg' : '.png';
+    
+    link.download = `watermarked-${nameWithoutExt}${extension}`;
     link.href = result.dataUrl!;
     link.click();
   } else {
@@ -359,8 +365,15 @@ async function downloadAsZip(results: BatchProcessingResult[], zipName?: string)
       const arrayBuffer = await response.arrayBuffer();
       const uint8Array = new Uint8Array(arrayBuffer);
 
-      // 生成文件名，确保唯一性
-      const fileName = `watermarked-${result.imageName}`;
+      // 生成文件名，确保使用正确的扩展名
+      const originalName = result.imageName;
+      const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
+      
+      // 根据dataURL的格式确定扩展名
+      const isJpeg = result.dataUrl.startsWith('data:image/jpeg');
+      const extension = isJpeg ? '.jpg' : '.png';
+      
+      const fileName = `watermarked-${nameWithoutExt}${extension}`;
       files[fileName] = uint8Array;
     }
   }
