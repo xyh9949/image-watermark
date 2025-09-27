@@ -1,10 +1,10 @@
-# 🖼️ Image Watermark
+# 🖼️ Image Batch Processing Tool
 
 **[English](README.md) | [中文](README_CN.md)**
 
 ## Visit [https://iw.vidocat.com](https://iw.vidocat.com/) for live preview
 
-A modern image watermarking application built with Next.js 15 + Fabric.js, supporting batch processing and intelligent watermark positioning.
+A modern image batch processing application built with Next.js 15, integrating watermarking and image compression features with intelligent optimization and batch processing capabilities.
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
@@ -13,22 +13,38 @@ A modern image watermarking application built with Next.js 15 + Fabric.js, suppo
 
 ## ✨ Key Features
 
-### 🎯 Smart Watermark Positioning
+### 🏷️ Watermark Tool
+
+#### 🎯 Smart Watermark Positioning
 - **Nine-Grid Alignment**: 9 preset positions for precise watermark control
 - **Ratio Mode**: Cross-resolution consistency, ensuring uniform watermark effects across different image sizes
 - **Pixel Mode**: Precise pixel-level positioning, suitable for single resolution processing
 - **Real-time Preview**: WYSIWYG watermark effect preview
 
-### 🖼️ Multiple Watermark Types
+#### 🖼️ Multiple Watermark Types
 - **Text Watermark**: Customizable font, color, transparency, rotation, stroke, and shadow
 - **Image Watermark**: Supports PNG, JPG, WebP formats with adjustable size and transparency
 - **Full-screen Tiling**: Repeating tile mode, suitable for copyright protection
 
-### ⚡ Efficient Batch Processing
-- **Parallel Processing**: High-performance rendering engine based on Fabric.js
+### 🗜️ Compression Tool
+
+#### 📦 Lossless Compression Technology
+- **Format Preservation**: Maintains original image formats (JPEG, PNG, WebP, GIF)
+- **Smart Optimization**: Automatically selects optimal compression strategies based on image characteristics
+- **Metadata Cleaning**: Optional removal of EXIF, XMP and other non-essential information
+- **Quality Control**: Three compression levels (light, standard, deep)
+
+#### 🚀 Efficient Processing
+- **Batch Compression**: Supports processing multiple images simultaneously
+- **Real-time Preview**: Before and after compression comparison
+- **Statistics**: Detailed data including compression ratio and space saved
+- **One-click Download**: Supports individual download or batch ZIP packaging
+
+### ⚡ Universal Features
+- **Parallel Processing**: High-performance rendering and processing engine
 - **Progress Monitoring**: Real-time display of processing progress and status
 - **Error Recovery**: Comprehensive error handling and retry mechanisms
-- **Multi-format Output**: Supports PNG, JPEG, WebP format export
+- **Multi-format Support**: Supports PNG, JPEG, WebP, GIF and other mainstream formats
 
 ### 🎨 Modern Interface
 - **Responsive Design**: Perfect adaptation for desktop and mobile devices
@@ -80,7 +96,7 @@ docker run -p 3000:3000 image-watermark
 
 ## 📖 User Guide
 
-### 🎯 Basic Operations
+### 🏷️ Watermark Tool Usage
 
 1. **📁 Upload Images**
    - Drag files to upload area
@@ -101,16 +117,52 @@ docker run -p 3000:3000 image-watermark
    - View processing progress
    - Automatic download of processing results
 
+### 🗜️ Compression Tool Usage
+
+1. **📂 Select Images**
+   - Drag or select image files to compress
+   - Supports JPEG, PNG, WebP, GIF formats
+   - Can select multiple images simultaneously
+
+2. **⚙️ Set Compression Parameters**
+   - Choose compression level (light/standard/deep)
+   - Configure metadata processing options
+   - View estimated compression effects
+
+3. **📊 View Results**
+   - Real-time compression progress display
+   - Before and after compression comparison
+   - Statistics on space saved and compression ratio
+
+4. **💾 Download Files**
+   - Individual file download
+   - Batch ZIP packaging download
+   - Maintains original file formats
+
 ### 💡 Advanced Features
 
-#### Smart Positioning Modes
-- **Pixel Mode**: Precise pixel positioning, suitable for single resolution
-- **Ratio Mode**: Relative ratio positioning, ensuring cross-resolution consistency
+#### Watermark Tool Advanced Features
+- **Smart Positioning Modes**
+  - Pixel Mode: Precise pixel positioning, suitable for single resolution
+  - Ratio Mode: Relative ratio positioning, ensuring cross-resolution consistency
+- **Batch Processing Tips**
+  - Recommend processing no more than 50 images at once
+  - For large images, consider reducing output quality to improve speed
 
-#### Batch Processing Tips
-- Recommend processing no more than 50 images at once
-- For large images, consider reducing output quality to improve speed
+#### Compression Tool Advanced Features
+- **Compression Strategies**
+  - JPEG: Lossless re-encoding with optimized Huffman tables
+  - PNG: DEFLATE compression optimization with palette reordering
+  - WebP: Prediction mode and entropy coding optimization
+- **Batch Optimization Tips**
+  - Supports parallel processing for improved speed
+  - Smart format recognition and optimization suggestions
+  - Optional preservation of important metadata
+
+#### Universal Tips
 - Support mid-process cancellation and error retry
+- Browser-based local processing for privacy protection
+- Responsive design with mobile device support
 
 ## 🏗️ Technical Architecture
 
@@ -128,15 +180,18 @@ docker run -p 3000:3000 image-watermark
 ```
 src/app/
 ├── components/           # React components
-│   ├── controls/        # Control panel components
-│   ├── editor/          # Editor components
-│   ├── upload/          # Upload components
+│   ├── controls/        # Watermark control panel components
+│   ├── editor/          # Watermark editor components
+│   ├── upload/          # File upload components
 │   └── preview/         # Preview components
+├── compress/            # Compression tool pages
+│   └── components/      # Compression tool components
 ├── lib/                 # Core logic
 │   ├── canvas/          # Canvas-related tools
 │   ├── stores/          # State management
 │   ├── utils/           # Utility functions
-│   └── watermark/       # Watermark processing core
+│   ├── watermark/       # Watermark processing core
+│   └── compress/        # Compression processing core
 ├── types/               # TypeScript type definitions
 ├── hooks/               # Custom Hooks
 └── api/                 # API routes
