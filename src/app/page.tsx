@@ -5,6 +5,7 @@ import { ImageUpload } from "@/app/components/upload/ImageUpload";
 import { WatermarkCanvas } from "@/app/components/editor/WatermarkCanvas";
 import { WatermarkControls } from "@/app/components/controls/WatermarkControls";
 import { StructuredData } from '@/app/components/seo/StructuredData';
+import { TopNavigation } from '@/components/TopNavigation';
 
 export default function Home() {
   return (
@@ -12,12 +13,18 @@ export default function Home() {
       {/* JSON-LD 结构化数据 */}
       <StructuredData />
 
+      {/* Top Navigation */}
+      <TopNavigation />
+
       {/* 移动端：垂直布局 */}
       <div className="lg:hidden flex flex-col h-full">
-        {/* 顶部工具栏 */}
-        <div className="flex-shrink-0 p-4 border-b bg-background">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">图片水印编辑器</h1>
+        {/* 页面标题 */}
+        <div className="flex-shrink-0 p-4 bg-background">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-1">图片批量处理工具</h1>
+            <p className="text-sm text-muted-foreground">
+              为您的图片添加专业水印，支持文字和图片水印
+            </p>
           </div>
         </div>
 
@@ -46,29 +53,31 @@ export default function Home() {
       </div>
 
       {/* 桌面端：固定编辑器布局 */}
-      <div className="hidden lg:flex h-full">
-        {/* 左侧：可滚动的上传区域 - 使用3/12的比例 */}
-        <div className="flex-[3] border-r bg-background">
-          <div className="h-full overflow-auto">
-            <div className="p-4">
-              <ImageUpload />
-            </div>
+      <div className="hidden lg:flex flex-col h-full">
+        {/* 页面标题 */}
+        <div className="flex-shrink-0 p-4 bg-background">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-1">图片批量处理工具</h1>
+            <p className="text-sm text-muted-foreground">
+              为您的图片添加专业水印，支持文字和图片水印
+            </p>
           </div>
         </div>
 
-        {/* 右侧：固定的编辑器和控制面板 - 使用9/12的比例 */}
-        <div className="flex-[9] flex flex-col">
-          {/* 顶部工具栏 */}
-          <div className="flex-shrink-0 p-4 border-b bg-background">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <h1 className="text-2xl font-bold">图片水印编辑器</h1>
+        {/* 主要内容区域 */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* 左侧：可滚动的上传区域 - 使用3/12的比例 */}
+          <div className="flex-[3] border-r bg-background">
+            <div className="h-full overflow-auto">
+              <div className="p-4">
+                <ImageUpload />
               </div>
             </div>
           </div>
 
-          {/* 编辑器和控制面板区域 */}
-          <div className="flex-1 flex overflow-hidden">
+          {/* 右侧：固定的编辑器和控制面板 - 使用9/12的比例 */}
+          <div className="flex-[9] flex overflow-hidden">
+
             {/* 中间：Canvas编辑器 - 使用6/9的比例 */}
             <div className="flex-[6] p-4 overflow-auto">
               <WatermarkCanvas className="h-full" />

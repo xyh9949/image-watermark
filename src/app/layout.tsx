@@ -111,7 +111,7 @@ export default function RootLayout({
               <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-2">
                   <h1 className="text-xl font-bold">图片水印工具</h1>
-                  <span className="text-sm text-muted-foreground">v1.0.3</span>
+                  <span className="text-sm text-muted-foreground">v1.2.3</span>
                 </div>
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
                   免费开源
@@ -139,7 +139,7 @@ export default function RootLayout({
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2">
                     <h1 className="text-xl font-bold">图片水印工具</h1>
-                    <span className="text-sm text-muted-foreground">v1.0.3</span>
+                    <span className="text-sm text-muted-foreground">v1.2.3</span>
                   </div>
                   <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
                     免费开源项目
