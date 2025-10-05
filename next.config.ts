@@ -18,10 +18,6 @@ const nextConfig: NextConfig = {
   // 实验性功能
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
-    // 允许通过外网 IP 访问本地开发服务器，消除跨域开发警告
-    allowedDevOrigins: [
-      'http://192.210.187.88:3000'
-    ],
   },
 
   // 服务器外部包配置
