@@ -53,6 +53,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1.0,
   themeColor: '#ffffff',
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -62,7 +63,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body className="font-sans antialiased bg-background text-foreground">
+      <body className="font-sans antialiased bg-background text-foreground overflow-x-hidden">
         <ClientSeo />
 
         {/* 服务端渲染的结构化数据 */}
@@ -103,9 +104,41 @@ export default function RootLayout({
             })
           }}
         />
-        <div className="min-h-screen flex flex-col">
+        {/* 兼容性：为不支持的环境提供 crypto.randomUUID polyfill（优先使用 Web Crypto） */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(() => {
+  try {
+    const g = globalThis;
+    if (!g.crypto) g.crypto = {};
+    if (typeof g.crypto.randomUUID !== 'function') {
+      const uuidv4 = () => {
+        try {
+          if (g.crypto && typeof g.crypto.getRandomValues === 'function') {
+            const bytes = new Uint8Array(16);
+            g.crypto.getRandomValues(bytes);
+            bytes[6] = (bytes[6] & 0x0f) | 0x40;
+            bytes[8] = (bytes[8] & 0x3f) | 0x80;
+            const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+            return hex.slice(0,8) + '-' + hex.slice(8,12) + '-' + hex.slice(12,16) + '-' + hex.slice(16,20) + '-' + hex.slice(20);
+          }
+        } catch {}
+        let ts = Date.now();
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+          const r = (ts + Math.random() * 16) % 16 | 0;
+          ts = Math.floor(ts / 16);
+          return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+        });
+      };
+      g.crypto.randomUUID = uuidv4;
+    }
+  } catch {}
+})();`
+          }}
+        />
+        <div className="min-h-dvh flex flex-col">
           {/* 头部导航 */}
-          <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             {/* 移动端头部 */}
             <div className="lg:hidden h-16 px-4 flex items-center justify-between">
               <div className="flex items-center space-x-3">

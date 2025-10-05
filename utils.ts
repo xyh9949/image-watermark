@@ -7,18 +7,19 @@ export function cn(...inputs: ClassValue[]) {
 
 // 安全的 UUID 生成（兼容不支持 crypto.randomUUID 的环境）
 export function safeUUID(): string {
-  const g: any = globalThis as any;
   try {
-    if (typeof g?.crypto?.randomUUID === 'function') {
-      return g.crypto.randomUUID();
+    const cryptoObj = (globalThis as unknown as { crypto?: Crypto }).crypto;
+
+    if (typeof cryptoObj?.randomUUID === 'function') {
+      return cryptoObj.randomUUID();
     }
-    if (g?.crypto?.getRandomValues) {
+    if (typeof cryptoObj?.getRandomValues === 'function') {
       const bytes = new Uint8Array(16);
-      g.crypto.getRandomValues(bytes);
+      cryptoObj.getRandomValues(bytes);
       // RFC 4122 version 4
       bytes[6] = (bytes[6] & 0x0f) | 0x40;
       bytes[8] = (bytes[8] & 0x3f) | 0x80;
-      const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+      const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
       return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
     }
   } catch {}

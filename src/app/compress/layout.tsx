@@ -6,7 +6,7 @@ interface CompressLayoutProps {
 
 export default function CompressLayout({ children }: CompressLayoutProps) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <div className="container mx-auto px-4 py-8">
         {children}
       </div>

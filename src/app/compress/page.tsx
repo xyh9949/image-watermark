@@ -274,7 +274,7 @@ export default function Compress() {
     : 0;
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="min-h-dvh flex flex-col">
       {/* Top Navigation */}
       <TopNavigation />
 

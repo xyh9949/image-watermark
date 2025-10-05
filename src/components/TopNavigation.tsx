@@ -27,7 +27,7 @@ export function TopNavigation() {
     <nav className="border-b bg-background">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex h-16 items-center justify-center">
-          <div className="flex items-center bg-muted rounded-lg p-1">
+          <div className="flex items-center bg-muted rounded-lg p-1 max-w-full overflow-x-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
