@@ -9,7 +9,7 @@ import { TopNavigation } from '@/components/TopNavigation';
 
 export default function Home() {
   return (
-    <div className="h-screen flex flex-col">
+    <div className="min-h-dvh flex flex-col overflow-hidden">
       {/* JSON-LD 结构化数据 */}
       <StructuredData />
 
