@@ -103,8 +103,8 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
         onError: (error, imageId) => {
           setProcessingError(error.message);
         },
-        quality: 0.85, // 降低质量以减小文件大小
-        format: 'jpeg' // 使用JPEG格式以减小文件大小
+        // {{ Shrimp-X: Modify - 移除硬编码格式，保留原始图片格式. Approval: Cunzhi(ID:timestamp). }}
+        quality: 0.92 // 提高默认质量，不指定 format 以保留原始格式
       });
 
     } catch (error) {
@@ -342,7 +342,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
   return (
     <Card className={`p-6 h-full ${className}`}>
-        <div className="space-y-4">
+      <div className="space-y-4">
         {/* 标题栏 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -368,7 +368,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
             )}
           </Button>
         </div>
-        
+
         {/* 水印类型选择 */}
         <Tabs
           value={currentConfig.type}
@@ -380,7 +380,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
             <TabsTrigger value="image">图片</TabsTrigger>
             <TabsTrigger value="fullscreen">全屏</TabsTrigger>
           </TabsList>
-          
+
           {/* 文字水印控制 */}
           <TabsContent value="text" className="space-y-4 mt-4">
             {/* 水印文字 */}
@@ -694,7 +694,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
               </div>
             )}
           </TabsContent>
-          
+
           {/* {{ Shrimp-X: Add - 完整的图片水印控制界面. Approval: Cunzhi(ID:timestamp). }} */}
           {/* 图片水印控制 */}
           <TabsContent value="image" className="space-y-4 mt-4">
@@ -810,7 +810,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
               </>
             )}
           </TabsContent>
-          
+
           {/* 全屏水印控制 */}
           <TabsContent value="fullscreen" className="space-y-4 mt-4">
             {/* 水印模式选择 */}
@@ -940,11 +940,11 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                           defaultPrevented: false,
                           eventPhase: 0,
                           isTrusted: false,
-                          preventDefault: () => {},
+                          preventDefault: () => { },
                           isDefaultPrevented: () => false,
-                          stopPropagation: () => {},
+                          stopPropagation: () => { },
                           isPropagationStopped: () => false,
-                          persist: () => {},
+                          persist: () => { },
                           timeStamp: Date.now(),
                           type: 'change'
                         } as React.ChangeEvent<HTMLInputElement>;
@@ -1198,82 +1198,82 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
         {currentConfig.type !== 'fullscreen' && (
           <div className="space-y-3">
             <Label>位置微调</Label>
-          <div className="text-xs text-gray-500 mb-2">
-            使用百分比微调水印位置，确保在不同尺寸图片上保持一致的相对位置
-          </div>
-
-          {/* X轴偏移 */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm text-muted-foreground">水平偏移</Label>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="number"
-                  value={((currentConfig.position.offsetX || 0) / 10).toFixed(1)}
-                  onChange={(e) => {
-                    const percentValue = Math.max(-50, Math.min(50, parseFloat(e.target.value) || 0));
-                    const pixelValue = percentValue * 10; // 转换为内部像素值存储
-                    updatePosition({ offsetX: pixelValue });
-                  }}
-                  className="w-16 px-2 py-1 text-sm border rounded"
-                  min="-50"
-                  max="50"
-                  step="0.1"
-                />
-                <span className="text-sm text-gray-500">%</span>
-              </div>
+            <div className="text-xs text-gray-500 mb-2">
+              使用百分比微调水印位置，确保在不同尺寸图片上保持一致的相对位置
             </div>
-            <Slider
-              value={[(currentConfig.position.offsetX || 0) / 10]}
-              onValueChange={(value) => updatePosition({ offsetX: value[0] * 10 })}
-              min={-50}
-              max={50}
-              step={0.1}
-              className="w-full"
-            />
-          </div>
 
-          {/* Y轴偏移 */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm text-muted-foreground">垂直偏移</Label>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="number"
-                  value={((currentConfig.position.offsetY || 0) / 10).toFixed(1)}
-                  onChange={(e) => {
-                    const percentValue = Math.max(-50, Math.min(50, parseFloat(e.target.value) || 0));
-                    const pixelValue = percentValue * 10; // 转换为内部像素值存储
-                    updatePosition({ offsetY: pixelValue });
-                  }}
-                  className="w-16 px-2 py-1 text-sm border rounded"
-                  min="-50"
-                  max="50"
-                  step="0.1"
-                />
-                <span className="text-sm text-gray-500">%</span>
+            {/* X轴偏移 */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm text-muted-foreground">水平偏移</Label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="number"
+                    value={((currentConfig.position.offsetX || 0) / 10).toFixed(1)}
+                    onChange={(e) => {
+                      const percentValue = Math.max(-50, Math.min(50, parseFloat(e.target.value) || 0));
+                      const pixelValue = percentValue * 10; // 转换为内部像素值存储
+                      updatePosition({ offsetX: pixelValue });
+                    }}
+                    className="w-16 px-2 py-1 text-sm border rounded"
+                    min="-50"
+                    max="50"
+                    step="0.1"
+                  />
+                  <span className="text-sm text-gray-500">%</span>
+                </div>
               </div>
+              <Slider
+                value={[(currentConfig.position.offsetX || 0) / 10]}
+                onValueChange={(value) => updatePosition({ offsetX: value[0] * 10 })}
+                min={-50}
+                max={50}
+                step={0.1}
+                className="w-full"
+              />
             </div>
-            <Slider
-              value={[(currentConfig.position.offsetY || 0) / 10]}
-              onValueChange={(value) => updatePosition({ offsetY: value[0] * 10 })}
-              min={-50}
-              max={50}
-              step={0.1}
-              className="w-full"
-            />
-          </div>
 
-          {/* 重置偏移量按钮 */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={() => updatePosition({ offsetX: 0, offsetY: 0 })}
-          >
-            重置偏移量
-          </Button>
-        </div>
+            {/* Y轴偏移 */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm text-muted-foreground">垂直偏移</Label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="number"
+                    value={((currentConfig.position.offsetY || 0) / 10).toFixed(1)}
+                    onChange={(e) => {
+                      const percentValue = Math.max(-50, Math.min(50, parseFloat(e.target.value) || 0));
+                      const pixelValue = percentValue * 10; // 转换为内部像素值存储
+                      updatePosition({ offsetY: pixelValue });
+                    }}
+                    className="w-16 px-2 py-1 text-sm border rounded"
+                    min="-50"
+                    max="50"
+                    step="0.1"
+                  />
+                  <span className="text-sm text-gray-500">%</span>
+                </div>
+              </div>
+              <Slider
+                value={[(currentConfig.position.offsetY || 0) / 10]}
+                onValueChange={(value) => updatePosition({ offsetY: value[0] * 10 })}
+                min={-50}
+                max={50}
+                step={0.1}
+                className="w-full"
+              />
+            </div>
+
+            {/* 重置偏移量按钮 */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => updatePosition({ offsetX: 0, offsetY: 0 })}
+            >
+              重置偏移量
+            </Button>
+          </div>
         )}
 
         {/* 处理按钮 */}

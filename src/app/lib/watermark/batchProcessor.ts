@@ -237,20 +237,37 @@ export class BatchWatermarkProcessor {
     // 渲染Canvas
     this.canvas.renderAll();
 
-    // {{ Shrimp-X: Modify - 使用 multiplier 放大到原始分辨率，与单张导出逻辑一致. Approval: Cunzhi(ID:timestamp). }}
+    // {{ Shrimp-X: Modify - 根据原始图片格式导出，保留原始格式. Approval: Cunzhi(ID:timestamp). }}
     // 导出图片 - 使用 multiplier 恢复原始分辨率
-    const quality = options.quality || 0.85;
-    const format = options.format || 'jpeg';
+    const quality = options.quality || 0.92;
 
-    // 转换格式名称以符合 Fabric.js 要求
-    const fabricFormat = format === 'jpg' ? 'jpeg' : format;
+    // 根据原始图片类型确定导出格式，保留原始格式
+    let format: 'png' | 'jpeg' = 'png'; // 默认 PNG
+    if (options.format) {
+      // 如果用户指定了格式，使用用户指定的格式
+      format = options.format === 'jpg' ? 'jpeg' : options.format as 'png' | 'jpeg';
+    } else {
+      // 根据原始图片的 MIME 类型自动确定格式
+      const mimeType = imageInfo.type?.toLowerCase() || '';
+      if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
+        format = 'jpeg';
+      } else if (mimeType.includes('png')) {
+        format = 'png';
+      } else if (mimeType.includes('webp')) {
+        // WebP 导出为 PNG 以保留透明度
+        format = 'png';
+      } else {
+        // 其他格式默认使用 PNG
+        format = 'png';
+      }
+    }
 
     // 计算 multiplier 以恢复原始分辨率
     const multiplier = 1 / scale;
 
     return this.canvas.toDataURL({
-      format: fabricFormat as 'png' | 'jpeg',
-      quality: fabricFormat === 'jpeg' ? quality : 1.0,
+      format: format,
+      quality: format === 'jpeg' ? quality : 1.0,
       multiplier: multiplier // 使用 multiplier 恢复原始分辨率
     });
   }

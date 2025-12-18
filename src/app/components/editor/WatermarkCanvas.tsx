@@ -6,11 +6,11 @@ import React, { useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  ZoomIn, 
-  ZoomOut, 
-  RotateCcw, 
-  Download, 
+import {
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Download,
   Eye,
   AlertCircle,
   Maximize
@@ -25,7 +25,7 @@ interface WatermarkCanvasProps {
   onExport?: (dataUrl: string) => void;
 }
 
-export function WatermarkCanvas({ 
+export function WatermarkCanvas({
   className = '',
   showControls = true,
   onExport
@@ -107,18 +107,36 @@ export function WatermarkCanvas({
     updateCanvasWatermark();
   }, [isReady, canvasImage, currentConfig]); // 移除函数依赖避免无限循环
 
+  // {{ Shrimp-X: Modify - 根据原始图片格式导出，保留原始格式. Approval: Cunzhi(ID:timestamp). }}
   // 导出图片
   const handleExport = useCallback(() => {
-    // 使用JPEG格式以减小文件大小，同时保持原始分辨率
-    const dataUrl = exportImage('jpeg', 0.9);
+    // 根据原始图片的 MIME 类型确定导出格式
+    const mimeType = currentImage?.type?.toLowerCase() || '';
+    let format: 'png' | 'jpeg' = 'png'; // 默认 PNG
+    let extension = '.png';
+
+    if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
+      format = 'jpeg';
+      extension = '.jpg';
+    } else if (mimeType.includes('png')) {
+      format = 'png';
+      extension = '.png';
+    } else if (mimeType.includes('webp')) {
+      // WebP 导出为 PNG 以保留透明度
+      format = 'png';
+      extension = '.png';
+    }
+
+    const quality = format === 'jpeg' ? 0.92 : 1.0;
+    const dataUrl = exportImage(format, quality);
     if (dataUrl) {
       onExport?.(dataUrl);
-      
+
       // 创建下载链接
       const link = document.createElement('a');
       const fileName = currentImage?.name || 'image';
       const nameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
-      link.download = `watermarked-${nameWithoutExt}.jpg`;
+      link.download = `watermarked-${nameWithoutExt}${extension}`;
       link.href = dataUrl;
       link.click();
     }
@@ -169,7 +187,7 @@ export function WatermarkCanvas({
                 </span>
               )}
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
@@ -179,7 +197,7 @@ export function WatermarkCanvas({
               >
                 <Maximize className="h-4 w-4" />
               </Button>
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -188,7 +206,7 @@ export function WatermarkCanvas({
               >
                 <Eye className="h-4 w-4" />
               </Button>
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -197,7 +215,7 @@ export function WatermarkCanvas({
               >
                 <RotateCcw className="h-4 w-4" />
               </Button>
-              
+
               <Button
                 variant="default"
                 size="sm"
@@ -243,7 +261,7 @@ export function WatermarkCanvas({
               </div>
             )}
           </div>
-          
+
           {/* 水印信息覆盖层 */}
           {isReady && watermarks.length > 0 && (
             <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
@@ -260,7 +278,7 @@ export function WatermarkCanvas({
               <span>缩放: 100%</span>
               <span>水印: {watermarks.length}</span>
             </div>
-            
+
             <div className="flex items-center space-x-2">
               {currentConfig.enabled ? (
                 <span className="flex items-center text-green-600">
