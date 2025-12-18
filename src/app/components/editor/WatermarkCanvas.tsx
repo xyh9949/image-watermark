@@ -234,7 +234,7 @@ export function WatermarkCanvas({
           <div className="flex items-center justify-center min-h-96">
             <canvas
               ref={canvasRef}
-              className="max-w-full max-h-full"
+              className="max-w-full max-h-full touch-none"
               style={{
                 display: isReady && currentImage ? 'block' : 'none',
                 margin: '0 auto'

@@ -15,6 +15,7 @@ import {
   PositionMode,
   ProportionData
 } from '../../types';
+import { safeUUID } from '@/lib/utils';
 import {
   calculateProportions,
   convertPixelToProportion,
@@ -91,7 +92,7 @@ const defaultPositionConfig: PositionConfig = {
 
 // 默认水印配置
 const createDefaultWatermarkConfig = (): WatermarkConfig => ({
-  id: crypto.randomUUID(),
+  id: safeUUID(),
   type: 'text',
   scaleMode: 'adaptive',
   position: { ...defaultPositionConfig },
@@ -340,7 +341,7 @@ export const useWatermarkStore = create<WatermarkState>()(
           const state = get();
           return {
             ...state.currentConfig,
-            id: crypto.randomUUID(),
+            id: safeUUID(),
             createdAt: new Date(),
             updatedAt: new Date(),
           };

@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { ImageInfo, ProcessingStatus, BatchTask, WatermarkConfig } from '@/app/types';
+import { safeUUID } from '@/lib/utils';
 
 // 图片状态接口
 export interface ImageState {
@@ -68,7 +69,7 @@ export interface ImageState {
 }
 
 // 创建图片ID
-const createImageId = () => crypto.randomUUID();
+const createImageId = () => safeUUID();
 
 // 创建图片信息
 const createImageInfo = (file: File): ImageInfo => ({
@@ -319,9 +320,7 @@ export const useImageStore = create<ImageState>()(
 
       // 创建批量任务
       createBatchTask: (name, imageIds) => {
-        const taskId = typeof window !== 'undefined' && typeof crypto !== 'undefined'
-          ? crypto.randomUUID()
-          : `batch_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+        const taskId = `batch_${safeUUID()}`;
         const state = get();
         const images = state.images.filter(img => imageIds.includes(img.id));
         
