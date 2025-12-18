@@ -7,7 +7,8 @@ export function cn(...inputs: ClassValue[]) {
 
 // 安全的 UUID 生成（兼容不支持 crypto.randomUUID 的环境）
 export function safeUUID(): string {
-  const g: any = globalThis as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const g = globalThis as any;
   try {
     if (typeof g?.crypto?.randomUUID === 'function') {
       return g.crypto.randomUUID();
@@ -21,7 +22,7 @@ export function safeUUID(): string {
       const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
       return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
     }
-  } catch {}
+  } catch { }
   // 最后兜底（Math.random），不保证强随机，仅作 ID 用途
   let ts = Date.now();
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
