@@ -57,6 +57,16 @@ export class BatchWatermarkProcessor {
         height: 600,
         backgroundColor: 'transparent'
       });
+
+      // {{ Shrimp-X: Add - 确保 Fabric.js 创建的 wrapper 容器也被隐藏. Approval: Cunzhi(ID:timestamp). }}
+      // Fabric.js 会创建一个 wrapper div，需要将其也隐藏
+      const wrapperElement = canvasElement.parentElement;
+      if (wrapperElement && wrapperElement.classList.contains('canvas-container')) {
+        wrapperElement.style.display = 'none';
+        wrapperElement.style.position = 'absolute';
+        wrapperElement.style.left = '-9999px';
+        wrapperElement.style.top = '-9999px';
+      }
     } catch (error) {
       console.error('Failed to initialize batch processing canvas:', error);
     }
@@ -167,9 +177,10 @@ export class BatchWatermarkProcessor {
 
   /**
    * 处理单张图片
+   * {{ Shrimp-X: Modify - 使用与单张导出相同的缩放策略，确保水印一致性. Approval: Cunzhi(ID:timestamp). }}
    */
   private async processImage(
-    imageInfo: ImageInfo, 
+    imageInfo: ImageInfo,
     watermarkConfig: WatermarkConfig,
     options: BatchProcessingOptions
   ): Promise<string> {
@@ -183,19 +194,34 @@ export class BatchWatermarkProcessor {
     // 加载图片
     const fabricImage = await this.loadImageToCanvas(imageInfo);
 
-    // 调整Canvas尺寸以匹配图片原始尺寸
+    // {{ Shrimp-X: Modify - 使用与单张导出相同的缩放策略，保持水印一致性. Approval: Cunzhi(ID:timestamp). }}
+    // 获取图片原始尺寸
     const imageWidth = fabricImage.getOriginalSize().width || imageInfo.width || 800;
     const imageHeight = fabricImage.getOriginalSize().height || imageInfo.height || 600;
 
+    // 使用与单张编辑器相同的最大显示尺寸
+    const maxDisplayWidth = 800;
+    const maxDisplayHeight = 600;
+
+    // 计算适合显示的尺寸，保持图片宽高比
+    const scaleX = maxDisplayWidth / imageWidth;
+    const scaleY = maxDisplayHeight / imageHeight;
+    const scale = Math.min(scaleX, scaleY, 1); // 不放大，只缩小
+
+    // 计算Canvas的逻辑尺寸（与单张导出一致）
+    const canvasWidth = Math.round(imageWidth * scale);
+    const canvasHeight = Math.round(imageHeight * scale);
+
+    // 调整Canvas尺寸为缩放后的尺寸（与单张导出一致）
     this.canvas.setDimensions({
-      width: imageWidth,
-      height: imageHeight
+      width: canvasWidth,
+      height: canvasHeight
     });
 
-    // 重新设置图片尺寸以填满Canvas
+    // 设置图片尺寸以填满Canvas
     fabricImage.set({
-      scaleX: 1,
-      scaleY: 1,
+      scaleX: scale,
+      scaleY: scale,
       left: 0,
       top: 0
     });
@@ -203,7 +229,7 @@ export class BatchWatermarkProcessor {
     // 添加图片到Canvas
     this.canvas.add(fabricImage);
 
-    // 应用水印
+    // 应用水印（现在传入的是与单张导出相同的缩放后尺寸）
     if (watermarkConfig.enabled) {
       await this.applyWatermark(watermarkConfig);
     }
@@ -211,19 +237,24 @@ export class BatchWatermarkProcessor {
     // 渲染Canvas
     this.canvas.renderAll();
 
-    // 导出图片 - 优化文件大小
-    const quality = options.quality || 0.85; // 降低默认质量
-    const format = options.format || 'jpeg'; // 默认使用JPEG格式
+    // {{ Shrimp-X: Modify - 使用 multiplier 放大到原始分辨率，与单张导出逻辑一致. Approval: Cunzhi(ID:timestamp). }}
+    // 导出图片 - 使用 multiplier 恢复原始分辨率
+    const quality = options.quality || 0.85;
+    const format = options.format || 'jpeg';
 
     // 转换格式名称以符合 Fabric.js 要求
     const fabricFormat = format === 'jpg' ? 'jpeg' : format;
 
+    // 计算 multiplier 以恢复原始分辨率
+    const multiplier = 1 / scale;
+
     return this.canvas.toDataURL({
       format: fabricFormat as 'png' | 'jpeg',
-      quality: fabricFormat === 'jpeg' ? quality : 1.0, // PNG不使用质量参数
-      multiplier: 1
+      quality: fabricFormat === 'jpeg' ? quality : 1.0,
+      multiplier: multiplier // 使用 multiplier 恢复原始分辨率
     });
   }
+
 
   /**
    * 加载图片到Canvas
@@ -335,13 +366,13 @@ export async function downloadBatchResults(results: BatchProcessingResult[], zip
     // 单张图片直接下载
     const result = successResults[0];
     const link = document.createElement('a');
-    
+
     // 生成正确的文件名和扩展名
     const originalName = result.imageName;
     const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
     const isJpeg = result.dataUrl!.startsWith('data:image/jpeg');
     const extension = isJpeg ? '.jpg' : '.png';
-    
+
     link.download = `watermarked-${nameWithoutExt}${extension}`;
     link.href = result.dataUrl!;
     link.click();
@@ -368,11 +399,11 @@ async function downloadAsZip(results: BatchProcessingResult[], zipName?: string)
       // 生成文件名，确保使用正确的扩展名
       const originalName = result.imageName;
       const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
-      
+
       // 根据dataURL的格式确定扩展名
       const isJpeg = result.dataUrl.startsWith('data:image/jpeg');
       const extension = isJpeg ? '.jpg' : '.png';
-      
+
       const fileName = `watermarked-${nameWithoutExt}${extension}`;
       files[fileName] = uint8Array;
     }

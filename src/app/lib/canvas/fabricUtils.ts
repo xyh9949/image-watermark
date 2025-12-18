@@ -521,6 +521,7 @@ function calculateRotatedBounds(width: number, height: number, angle: number): {
 
 /**
  * 计算全屏水印平铺尺寸
+ * {{ Shrimp-X: Modify - 根据 Canvas 尺寸进行比例适配，修复批量处理与预览不一致问题. Approval: Cunzhi(ID:timestamp). }}
  */
 function calculateTileSize(
   fullscreenStyle: {
@@ -538,22 +539,32 @@ function calculateTileSize(
   canvasWidth: number,
   canvasHeight: number
 ): { width: number; height: number } {
+  // {{ Shrimp-X: Add - 基准 Canvas 尺寸（与预览编辑器保持一致）. Approval: Cunzhi(ID:timestamp). }}
+  const REFERENCE_WIDTH = 800;
+  const REFERENCE_HEIGHT = 600;
+
+  // 计算相对于基准尺寸的缩放比例
+  const scaleRatio = Math.min(canvasWidth / REFERENCE_WIDTH, canvasHeight / REFERENCE_HEIGHT);
+  // 对于较小的图片（小于基准尺寸），使用 1.0 防止水印过大
+  const finalScaleRatio = Math.max(scaleRatio, 1.0);
+
   const density = fullscreenStyle.tileDensity || 0.5;
-  const spacing = fullscreenStyle.tileSpacing || 200;
+  // {{ Shrimp-X: Modify - 根据 Canvas 尺寸比例调整间距. Approval: Cunzhi(ID:timestamp). }}
+  const spacing = (fullscreenStyle.tileSpacing || 200) * finalScaleRatio;
   const rotation = fullscreenStyle.rotation || 0;
 
   let baseWidth, baseHeight;
 
   if (fullscreenStyle.mode === 'image') {
-    // {{ Shrimp-X: Modify - 基于实际图片尺寸进行缩放计算，考虑旋转后的边界框. Approval: Cunzhi(ID:timestamp). }}
-    // 图片模式：使用实际图片尺寸 * 缩放比例
+    // {{ Shrimp-X: Modify - 基于实际图片尺寸进行缩放计算，考虑旋转后的边界框和 Canvas 尺寸比例. Approval: Cunzhi(ID:timestamp). }}
+    // 图片模式：使用实际图片尺寸 * 缩放比例 * Canvas 尺寸比例
     const originalWidth = fullscreenStyle.imageOriginalWidth || 100;
     const originalHeight = fullscreenStyle.imageOriginalHeight || 100;
     const scale = fullscreenStyle.imageScale || 1.0;
 
-    // 计算缩放后的尺寸
-    const scaledWidth = originalWidth * scale;
-    const scaledHeight = originalHeight * scale;
+    // 计算缩放后的尺寸，包含 Canvas 尺寸比例
+    const scaledWidth = originalWidth * scale * finalScaleRatio;
+    const scaledHeight = originalHeight * scale * finalScaleRatio;
 
     // {{ Shrimp-X: Add - 计算旋转后的边界框，避免PNG透明水印旋转时产生方形遮挡. Approval: Cunzhi(ID:timestamp). }}
     // 如果有旋转角度，计算旋转后的边界框
@@ -566,8 +577,8 @@ function calculateTileSize(
       baseHeight = scaledHeight;
     }
   } else {
-    // 文字模式：根据字体大小和内容长度估算
-    const fontSize = fullscreenStyle.fontSize || 16;
+    // 文字模式：根据字体大小和内容长度估算，同样应用 Canvas 尺寸比例
+    const fontSize = (fullscreenStyle.fontSize || 16) * finalScaleRatio;
     const textWidth = fontSize * (fullscreenStyle.content?.length || 4) * 0.6;
     const textHeight = fontSize * 1.2;
 
@@ -591,6 +602,7 @@ function calculateTileSize(
 
   return { width, height };
 }
+
 
 /**
  * 计算对角线模式偏移
@@ -651,6 +663,12 @@ export async function createFullscreenWatermark(
     // 3. 根据模式创建水印对象
     let watermarkObject: FabricObject;
 
+    // {{ Shrimp-X: Add - 计算 Canvas 尺寸比例，与 calculateTileSize 保持一致. Approval: Cunzhi(ID:timestamp). }}
+    const REFERENCE_WIDTH = 800;
+    const REFERENCE_HEIGHT = 600;
+    const scaleRatio = Math.min(cWidth / REFERENCE_WIDTH, cHeight / REFERENCE_HEIGHT);
+    const finalScaleRatio = Math.max(scaleRatio, 1.0);
+
     if (fullscreenStyle.mode === 'image' && fullscreenStyle.imageUrl) {
       // {{ Shrimp-X: Add - 支持图片全屏水印模式. Approval: Cunzhi(ID:timestamp). }}
       // 图片模式
@@ -674,21 +692,24 @@ export async function createFullscreenWatermark(
         evented: false,
       });
 
-      // {{ Shrimp-X: Modify - 使用比例缩放保持图片纵横比. Approval: Cunzhi(ID:timestamp). }}
-      // 使用统一的缩放比例，保持图片纵横比
+      // {{ Shrimp-X: Modify - 使用比例缩放保持图片纵横比，并应用 Canvas 尺寸比例. Approval: Cunzhi(ID:timestamp). }}
+      // 使用统一的缩放比例，保持图片纵横比，并根据 Canvas 尺寸进行适配
       const scale = fullscreenStyle.imageScale || 1.0;
-      fabricImage.set({ scaleX: scale, scaleY: scale });
+      const finalScale = scale * finalScaleRatio;
+      fabricImage.set({ scaleX: finalScale, scaleY: finalScale });
 
       watermarkObject = fabricImage;
     } else {
+      // {{ Shrimp-X: Modify - 文字模式也应用 Canvas 尺寸比例. Approval: Cunzhi(ID:timestamp). }}
       // 文字模式
+      const fontSize = (fullscreenStyle.fontSize || 16) * finalScaleRatio;
       watermarkObject = new FabricText(fullscreenStyle.content, {
         left: tileSize.width / 2,
         top: tileSize.height / 2,
         originX: 'center',
         originY: 'center',
         fontFamily: fullscreenStyle.fontFamily,
-        fontSize: fullscreenStyle.fontSize,
+        fontSize: fontSize,
         fill: fullscreenStyle.color,
         opacity: fullscreenStyle.opacity,
         angle: fullscreenStyle.rotation,
@@ -828,27 +849,27 @@ export function exportCanvasAsImage(
   // 获取Canvas中的背景图片（通常是第一个对象）
   const objects = canvas.getObjects();
   const backgroundImage = objects.find(obj => obj.type === 'image') as FabricImage;
-  
+
   if (backgroundImage) {
     // 计算原始图片尺寸与当前Canvas尺寸的比例
     const originalWidth = backgroundImage.getOriginalSize().width || backgroundImage.width || canvas.getWidth();
     const originalHeight = backgroundImage.getOriginalSize().height || backgroundImage.height || canvas.getHeight();
-    
+
     const currentWidth = canvas.getWidth();
     const currentHeight = canvas.getHeight();
-    
+
     // 计算需要的缩放倍数以恢复原始分辨率
     const scaleX = originalWidth / currentWidth;
     const scaleY = originalHeight / currentHeight;
     const multiplier = Math.max(scaleX, scaleY);
-    
+
     return canvas.toDataURL({
       format: format === 'png' ? 'png' : 'jpeg',
       quality: format === 'jpeg' ? quality : 1.0,
       multiplier: multiplier, // 使用计算出的倍数恢复原始分辨率
     });
   }
-  
+
   // 如果没有背景图片，使用默认导出
   return canvas.toDataURL({
     format: format === 'png' ? 'png' : 'jpeg',
