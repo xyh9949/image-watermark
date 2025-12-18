@@ -13,6 +13,7 @@ import { Settings, Eye, EyeOff, Play, Square, AlertCircle } from 'lucide-react';
 import { useWatermarkStore, useImageStore } from '@/app/lib/stores';
 import { WatermarkPosition } from '@/app/types';
 import { BatchWatermarkProcessor, downloadBatchResults, BatchProcessingResult } from '@/app/lib/watermark/batchProcessor';
+import { generatePreviewFileName, DEFAULT_FILENAME_TEMPLATE, isValidTemplate } from '@/app/lib/utils/renamingUtils';
 
 interface WatermarkControlsProps {
   className?: string;
@@ -51,6 +52,10 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
   // 全屏水印图片上传状态
   const [isUploadingFullscreenImage, setIsUploadingFullscreenImage] = useState(false);
+
+  // {{ Shrimp-X: Add - 文件名模板状态. Approval: Cunzhi(ID:timestamp). }}
+  // 文件命名设置
+  const [fileNameTemplate, setFileNameTemplate] = useState(DEFAULT_FILENAME_TEMPLATE);
 
 
 
@@ -95,7 +100,8 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
           // 自动下载结果
           try {
-            await downloadBatchResults(results);
+            // {{ Shrimp-X: Modify - 传递文件名模板参数. Approval: Cunzhi(ID:timestamp). }}
+            await downloadBatchResults(results, undefined, fileNameTemplate);
           } catch (error) {
             setProcessingError('下载失败，但处理已完成');
           }
@@ -1278,6 +1284,23 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
         {/* 处理按钮 */}
         <div className="space-y-3 pt-4">
+          {/* {{ Shrimp-X: Add - 文件命名规则设置. Approval: Cunzhi(ID:timestamp). }} */}
+          {/* 文件命名设置 */}
+          <div className="space-y-2">
+            <Label>导出文件名规则</Label>
+            <Input
+              type="text"
+              placeholder="watermarked-{name}"
+              value={fileNameTemplate}
+              onChange={(e) => setFileNameTemplate(e.target.value)}
+              className={!isValidTemplate(fileNameTemplate) ? 'border-red-500' : ''}
+            />
+            <div className="text-xs text-muted-foreground space-y-1">
+              <div>预览: <span className="font-mono bg-gray-100 px-1 rounded">{generatePreviewFileName(fileNameTemplate, 'example')}.jpg</span></div>
+              <div>可用变量: <code className="bg-gray-100 px-1 rounded">{'{name}'}</code> 原名 | <code className="bg-gray-100 px-1 rounded">{'{index}'}</code> 序号 | <code className="bg-gray-100 px-1 rounded">{'{index:03}'}</code> 补零序号 | <code className="bg-gray-100 px-1 rounded">{'{date}'}</code> 日期</div>
+            </div>
+          </div>
+
           {/* 水印模式信息 */}
           {hasImages() && (
             <div className="p-3 bg-blue-50 rounded-lg text-sm">

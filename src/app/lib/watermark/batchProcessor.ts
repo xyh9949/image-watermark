@@ -7,6 +7,11 @@ import { createTextWatermark, createImageWatermark, createFullscreenWatermark } 
 import { Canvas, FabricImage } from 'fabric';
 import { zip } from 'fflate';
 import {
+  parseFileNameTemplate,
+  getFileNameWithoutExtension,
+  DEFAULT_FILENAME_TEMPLATE
+} from '../utils/renamingUtils';
+import {
   prepareBatchWatermarkConfig,
   adjustWatermarkForImage,
   ScaledWatermarkConfig,
@@ -23,6 +28,7 @@ export interface BatchProcessingOptions {
   onError?: (error: Error, imageId?: string) => void;
   quality?: number; // 输出质量 0-1
   format?: 'png' | 'jpeg' | 'jpg' | 'webp';
+  fileNameTemplate?: string; // 文件名模板
 }
 
 export interface BatchProcessingResult {
@@ -371,41 +377,60 @@ export class BatchWatermarkProcessor {
 
 /**
  * 下载批量处理结果
+ * {{ Shrimp-X: Modify - 支持自定义文件名模板. Approval: Cunzhi(ID:timestamp). }}
  */
-export async function downloadBatchResults(results: BatchProcessingResult[], zipName?: string): Promise<void> {
+export async function downloadBatchResults(
+  results: BatchProcessingResult[],
+  zipName?: string,
+  fileNameTemplate?: string
+): Promise<void> {
   const successResults = results.filter(r => r.success && r.dataUrl);
 
   if (successResults.length === 0) {
     throw new Error('No successful results to download');
   }
 
+  // 使用默认模板或自定义模板
+  const template = fileNameTemplate || DEFAULT_FILENAME_TEMPLATE;
+
   if (successResults.length === 1) {
     // 单张图片直接下载
     const result = successResults[0];
     const link = document.createElement('a');
 
-    // 生成正确的文件名和扩展名
-    const originalName = result.imageName;
-    const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
+    // 使用模板生成文件名
+    const nameWithoutExt = getFileNameWithoutExtension(result.imageName);
+    const generatedName = parseFileNameTemplate(template, nameWithoutExt, 1);
+
+    // 根据dataURL的格式确定扩展名
     const isJpeg = result.dataUrl!.startsWith('data:image/jpeg');
     const extension = isJpeg ? '.jpg' : '.png';
 
-    link.download = `watermarked-${nameWithoutExt}${extension}`;
+    link.download = `${generatedName}${extension}`;
     link.href = result.dataUrl!;
     link.click();
   } else {
     // 多张图片打包成ZIP下载
-    await downloadAsZip(successResults, zipName);
+    await downloadAsZip(successResults, zipName, template);
   }
 }
 
 /**
  * 将多张图片打包成ZIP并下载
+ * {{ Shrimp-X: Modify - 支持自定义文件名模板. Approval: Cunzhi(ID:timestamp). }}
  */
-async function downloadAsZip(results: BatchProcessingResult[], zipName?: string): Promise<void> {
+async function downloadAsZip(
+  results: BatchProcessingResult[],
+  zipName?: string,
+  fileNameTemplate?: string
+): Promise<void> {
   const files: Record<string, Uint8Array> = {};
 
+  // 使用默认模板或自定义模板
+  const template = fileNameTemplate || DEFAULT_FILENAME_TEMPLATE;
+
   // 添加每张图片到ZIP
+  let index = 1;
   for (const result of results) {
     if (result.dataUrl) {
       // 将dataURL转换为Uint8Array
@@ -413,16 +438,17 @@ async function downloadAsZip(results: BatchProcessingResult[], zipName?: string)
       const arrayBuffer = await response.arrayBuffer();
       const uint8Array = new Uint8Array(arrayBuffer);
 
-      // 生成文件名，确保使用正确的扩展名
-      const originalName = result.imageName;
-      const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
+      // 使用模板生成文件名
+      const nameWithoutExt = getFileNameWithoutExtension(result.imageName);
+      const generatedName = parseFileNameTemplate(template, nameWithoutExt, index);
 
       // 根据dataURL的格式确定扩展名
       const isJpeg = result.dataUrl.startsWith('data:image/jpeg');
       const extension = isJpeg ? '.jpg' : '.png';
 
-      const fileName = `watermarked-${nameWithoutExt}${extension}`;
+      const fileName = `${generatedName}${extension}`;
       files[fileName] = uint8Array;
+      index++;
     }
   }
 
