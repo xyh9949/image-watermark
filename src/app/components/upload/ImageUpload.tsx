@@ -291,10 +291,10 @@ export function ImageUpload({
         </div>
       )}
 
-      {/* {{ Shrimp-X: Modify - 优化图片列表布局，适配新的固定编辑器设计. Approval: Cunzhi(ID:timestamp). }} */}
-      {/* 图片列表 */}
+      {/* {{ Shrimp-X: Modify - 优化图片列表布局，增加内置滚动条. Approval: Cunzhi(ID:timestamp). }} */}
+      {/* 图片列表 - 带内置滚动条，避免页面整体滚动 */}
       {hasImages() && (
-        <Card className="flex flex-col h-full">
+        <Card className="flex flex-col max-h-[60vh]">
           {/* 列表标题和操作 - 固定在顶部 */}
           <div className="flex-shrink-0 p-4 border-b">
             <div className="flex items-center justify-between">
@@ -314,8 +314,8 @@ export function ImageUpload({
             </div>
           </div>
 
-          {/* 文件预览列表 - 可滚动区域 */}
-          <div className="flex-1 overflow-auto p-4">
+          {/* 文件预览列表 - 内置滚动区域 */}
+          <div className="flex-1 overflow-y-auto p-4">
             {/* {{ Shrimp-X: Modify - 修复图片切换问题，点击图片时同时选择和设置为当前图片. Approval: Cunzhi(ID:timestamp). }} */}
             <FilePreviewList
               images={images}
