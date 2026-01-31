@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ClientSeo } from './components/seo/ClientSeo';
+import { Analytics } from '@vercel/analytics/next';
 
 // 基础metadata用于SSR
 export const metadata: Metadata = {
@@ -230,6 +231,7 @@ export default function RootLayout({
             </div>
           </footer>
         </div>
+        <Analytics />
       </body>
     </html>
   );
