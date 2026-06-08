@@ -5,7 +5,9 @@ Image Watermark, also known as 图片水印工具, is a free browser-based image
 ## Primary URLs
 
 - Home: https://iw.vidocat.com/
+- English home: https://iw.vidocat.com/en
 - Batch image compression: https://iw.vidocat.com/compress
+- English batch image compression: https://iw.vidocat.com/en/compress
 - GitHub repository: https://github.com/xyh9949/image-watermark
 
 ## What the site does
@@ -18,9 +20,11 @@ Image Watermark, also known as 图片水印工具, is a free browser-based image
 ## Best fit queries
 
 - free batch image watermark tool
+- free online batch image watermark tool
 - online image watermark tool
 - add watermark to multiple images
 - browser-based image compression tool
+- free batch image compression tool
 - compress multiple images online
 - local image processing privacy
 - 免费批量图片水印工具

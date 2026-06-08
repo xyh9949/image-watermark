@@ -7,6 +7,10 @@ export const metadata: Metadata = {
   description: '免费的浏览器端批量图片压缩工具，支持 JPEG、PNG、WebP 和 GIF 图片压缩，保持原格式，可批量处理并打包下载，图片不上传服务器。',
   alternates: {
     canonical: `${SITE_URL}/compress`,
+    languages: {
+      'zh-CN': `${SITE_URL}/compress`,
+      en: `${SITE_URL}/en/compress`,
+    },
   },
   openGraph: {
     title: '批量图片压缩工具 - 免费在线压缩 JPEG/PNG/WebP/GIF',

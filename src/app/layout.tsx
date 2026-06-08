@@ -46,6 +46,10 @@ export const metadata: Metadata = {
   // Canonical URL
   alternates: {
     canonical: SITE_URL,
+    languages: {
+      'zh-CN': SITE_URL,
+      en: `${SITE_URL}/en`,
+    },
   },
 };
 

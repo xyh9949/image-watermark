@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { TopNavigation } from '@/components/TopNavigation';
+import { usePathname } from 'next/navigation';
 import { Upload, FileImage, Download, FileArchive, CheckCircle, XCircle, PackageOpen, Settings, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -624,6 +625,8 @@ function ResultsPreviewPanel({
 }
 
 export default function Compress() {
+  const pathname = usePathname();
+  const isEnglish = pathname.startsWith('/en');
   const [files, setFiles] = useState<File[]>([]);
   const [results, setResults] = useState<CompressedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -835,7 +838,7 @@ export default function Compress() {
 
   return (
     <div className="min-h-dvh flex flex-col overflow-x-hidden">
-      <h1 className="sr-only">免费批量图片压缩工具</h1>
+      <h1 className="sr-only">{isEnglish ? 'Free batch image compression tool' : '免费批量图片压缩工具'}</h1>
 
       {/* Top Navigation */}
       <TopNavigation />
@@ -845,9 +848,9 @@ export default function Compress() {
         {/* 页面标题 */}
         <div className="flex-shrink-0 p-4 bg-background">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-1">批量图片压缩</h2>
+            <h2 className="text-2xl font-bold mb-1">{isEnglish ? 'Batch Image Compression' : '批量图片压缩'}</h2>
             <p className="text-sm text-muted-foreground">
-              专业的图片压缩工具，支持多种格式
+              {isEnglish ? 'Compress images locally in your browser with batch export' : '专业的图片压缩工具，支持多种格式'}
             </p>
           </div>
         </div>
@@ -856,9 +859,9 @@ export default function Compress() {
         <div className="flex-1 overflow-hidden">
           <Tabs defaultValue="upload" className="h-full flex flex-col">
             <TabsList className="flex-shrink-0 grid w-full grid-cols-3 m-4">
-              <TabsTrigger value="upload">上传</TabsTrigger>
-              <TabsTrigger value="preview">结果</TabsTrigger>
-              <TabsTrigger value="controls">控制</TabsTrigger>
+              <TabsTrigger value="upload">{isEnglish ? 'Upload' : '上传'}</TabsTrigger>
+              <TabsTrigger value="preview">{isEnglish ? 'Results' : '结果'}</TabsTrigger>
+              <TabsTrigger value="controls">{isEnglish ? 'Controls' : '控制'}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="upload" className="flex-1 overflow-auto p-4">
@@ -900,9 +903,9 @@ export default function Compress() {
         {/* 页面标题 */}
         <div className="flex-shrink-0 p-4 bg-background">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-1">批量图片压缩</h2>
+            <h2 className="text-2xl font-bold mb-1">{isEnglish ? 'Batch Image Compression' : '批量图片压缩'}</h2>
             <p className="text-sm text-muted-foreground">
-              专业的图片压缩工具，支持 JPEG、PNG、WebP、GIF 格式
+              {isEnglish ? 'Compress JPEG, PNG, WebP, and GIF images locally in your browser' : '专业的图片压缩工具，支持 JPEG、PNG、WebP、GIF 格式'}
             </p>
           </div>
         </div>
@@ -953,12 +956,103 @@ export default function Compress() {
         </div>
       </div>
 
-      <CompressGeoContent />
+      <CompressGeoContent isEnglish={isEnglish} />
     </div>
   );
 }
 
-function CompressGeoContent() {
+function EnglishCompressGeoContent() {
+  const faqs = [
+    {
+      question: 'Is this batch image compression tool free?',
+      answer: 'Yes. Image Watermark includes a free browser-based image compression tool that does not require an account.'
+    },
+    {
+      question: 'Are images uploaded to a server?',
+      answer: 'No. Compression runs locally in your browser, so your image files are not uploaded to a remote server.'
+    },
+    {
+      question: 'Which image formats are supported?',
+      answer: 'The tool supports JPEG, PNG, WebP, and GIF images. It keeps the original format by default and supports batch ZIP downloads.'
+    },
+    {
+      question: 'Can I compress multiple images at once?',
+      answer: 'Yes. You can select multiple images, compress them in a batch, compare file sizes, and download all completed files together.'
+    },
+    {
+      question: 'Who is this useful for?',
+      answer: 'It is useful for website performance work, ecommerce product images, social media assets, email attachments, and team asset archives.'
+    }
+  ];
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  };
+
+  return (
+    <section className="border-t bg-muted/20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <div className="mx-auto max-w-5xl px-4 py-10 space-y-8">
+        <div className="space-y-3">
+          <h2 className="text-2xl font-semibold">Free browser-based batch image compression tool</h2>
+          <p className="text-muted-foreground leading-7">
+            Image Watermark includes a free online batch image compression tool for JPEG, PNG, WebP, and GIF files.
+            Images are read and processed locally in your browser, then exported individually or as a ZIP archive.
+          </p>
+          <p className="text-muted-foreground leading-7">
+            The tool is useful for improving website performance, reducing ecommerce product image sizes, preparing
+            social media assets, shrinking email attachments, and archiving team image files.
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <div>
+            <h3 className="font-medium">Multiple formats</h3>
+            <p className="mt-2 text-sm text-muted-foreground leading-6">Compress JPEG, PNG, WebP, and GIF images while keeping the original format by default.</p>
+          </div>
+          <div>
+            <h3 className="font-medium">Batch processing</h3>
+            <p className="mt-2 text-sm text-muted-foreground leading-6">Select multiple images, process them together, and review size savings for each file.</p>
+          </div>
+          <div>
+            <h3 className="font-medium">Local privacy</h3>
+            <p className="mt-2 text-sm text-muted-foreground leading-6">Compression happens in the browser, which reduces exposure for private or work images.</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h2 className="text-xl font-semibold">Frequently asked questions</h2>
+          <div className="divide-y rounded border bg-background">
+            {faqs.map((item) => (
+              <details key={item.question} className="group p-4">
+                <summary className="cursor-pointer font-medium">{item.question}</summary>
+                <p className="mt-3 text-sm text-muted-foreground leading-6">{item.answer}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CompressGeoContent({ isEnglish }: { isEnglish: boolean }) {
+  if (isEnglish) {
+    return <EnglishCompressGeoContent />;
+  }
+
   const faqs = [
     {
       question: '这个批量图片压缩工具免费吗？',

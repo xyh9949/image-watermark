@@ -2,24 +2,30 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ImageIcon, FileArchive } from 'lucide-react';
+import { FileArchive, Globe2, ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function TopNavigation() {
   const pathname = usePathname();
+  const isEnglish = pathname.startsWith('/en');
+  const watermarkHref = isEnglish ? '/en' : '/';
+  const compressHref = isEnglish ? '/en/compress' : '/compress';
+  const languageHref = isEnglish
+    ? (pathname === '/en/compress' ? '/compress' : '/')
+    : (pathname === '/compress' ? '/en/compress' : '/en');
 
   const navItems = [
     {
-      href: '/',
-      label: '水印工具',
+      href: watermarkHref,
+      label: isEnglish ? 'Watermark' : '水印工具',
       icon: ImageIcon,
-      active: pathname === '/'
+      active: pathname === watermarkHref
     },
     {
-      href: '/compress',
-      label: '压缩工具',
+      href: compressHref,
+      label: isEnglish ? 'Compress' : '压缩工具',
       icon: FileArchive,
-      active: pathname === '/compress'
+      active: pathname === compressHref
     }
   ];
 
@@ -46,6 +52,12 @@ export function TopNavigation() {
                 </Link>
               );
             })}
+            <Link href={languageHref}>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-background/50 transition-colors">
+                <Globe2 className="w-4 h-4" />
+                {isEnglish ? '中文' : 'English'}
+              </div>
+            </Link>
           </div>
         </div>
       </div>
