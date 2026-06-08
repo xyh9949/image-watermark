@@ -193,19 +193,30 @@ export const useCompressStore = create<CompressState>((set, get) => ({
     
     // 多个文件打包下载
     try {
-      const { deflate } = await import('pako');
-      const zip: Record<string, Uint8Array> = {};
+      const { zip } = await import('fflate');
+      const zipFiles: Record<string, Uint8Array> = {};
       
       for (const result of completedResults) {
         if (result.compressedFile) {
           const buffer = await result.compressedFile.arrayBuffer();
-          zip[result.compressedFile.name] = new Uint8Array(buffer);
+          zipFiles[result.compressedFile.name] = new Uint8Array(buffer);
         }
       }
       
-      // 简单的 ZIP 实现（实际项目中建议使用专门的 ZIP 库）
-      const zipBuffer = deflate(JSON.stringify(zip));
-      const blob = new Blob([zipBuffer], { type: 'application/zip' });
+      const zipBuffer = await new Promise<Uint8Array>((resolve, reject) => {
+        zip(zipFiles, (err, data) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(data);
+        });
+      });
+      const zipArrayBuffer = zipBuffer.buffer.slice(
+        zipBuffer.byteOffset,
+        zipBuffer.byteOffset + zipBuffer.byteLength
+      ) as ArrayBuffer;
+      const blob = new Blob([zipArrayBuffer], { type: 'application/zip' });
       
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

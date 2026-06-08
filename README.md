@@ -4,12 +4,12 @@
 
 ## Visit [https://iw.vidocat.com](https://iw.vidocat.com/) for live preview
 
-A modern image batch processing application built with Next.js 15, integrating watermarking and image compression features with intelligent optimization and batch processing capabilities.
+A modern image batch processing application built with Next.js 16, integrating watermarking and image compression features with intelligent optimization and batch processing capabilities.
 
-![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
 ![Fabric.js](https://img.shields.io/badge/Fabric.js-6-orange?style=flat-square)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?style=flat-square&logo=tailwind-css)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC?style=flat-square&logo=tailwind-css)
 
 ## ✨ Key Features
 
@@ -169,12 +169,12 @@ docker run -p 3000:3000 image-watermark
 ### 🛠️ Tech Stack
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| Next.js | 15.x | React full-stack framework |
+| Next.js | 16.x | React full-stack framework |
 | TypeScript | 5.x | Type safety |
 | Fabric.js | 6.x | Canvas rendering engine |
-| Zustand | 4.x | State management |
+| Zustand | 5.x | State management |
 | shadcn/ui | Latest | UI component library |
-| Tailwind CSS | 3.x | Styling framework |
+| Tailwind CSS | 4.x | Styling framework |
 
 ### 📁 Project Structure
 ```

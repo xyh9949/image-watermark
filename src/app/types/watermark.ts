@@ -1,7 +1,7 @@
 // 水印相关类型定义
 
 import { WatermarkConfig, ImageInfo } from './index';
-import { FabricObject } from 'fabric';
+import { Canvas, FabricObject } from 'fabric';
 
 // Fabric.js 相关类型扩展
 export interface FabricWatermarkObject {
@@ -22,7 +22,7 @@ export interface CanvasConfig {
 
 // 水印渲染选项
 export interface WatermarkRenderOptions {
-  canvas: fabric.Canvas;
+  canvas: Canvas;
   image: ImageInfo;
   config: WatermarkConfig;
   preview?: boolean;
@@ -58,7 +58,7 @@ export interface WatermarkPipeline {
   validate: (config: WatermarkConfig) => boolean;
   calculate: (image: ImageInfo, config: WatermarkConfig) => AdaptiveCalculationResult;
   render: (options: WatermarkRenderOptions) => Promise<string>;
-  export: (canvas: fabric.Canvas, format: 'png' | 'jpeg', quality?: number) => string;
+  export: (canvas: Canvas, format: 'png' | 'jpeg', quality?: number) => string;
 }
 
 // 字体配置

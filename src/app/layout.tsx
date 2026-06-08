@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { ClientSeo } from './components/seo/ClientSeo';
 
 // 基础metadata用于SSR
 export const metadata: Metadata = {
@@ -64,8 +63,6 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="font-sans antialiased bg-background text-foreground overflow-x-hidden">
-        <ClientSeo />
-
         {/* 服务端渲染的结构化数据 */}
         <script
           type="application/ld+json"
@@ -83,13 +80,6 @@ export default function RootLayout({
                 "price": "0",
                 "priceCurrency": "CNY",
                 "availability": "https://schema.org/InStock"
-              },
-              "aggregateRating": {
-                "@type": "AggregateRating",
-                "ratingValue": "4.8",
-                "ratingCount": "1250",
-                "bestRating": "5",
-                "worstRating": "1"
               },
               "featureList": [
                 "批量图片水印添加",

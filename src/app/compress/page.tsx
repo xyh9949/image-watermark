@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,26 @@ interface CompressionSettings {
   preserveFormat: boolean;
 }
 
+function ObjectUrlImage({
+  file,
+  alt,
+  className
+}: {
+  file: Blob;
+  alt: string;
+  className?: string;
+}) {
+  const url = useMemo(() => URL.createObjectURL(file), [file]);
+
+  useEffect(() => {
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [url]);
+
+  return <img src={url} alt={alt} className={className} />;
+}
+
 // 文件上传组件
 function FileUploadPanel({
   files,
@@ -47,6 +67,14 @@ function FileUploadPanel({
 }) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState<string>('');
+
+  useEffect(() => {
+    return () => {
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage);
+      }
+    };
+  }, [previewImage]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -77,9 +105,6 @@ function FileUploadPanel({
 
   // 关闭预览
   const closePreview = () => {
-    if (previewImage) {
-      URL.revokeObjectURL(previewImage);
-    }
     setPreviewImage(null);
     setPreviewName('');
   };
@@ -167,14 +192,10 @@ function FileUploadPanel({
                     className="w-10 h-10 rounded overflow-hidden bg-muted flex-shrink-0 cursor-pointer"
                     onClick={() => handlePreview(file)}
                   >
-                    <img
-                      src={URL.createObjectURL(file)}
+                    <ObjectUrlImage
+                      file={file}
                       alt={file.name}
                       className="w-full h-full object-cover"
-                      onLoad={(e) => {
-                        // 清理 blob URL，避免内存泄漏
-                        URL.revokeObjectURL((e.target as HTMLImageElement).src);
-                      }}
                     />
                   </div>
 
@@ -425,6 +446,14 @@ function ResultsPreviewPanel({
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState<string>('');
 
+  useEffect(() => {
+    return () => {
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage);
+      }
+    };
+  }, [previewImage]);
+
   const completedResults = results.filter(r => r.status === 'completed');
 
   const formatFileSize = (bytes: number): string => {
@@ -447,9 +476,6 @@ function ResultsPreviewPanel({
 
   // 关闭预览
   const closePreview = () => {
-    if (previewImage) {
-      URL.revokeObjectURL(previewImage);
-    }
     setPreviewImage(null);
     setPreviewName('');
   };
@@ -462,7 +488,7 @@ function ResultsPreviewPanel({
           <FileArchive className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
           <h3 className="text-lg font-medium mb-2">等待处理</h3>
           <p className="text-sm text-muted-foreground max-w-sm">
-            上传图片文件后点击"开始压缩"，压缩结果将显示在这里
+            上传图片文件后点击“开始压缩”，压缩结果将显示在这里
           </p>
         </div>
       </div>
@@ -513,13 +539,10 @@ function ResultsPreviewPanel({
                 className="w-12 h-12 rounded overflow-hidden bg-muted flex-shrink-0 cursor-pointer relative"
                 onClick={() => handlePreview(result)}
               >
-                <img
-                  src={URL.createObjectURL(result.compressedFile || result.originalFile)}
+                <ObjectUrlImage
+                  file={result.compressedFile || result.originalFile}
                   alt={result.originalFile.name}
                   className="w-full h-full object-cover"
-                  onLoad={(e) => {
-                    URL.revokeObjectURL((e.target as HTMLImageElement).src);
-                  }}
                 />
                 {/* 状态图标覆盖层 */}
                 <div className="absolute bottom-0 right-0 p-0.5 bg-background rounded-tl">
@@ -625,8 +648,10 @@ export default function Compress() {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
 
       img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
         canvas.width = img.width;
         canvas.height = img.height;
         ctx?.drawImage(img, 0, 0);
@@ -688,6 +713,7 @@ export default function Compress() {
       };
 
       img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
         resolve({
           id: `${file.name}_${Date.now()}`,
           originalFile: file,
@@ -700,7 +726,7 @@ export default function Compress() {
         });
       };
 
-      img.src = URL.createObjectURL(file);
+      img.src = objectUrl;
     });
   };
 

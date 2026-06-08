@@ -4,15 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImageUpload } from "@/app/components/upload/ImageUpload";
 import { WatermarkCanvas } from "@/app/components/editor/WatermarkCanvas";
 import { WatermarkControls } from "@/app/components/controls/WatermarkControls";
-import { StructuredData } from '@/app/components/seo/StructuredData';
 import { TopNavigation } from '@/components/TopNavigation';
 
 export default function Home() {
   return (
     <div className="min-h-dvh flex flex-col overflow-hidden">
-      {/* JSON-LD 结构化数据 */}
-      <StructuredData />
-
       {/* Top Navigation */}
       <TopNavigation />
 

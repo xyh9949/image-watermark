@@ -4,12 +4,12 @@
 
 ## 访问 [https://iw.vidocat.com](https://iw.vidocat.com/)可以进行预览
 
-一个现代化的图片批量处理应用，基于 Next.js 15 构建，集成水印添加和图片压缩功能，支持批量处理和智能优化。
+一个现代化的图片批量处理应用，基于 Next.js 16 构建，集成水印添加和图片压缩功能，支持批量处理和智能优化。
 
-![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
 ![Fabric.js](https://img.shields.io/badge/Fabric.js-6-orange?style=flat-square)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?style=flat-square&logo=tailwind-css)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC?style=flat-square&logo=tailwind-css)
 
 ## ✨ 主要功能
 
@@ -169,12 +169,12 @@ docker run -p 3000:3000 image-watermark
 ### 🛠️ 技术栈
 | 技术 | 版本 | 用途 |
 |------|------|------|
-| Next.js | 15.x | React 全栈框架 |
+| Next.js | 16.x | React 全栈框架 |
 | TypeScript | 5.x | 类型安全 |
 | Fabric.js | 6.x | Canvas 渲染引擎 |
-| Zustand | 4.x | 状态管理 |
+| Zustand | 5.x | 状态管理 |
 | shadcn/ui | Latest | UI 组件库 |
-| Tailwind CSS | 3.x | 样式框架 |
+| Tailwind CSS | 4.x | 样式框架 |
 
 ### 📁 项目结构
 ```
