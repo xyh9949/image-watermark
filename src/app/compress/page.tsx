@@ -58,16 +58,41 @@ function FileUploadPanel({
   onDrop,
   onClear,
   onRemoveFile,
-  isProcessing
+  isProcessing,
+  isEnglish
 }: {
   files: File[];
   onDrop: (files: File[]) => void;
   onClear: () => void;
   onRemoveFile: (index: number) => void;
   isProcessing: boolean;
+  isEnglish: boolean;
 }) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState<string>('');
+  const labels = isEnglish
+    ? {
+        title: 'File upload',
+        fileCount: (count: number) => `${count} ${count === 1 ? 'file' : 'files'}`,
+        release: 'Release files to upload',
+        addMoreHint: 'Drag or click to add more files',
+        emptyHint: 'Drag images here or click to upload',
+        support: 'Supports JPEG, PNG, WebP, and GIF',
+        addMore: 'Add more',
+        choose: 'Choose files',
+        pending: 'Pending files',
+      }
+    : {
+        title: '文件上传',
+        fileCount: (count: number) => `${count} 个文件`,
+        release: '释放文件开始上传',
+        addMoreHint: '拖拽或点击添加更多文件',
+        emptyHint: '拖拽图片到此处或点击上传',
+        support: '支持 JPEG、PNG、WebP、GIF 格式',
+        addMore: '添加更多',
+        choose: '选择文件',
+        pending: '待处理文件',
+      };
 
   useEffect(() => {
     return () => {
@@ -119,12 +144,12 @@ function FileUploadPanel({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Upload className="h-5 w-5" />
-              <h2 className="text-lg font-semibold">文件上传</h2>
+              <h2 className="text-lg font-semibold">{labels.title}</h2>
             </div>
             {files.length > 0 && (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
-                  {files.length} 个文件
+                  {labels.fileCount(files.length)}
                 </span>
                 <Button variant="ghost" size="sm" onClick={onClear} disabled={isProcessing}>
                   <X className="h-4 w-4" />
@@ -149,22 +174,22 @@ function FileUploadPanel({
               <div className="space-y-2">
                 <p className={`text-muted-foreground ${files.length > 0 ? 'text-xs' : 'text-sm'}`}>
                   {isDragActive
-                    ? '释放文件开始上传'
+                    ? labels.release
                     : files.length > 0
-                      ? '拖拽或点击添加更多文件'
-                      : '拖拽图片到此处或点击上传'
+                      ? labels.addMoreHint
+                      : labels.emptyHint
                   }
                 </p>
                 {files.length === 0 && (
                   <p className="text-xs text-muted-foreground">
-                    支持 JPEG、PNG、WebP、GIF 格式
+                    {labels.support}
                   </p>
                 )}
               </div>
               <div className="flex items-center justify-center">
                 <Button variant="outline" size={files.length > 0 ? 'sm' : 'default'} disabled={isProcessing}>
                   <Plus className="h-4 w-4 mr-2" />
-                  {files.length > 0 ? '添加更多' : '选择文件'}
+                  {files.length > 0 ? labels.addMore : labels.choose}
                 </Button>
               </div>
             </div>
@@ -178,7 +203,7 @@ function FileUploadPanel({
           <div className="flex-shrink-0 p-4 border-b">
             <h3 className="text-sm font-medium flex items-center gap-2">
               <FileImage className="h-4 w-4" />
-              待处理文件 ({files.length})
+              {labels.pending} ({files.length})
             </h3>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
@@ -269,7 +294,8 @@ function CompressionControlPanel({
   results,
   isProcessing,
   progress,
-  onStartCompression
+  onStartCompression,
+  isEnglish
 }: {
   settings: CompressionSettings;
   onSettingsChange: (settings: CompressionSettings) => void;
@@ -278,6 +304,7 @@ function CompressionControlPanel({
   isProcessing: boolean;
   progress: number;
   onStartCompression: () => void;
+  isEnglish: boolean;
 }) {
   const completedResults = results.filter(r => r.status === 'completed');
   const totalSaved = completedResults.reduce((sum, r) => sum + (r.originalSize - r.compressedSize), 0);
@@ -293,6 +320,45 @@ function CompressionControlPanel({
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+  const labels = isEnglish
+    ? {
+        settings: 'Compression settings',
+        quality: 'Compression quality',
+        high: 'High quality (95%)',
+        medium: 'Balanced quality (85%)',
+        low: 'High compression (70%)',
+        removeMetadata: 'Remove metadata',
+        preserveFormat: 'Keep original format',
+        lossless: 'Lossless',
+        metadata: 'Metadata',
+        remove: 'Remove',
+        keep: 'Keep',
+        compressing: (value: number) => `Compressing... ${Math.round(value)}%`,
+        start: (count: number) => `Start compression (${count} ${count === 1 ? 'file' : 'files'})`,
+        stats: 'Compression stats',
+        ratio: 'Ratio',
+        saved: 'Saved',
+        completed: 'Completed',
+      }
+    : {
+        settings: '压缩设置',
+        quality: '压缩质量',
+        high: '高质量 (95%)',
+        medium: '中等质量 (85%)',
+        low: '高压缩 (70%)',
+        removeMetadata: '移除元数据',
+        preserveFormat: '保持原格式',
+        lossless: '无损',
+        metadata: '元数据',
+        remove: '移除',
+        keep: '保留',
+        compressing: (value: number) => `压缩中... ${Math.round(value)}%`,
+        start: (count: number) => `开始压缩 (${count} 个文件)`,
+        stats: '压缩统计',
+        ratio: '压缩率',
+        saved: '节省',
+        completed: '完成',
+      };
 
   return (
     <div className="space-y-4">
@@ -301,13 +367,13 @@ function CompressionControlPanel({
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Settings className="w-4 h-4" />
-            压缩设置
+            {labels.settings}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* 压缩质量 */}
           <div className="space-y-2">
-            <Label className="text-sm">压缩质量</Label>
+            <Label className="text-sm">{labels.quality}</Label>
             <Select
               value={settings.quality}
               onValueChange={(value: 'high' | 'medium' | 'low') =>
@@ -318,9 +384,9 @@ function CompressionControlPanel({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="high">高质量 (95%)</SelectItem>
-                <SelectItem value="medium">中等质量 (85%)</SelectItem>
-                <SelectItem value="low">高压缩 (70%)</SelectItem>
+                <SelectItem value="high">{labels.high}</SelectItem>
+                <SelectItem value="medium">{labels.medium}</SelectItem>
+                <SelectItem value="low">{labels.low}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -328,7 +394,7 @@ function CompressionControlPanel({
           {/* 选项开关 */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label htmlFor="remove-metadata" className="text-sm">移除元数据</Label>
+              <Label htmlFor="remove-metadata" className="text-sm">{labels.removeMetadata}</Label>
               <Switch
                 id="remove-metadata"
                 checked={settings.removeMetadata}
@@ -338,7 +404,7 @@ function CompressionControlPanel({
               />
             </div>
             <div className="flex items-center justify-between">
-              <Label htmlFor="preserve-format" className="text-sm">保持原格式</Label>
+              <Label htmlFor="preserve-format" className="text-sm">{labels.preserveFormat}</Label>
               <Switch
                 id="preserve-format"
                 checked={settings.preserveFormat}
@@ -360,8 +426,8 @@ function CompressionControlPanel({
                 settings.quality === 'high' ? '92%' :
                   settings.quality === 'medium' ? '80%' : '65%'
               }</div>
-              <div>PNG: 无损</div>
-              <div>元数据: {settings.removeMetadata ? '移除' : '保留'}</div>
+              <div>PNG: {labels.lossless}</div>
+              <div>{labels.metadata}: {settings.removeMetadata ? labels.remove : labels.keep}</div>
             </div>
           </div>
         </CardContent>
@@ -379,12 +445,12 @@ function CompressionControlPanel({
             {isProcessing ? (
               <>
                 <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                压缩中... {Math.round(progress)}%
+                {labels.compressing(progress)}
               </>
             ) : (
               <>
                 <PackageOpen className="w-4 h-4 mr-2" />
-                开始压缩 ({files.length} 个文件)
+                {labels.start(files.length)}
               </>
             )}
           </Button>
@@ -402,7 +468,7 @@ function CompressionControlPanel({
       {completedResults.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">压缩统计</CardTitle>
+            <CardTitle className="text-base">{labels.stats}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-2 text-center">
@@ -410,19 +476,19 @@ function CompressionControlPanel({
                 <div className="text-base font-bold text-green-600 dark:text-green-400">
                   {(averageCompression * 100).toFixed(1)}%
                 </div>
-                <div className="text-xs text-muted-foreground">压缩率</div>
+                <div className="text-xs text-muted-foreground">{labels.ratio}</div>
               </div>
               <div className="p-2 bg-blue-500/10 rounded border border-blue-500/20">
                 <div className="text-base font-bold text-blue-600 dark:text-blue-400">
                   {formatFileSize(totalSaved)}
                 </div>
-                <div className="text-xs text-muted-foreground">节省</div>
+                <div className="text-xs text-muted-foreground">{labels.saved}</div>
               </div>
               <div className="p-2 bg-purple-500/10 rounded border border-purple-500/20">
                 <div className="text-base font-bold text-purple-600 dark:text-purple-400">
                   {completedResults.length}
                 </div>
-                <div className="text-xs text-muted-foreground">完成</div>
+                <div className="text-xs text-muted-foreground">{labels.completed}</div>
               </div>
             </div>
           </CardContent>
@@ -437,12 +503,14 @@ function ResultsPreviewPanel({
   results,
   isDownloading,
   onDownloadFile,
-  onDownloadAll
+  onDownloadAll,
+  isEnglish
 }: {
   results: CompressedFile[];
   isDownloading: boolean;
   onDownloadFile: (result: CompressedFile) => void;
   onDownloadAll: () => void;
+  isEnglish: boolean;
 }) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState<string>('');
@@ -456,6 +524,21 @@ function ResultsPreviewPanel({
   }, [previewImage]);
 
   const completedResults = results.filter(r => r.status === 'completed');
+  const labels = isEnglish
+    ? {
+        waiting: 'Waiting for images',
+        waitingDescription: 'Upload image files and click "Start compression". Results will appear here.',
+        results: 'Results',
+        packaging: 'Packaging...',
+        downloadAll: 'Download all',
+      }
+    : {
+        waiting: '等待处理',
+        waitingDescription: '上传图片文件后点击“开始压缩”，压缩结果将显示在这里',
+        results: '处理结果',
+        packaging: '打包中...',
+        downloadAll: '下载全部',
+      };
 
   const formatFileSize = (bytes: number): string => {
     if (!bytes || bytes === 0 || isNaN(bytes)) return '0 Bytes';
@@ -487,9 +570,9 @@ function ResultsPreviewPanel({
       <div className="h-full flex items-center justify-center">
         <div className="text-center p-8">
           <FileArchive className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-          <h3 className="text-lg font-medium mb-2">等待处理</h3>
+          <h3 className="text-lg font-medium mb-2">{labels.waiting}</h3>
           <p className="text-sm text-muted-foreground max-w-sm">
-            上传图片文件后点击“开始压缩”，压缩结果将显示在这里
+            {labels.waitingDescription}
           </p>
         </div>
       </div>
@@ -502,7 +585,7 @@ function ResultsPreviewPanel({
       <div className="flex-shrink-0 p-4 border-b bg-background">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium">
-            处理结果 ({completedResults.length}/{results.length})
+            {labels.results} ({completedResults.length}/{results.length})
           </h3>
           {completedResults.length > 0 && (
             <Button
@@ -514,12 +597,12 @@ function ResultsPreviewPanel({
               {isDownloading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                  打包中...
+                  {labels.packaging}
                 </>
               ) : (
                 <>
                   <PackageOpen className="w-4 h-4 mr-2" />
-                  下载全部
+                  {labels.downloadAll}
                 </>
               )}
             </Button>
@@ -706,7 +789,7 @@ export default function Compress() {
                 compressedSize: 0,
                 compressionRatio: 0,
                 status: 'error',
-                error: '压缩失败'
+                error: isEnglish ? 'Compression failed' : '压缩失败'
               });
             }
           },
@@ -725,7 +808,7 @@ export default function Compress() {
           compressedSize: 0,
           compressionRatio: 0,
           status: 'error',
-          error: '图片加载失败'
+          error: isEnglish ? 'Image failed to load' : '图片加载失败'
         });
       };
 
@@ -871,6 +954,7 @@ export default function Compress() {
                 onClear={clearFiles}
                 onRemoveFile={removeFile}
                 isProcessing={isProcessing}
+                isEnglish={isEnglish}
               />
             </TabsContent>
 
@@ -880,6 +964,7 @@ export default function Compress() {
                 isDownloading={isDownloading}
                 onDownloadFile={downloadFile}
                 onDownloadAll={downloadAllFiles}
+                isEnglish={isEnglish}
               />
             </TabsContent>
 
@@ -892,6 +977,7 @@ export default function Compress() {
                 isProcessing={isProcessing}
                 progress={progress}
                 onStartCompression={startCompression}
+                isEnglish={isEnglish}
               />
             </TabsContent>
           </Tabs>
@@ -919,10 +1005,11 @@ export default function Compress() {
                 <FileUploadPanel
                   files={files}
                   onDrop={onDrop}
-                  onClear={clearFiles}
-                  onRemoveFile={removeFile}
-                  isProcessing={isProcessing}
-                />
+                onClear={clearFiles}
+                onRemoveFile={removeFile}
+                isProcessing={isProcessing}
+                isEnglish={isEnglish}
+              />
               </div>
             </div>
           </div>
@@ -934,6 +1021,7 @@ export default function Compress() {
               isDownloading={isDownloading}
               onDownloadFile={downloadFile}
               onDownloadAll={downloadAllFiles}
+              isEnglish={isEnglish}
             />
           </div>
 
@@ -949,6 +1037,7 @@ export default function Compress() {
                   isProcessing={isProcessing}
                   progress={progress}
                   onStartCompression={startCompression}
+                  isEnglish={isEnglish}
                 />
               </div>
             </div>

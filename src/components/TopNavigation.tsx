@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileArchive, Globe2, ImageIcon } from 'lucide-react';
+import { FileArchive, ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function TopNavigation() {
@@ -10,9 +10,6 @@ export function TopNavigation() {
   const isEnglish = pathname.startsWith('/en');
   const watermarkHref = isEnglish ? '/en' : '/';
   const compressHref = isEnglish ? '/en/compress' : '/compress';
-  const languageHref = isEnglish
-    ? (pathname === '/en/compress' ? '/compress' : '/')
-    : (pathname === '/compress' ? '/en/compress' : '/en');
 
   const navItems = [
     {
@@ -52,12 +49,6 @@ export function TopNavigation() {
                 </Link>
               );
             })}
-            <Link href={languageHref}>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-background/50 transition-colors">
-                <Globe2 className="w-4 h-4" />
-                {isEnglish ? '中文' : 'English'}
-              </div>
-            </Link>
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -29,12 +29,14 @@ interface ImageUploadProps {
   className?: string;
   maxFiles?: number;
   disabled?: boolean;
+  isEnglish?: boolean;
 }
 
 export function ImageUpload({
   className = '',
   maxFiles = Infinity,
-  disabled = false
+  disabled = false,
+  isEnglish = false
 }: ImageUploadProps) {
   const {
     images,
@@ -59,6 +61,41 @@ export function ImageUpload({
 
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
+  const labels = useMemo(() => isEnglish
+    ? ({
+        title: 'Image Upload',
+        uploading: 'Uploading...',
+        release: 'Release files to upload',
+        addMoreHint: 'Drag or click to add more images',
+        emptyHint: 'Drag images here or click to upload',
+        support: 'Supports JPG, PNG, SVG, and WebP. Max file size',
+        addMore: 'Add more',
+        choose: 'Choose files',
+        uploaded: 'Uploaded images',
+        deleteSelected: 'Delete selected',
+        maxFiles: (max: number, current: number) => `You can upload up to ${max} images. ${current} already uploaded.`,
+        count: (count: number) => `${count} ${count === 1 ? 'image' : 'images'}`,
+        limitedCount: (count: number, max: number) => `${count} / ${max} images`,
+        uploadFailed: (message: string) => `Upload failed: ${message}`,
+        unknownError: 'Unknown error',
+      })
+    : ({
+        title: '图片上传',
+        uploading: '上传中...',
+        release: '释放文件开始上传',
+        addMoreHint: '拖拽或点击添加更多图片',
+        emptyHint: '拖拽图片到此处或点击上传',
+        support: '支持 JPG、PNG、SVG、WebP 格式，单文件最大',
+        addMore: '添加更多',
+        choose: '选择文件',
+        uploaded: '已上传图片',
+        deleteSelected: '删除选中',
+        maxFiles: (max: number, current: number) => `最多只能上传 ${max} 张图片，当前已有 ${current} 张`,
+        count: (count: number) => `${count} 张图片`,
+        limitedCount: (count: number, max: number) => `${count} / ${max} 张图片`,
+        uploadFailed: (message: string) => `上传失败: ${message}`,
+        unknownError: '未知错误',
+      }), [isEnglish]);
 
   // 处理文件上传
   const handleFilesUpload = useCallback(async (files: File[]) => {
@@ -69,7 +106,7 @@ export function ImageUpload({
     const totalCount = currentCount + files.length;
 
     if (maxFiles !== Infinity && totalCount > maxFiles) {
-      setValidationErrors([`最多只能上传 ${maxFiles} 张图片，当前已有 ${currentCount} 张`]);
+      setValidationErrors([labels.maxFiles(maxFiles, currentCount)]);
       return;
     }
 
@@ -107,10 +144,10 @@ export function ImageUpload({
           }, 100);
         }
       } catch (error) {
-        setValidationErrors([`上传失败: ${error instanceof Error ? error.message : '未知错误'}`]);
+        setValidationErrors([labels.uploadFailed(error instanceof Error ? error.message : labels.unknownError)]);
       }
     }
-  }, [disabled, isUploading, maxFiles, addImages, getImageCount, hasImages, setCurrentImage]);
+  }, [disabled, isUploading, maxFiles, addImages, getImageCount, hasImages, setCurrentImage, labels]);
 
   // react-dropzone 配置
   const {
@@ -167,11 +204,11 @@ export function ImageUpload({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Upload className="h-5 w-5" />
-              <h2 className="text-lg font-semibold">图片上传</h2>
+              <h2 className="text-lg font-semibold">{labels.title}</h2>
             </div>
             {hasImages() && (
               <span className="text-sm text-muted-foreground">
-                {maxFiles === Infinity ? `${getImageCount()} 张图片` : `${getImageCount()} / ${maxFiles} 张图片`}
+                {maxFiles === Infinity ? labels.count(getImageCount()) : labels.limitedCount(getImageCount(), maxFiles)}
               </span>
             )}
           </div>
@@ -196,7 +233,7 @@ export function ImageUpload({
                 <>
                   <Upload className={`mx-auto text-primary animate-bounce ${hasImages() ? 'h-6 w-6' : 'h-12 w-12'}`} />
                   <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">上传中...</p>
+                    <p className="text-sm text-muted-foreground">{labels.uploading}</p>
                     <Progress value={uploadProgress} className="w-full max-w-xs mx-auto" />
                     <p className="text-xs text-muted-foreground">{uploadProgress}%</p>
                   </div>
@@ -207,15 +244,15 @@ export function ImageUpload({
                   <div className="space-y-2">
                     <p className={`text-muted-foreground ${hasImages() ? 'text-xs' : 'text-sm'}`}>
                       {isDragActive
-                        ? '释放文件开始上传'
+                        ? labels.release
                         : hasImages()
-                          ? '拖拽或点击添加更多图片'
-                          : '拖拽图片到此处或点击上传'
+                          ? labels.addMoreHint
+                          : labels.emptyHint
                       }
                     </p>
                     {!hasImages() && (
                       <p className="text-xs text-muted-foreground">
-                        支持 JPG、PNG、SVG、WebP 格式，单文件最大 {formatFileSize(MAX_FILE_SIZE)}
+                        {labels.support} {formatFileSize(MAX_FILE_SIZE)}
                       </p>
                     )}
                   </div>
@@ -223,7 +260,7 @@ export function ImageUpload({
                   <div className="flex items-center justify-center">
                     <Button variant="outline" size={hasImages() ? 'sm' : 'default'} disabled={disabled}>
                       <Plus className="h-4 w-4 mr-2" />
-                      {hasImages() ? '添加更多' : '选择文件'}
+                      {hasImages() ? labels.addMore : labels.choose}
                     </Button>
                   </div>
                 </>
@@ -299,7 +336,7 @@ export function ImageUpload({
           <div className="flex-shrink-0 p-4 border-b">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium">
-                已上传图片 ({getImageCount()})
+                {labels.uploaded} ({getImageCount()})
               </h3>
               {hasSelectedImages() && (
                 <Button
@@ -308,7 +345,7 @@ export function ImageUpload({
                   onClick={handleRemoveSelected}
                 >
                   <X className="h-4 w-4 mr-2" />
-                  删除选中 ({selectedImageIds.length})
+                  {labels.deleteSelected} ({selectedImageIds.length})
                 </Button>
               )}
             </div>
@@ -328,6 +365,7 @@ export function ImageUpload({
               onSelectMultiple={selectImages}
               onRemove={removeImage}
               onPreview={setCurrentImage}
+              isEnglish={isEnglish}
             />
           </div>
         </Card>

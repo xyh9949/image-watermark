@@ -24,6 +24,7 @@ interface FilePreviewProps {
   image: ImageInfo;
   isSelected?: boolean;
   showProgress?: boolean;
+  isEnglish?: boolean;
   onSelect?: (imageId: string) => void;
   onRemove?: (imageId: string) => void;
   onPreview?: (imageId: string) => void;
@@ -50,23 +51,34 @@ const StatusColor = {
 
 // 状态文本映射
 const StatusText = {
-  uploading: '上传中',
-  uploaded: '已上传',
-  processing: '处理中',
-  completed: '已完成',
-  error: '错误',
+  zh: {
+    uploading: '上传中',
+    uploaded: '已上传',
+    processing: '处理中',
+    completed: '已完成',
+    error: '错误',
+  },
+  en: {
+    uploading: 'Uploading',
+    uploaded: 'Uploaded',
+    processing: 'Processing',
+    completed: 'Completed',
+    error: 'Error',
+  },
 };
 
 export function FilePreview({
   image,
   isSelected = false,
   showProgress = false,
+  isEnglish = false,
   onSelect,
   onRemove,
   onPreview,
   className = ''
 }: FilePreviewProps) {
   const StatusIconComponent = StatusIcon[image.status];
+  const statusText = isEnglish ? StatusText.en : StatusText.zh;
   
   const handleSelect = () => {
     onSelect?.(image.id);
@@ -113,7 +125,7 @@ export function FilePreview({
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <div className="text-white text-center">
               <StatusIconComponent className="h-6 w-6 mx-auto mb-2 animate-spin" />
-              <p className="text-sm">{StatusText[image.status]}</p>
+              <p className="text-sm">{statusText[image.status]}</p>
             </div>
           </div>
         )}
@@ -123,7 +135,7 @@ export function FilePreview({
           <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
             <div className="text-center">
               <AlertCircle className="h-6 w-6 mx-auto mb-2 text-red-500" />
-              <p className="text-sm text-red-700">上传失败</p>
+              <p className="text-sm text-red-700">{isEnglish ? 'Upload failed' : '上传失败'}</p>
             </div>
           </div>
         )}
@@ -180,13 +192,13 @@ export function FilePreview({
             className={`text-xs ${StatusColor[image.status]} text-white`}
           >
             <StatusIconComponent className="h-3 w-3 mr-1" />
-            {StatusText[image.status]}
+            {statusText[image.status]}
           </Badge>
           
           {image.status === 'uploaded' && (
             <Button size="sm" variant="ghost" className="h-6 text-xs">
               <Download className="h-3 w-3 mr-1" />
-              下载
+              {isEnglish ? 'Download' : '下载'}
             </Button>
           )}
         </div>
@@ -217,6 +229,7 @@ interface FilePreviewListProps {
   images: ImageInfo[];
   selectedIds?: string[];
   showProgress?: boolean;
+  isEnglish?: boolean;
   onSelect?: (imageId: string) => void;
   onSelectMultiple?: (imageIds: string[]) => void;
   onRemove?: (imageId: string) => void;
@@ -228,6 +241,7 @@ export function FilePreviewList({
   images,
   selectedIds = [],
   showProgress = false,
+  isEnglish = false,
   onSelect,
   onSelectMultiple,
   onRemove,
@@ -243,7 +257,7 @@ export function FilePreviewList({
     return (
       <div className="text-center py-8 text-muted-foreground">
         <FileImage className="h-12 w-12 mx-auto mb-2" />
-        <p>暂无图片</p>
+        <p>{isEnglish ? 'No images yet' : '暂无图片'}</p>
       </div>
     );
   }
@@ -258,10 +272,14 @@ export function FilePreviewList({
             size="sm"
             onClick={handleSelectAll}
           >
-            {selectedIds.length === images.length ? '取消全选' : '全选'}
+            {selectedIds.length === images.length
+              ? (isEnglish ? 'Clear selection' : '取消全选')
+              : (isEnglish ? 'Select all' : '全选')}
           </Button>
           <span className="text-sm text-muted-foreground">
-            已选择 {selectedIds.length} / {images.length} 张图片
+            {isEnglish
+              ? `Selected ${selectedIds.length} / ${images.length} images`
+              : `已选择 ${selectedIds.length} / ${images.length} 张图片`}
           </span>
         </div>
       )}
@@ -277,6 +295,7 @@ export function FilePreviewList({
             onSelect={onSelect}
             onRemove={onRemove}
             onPreview={onPreview}
+            isEnglish={isEnglish}
           />
         ))}
       </div>

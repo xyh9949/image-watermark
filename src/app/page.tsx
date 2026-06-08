@@ -42,15 +42,15 @@ export default function Home() {
             </TabsList>
 
             <TabsContent value="upload" className="flex-1 overflow-auto p-4">
-              <ImageUpload />
+              <ImageUpload isEnglish={isEnglish} />
             </TabsContent>
 
             <TabsContent value="edit" className="flex-1 overflow-auto p-4">
-              <WatermarkCanvas />
+              <WatermarkCanvas isEnglish={isEnglish} />
             </TabsContent>
 
             <TabsContent value="controls" className="flex-1 overflow-auto p-4">
-              <WatermarkControls />
+              <WatermarkControls isEnglish={isEnglish} />
             </TabsContent>
           </Tabs>
         </div>
@@ -76,7 +76,7 @@ export default function Home() {
           <div className="flex-[3] border-r bg-background">
             <div className="h-full overflow-auto">
               <div className="p-4">
-                <ImageUpload />
+                <ImageUpload isEnglish={isEnglish} />
               </div>
             </div>
           </div>
@@ -86,14 +86,14 @@ export default function Home() {
 
             {/* 中间：Canvas编辑器 - 使用6/9的比例 */}
             <div className="flex-[6] p-4 overflow-auto">
-              <WatermarkCanvas className="h-full" />
+              <WatermarkCanvas className="h-full" isEnglish={isEnglish} />
             </div>
 
             {/* 右侧：控制面板 - 使用3/9的比例 */}
             <div className="flex-[3] border-l bg-background">
               <div className="h-full overflow-auto">
                 <div className="p-4">
-                  <WatermarkControls />
+                  <WatermarkControls isEnglish={isEnglish} />
                 </div>
               </div>
             </div>

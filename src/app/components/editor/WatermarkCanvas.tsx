@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -22,12 +22,14 @@ import type { ImageInfo, WatermarkConfig } from '@/app/types';
 interface WatermarkCanvasProps {
   className?: string;
   showControls?: boolean;
+  isEnglish?: boolean;
   onExport?: (dataUrl: string) => void;
 }
 
 export function WatermarkCanvas({
   className = '',
   showControls = true,
+  isEnglish = false,
   onExport
 }: WatermarkCanvasProps) {
   const currentImage = useImageStore(s => s.images.find(img => img.id === s.currentImageId) || null);
@@ -60,6 +62,41 @@ export function WatermarkCanvas({
       // 选择已改变
     }
   });
+  const labels = useMemo(() => isEnglish
+    ? ({
+        editor: 'Watermark editor',
+        fit: 'Fit to window',
+        preview: 'Preview',
+        clear: 'Clear watermark',
+        export: 'Export',
+        exportTitle: 'Export image',
+        selectImage: 'Select an image to edit',
+        initializing: 'Initializing editor...',
+        watermarkCount: 'Watermarks',
+        zoom: 'Zoom',
+        watermark: 'Watermark',
+        enabled: 'Watermark enabled',
+        disabled: 'Watermark disabled',
+        initializingAlert: 'Canvas is initializing. Please wait...',
+        previewTitle: 'Watermark Preview',
+      })
+    : ({
+        editor: '水印编辑器',
+        fit: '适应窗口',
+        preview: '预览',
+        clear: '清除水印',
+        export: '导出',
+        exportTitle: '导出图片',
+        selectImage: '请先选择要编辑的图片',
+        initializing: '初始化编辑器...',
+        watermarkCount: '水印数量',
+        zoom: '缩放',
+        watermark: '水印',
+        enabled: '水印已启用',
+        disabled: '水印已禁用',
+        initializingAlert: 'Canvas初始化中，请稍候...',
+        previewTitle: '水印预览',
+      }), [isEnglish]);
 
   // 当选中的图片改变时，加载到Canvas，并在完成后刷新水印
   useEffect(() => {
@@ -156,7 +193,7 @@ export function WatermarkCanvas({
       if (previewWindow) {
         previewWindow.document.write(`
           <html>
-            <head><title>水印预览</title></head>
+            <head><title>${labels.previewTitle}</title></head>
             <body style="margin:0;padding:20px;background:#f0f0f0;display:flex;justify-content:center;align-items:center;min-height:100vh;">
               <img src="${dataUrl}" style="max-width:100%;max-height:100%;box-shadow:0 4px 8px rgba(0,0,0,0.1);" />
             </body>
@@ -164,7 +201,7 @@ export function WatermarkCanvas({
         `);
       }
     }
-  }, [getCanvasDataURL]);
+  }, [getCanvasDataURL, labels.previewTitle]);
 
   // 清除水印
   const handleClearWatermarks = useCallback(() => {
@@ -180,7 +217,7 @@ export function WatermarkCanvas({
         {showControls && (
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-medium">水印编辑器</h3>
+              <h3 className="text-sm font-medium">{labels.editor}</h3>
               {currentImage && (
                 <span className="text-xs text-muted-foreground">
                   {currentImage.width} × {currentImage.height}
@@ -193,7 +230,7 @@ export function WatermarkCanvas({
                 variant="outline"
                 size="sm"
                 onClick={handleFitToWindow}
-                title="适应窗口"
+                title={labels.fit}
               >
                 <Maximize className="h-4 w-4" />
               </Button>
@@ -202,7 +239,7 @@ export function WatermarkCanvas({
                 variant="outline"
                 size="sm"
                 onClick={handlePreview}
-                title="预览"
+                title={labels.preview}
               >
                 <Eye className="h-4 w-4" />
               </Button>
@@ -211,7 +248,7 @@ export function WatermarkCanvas({
                 variant="outline"
                 size="sm"
                 onClick={handleClearWatermarks}
-                title="清除水印"
+                title={labels.clear}
               >
                 <RotateCcw className="h-4 w-4" />
               </Button>
@@ -220,10 +257,10 @@ export function WatermarkCanvas({
                 variant="default"
                 size="sm"
                 onClick={handleExport}
-                title="导出图片"
+                title={labels.exportTitle}
               >
                 <Download className="h-4 w-4 mr-2" />
-                导出
+                {labels.export}
               </Button>
             </div>
           </div>
@@ -246,7 +283,7 @@ export function WatermarkCanvas({
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
                   <Eye className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">请先选择要编辑的图片</p>
+                  <p className="text-muted-foreground">{labels.selectImage}</p>
                 </div>
               </div>
             )}
@@ -256,7 +293,7 @@ export function WatermarkCanvas({
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                  <p className="text-sm text-muted-foreground">初始化编辑器...</p>
+                  <p className="text-sm text-muted-foreground">{labels.initializing}</p>
                 </div>
               </div>
             )}
@@ -265,7 +302,7 @@ export function WatermarkCanvas({
           {/* 水印信息覆盖层 */}
           {isReady && watermarks.length > 0 && (
             <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
-              水印数量: {watermarks.length}
+              {labels.watermarkCount}: {watermarks.length}
             </div>
           )}
         </div>
@@ -275,20 +312,20 @@ export function WatermarkCanvas({
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center space-x-4">
               <span>Canvas: {canvas?.getWidth()} × {canvas?.getHeight()}</span>
-              <span>缩放: 100%</span>
-              <span>水印: {watermarks.length}</span>
+              <span>{labels.zoom}: 100%</span>
+              <span>{labels.watermark}: {watermarks.length}</span>
             </div>
 
             <div className="flex items-center space-x-2">
               {currentConfig.enabled ? (
                 <span className="flex items-center text-green-600">
                   <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                  水印已启用
+                  {labels.enabled}
                 </span>
               ) : (
                 <span className="flex items-center text-gray-500">
                   <div className="w-2 h-2 bg-gray-400 rounded-full mr-1"></div>
-                  水印已禁用
+                  {labels.disabled}
                 </span>
               )}
             </div>
@@ -300,7 +337,7 @@ export function WatermarkCanvas({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Canvas初始化中，请稍候...
+              {labels.initializingAlert}
             </AlertDescription>
           </Alert>
         )}

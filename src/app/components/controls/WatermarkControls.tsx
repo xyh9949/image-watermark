@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,9 +17,10 @@ import { generatePreviewFileName, DEFAULT_FILENAME_TEMPLATE, isValidTemplate } f
 
 interface WatermarkControlsProps {
   className?: string;
+  isEnglish?: boolean;
 }
 
-export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
+export function WatermarkControls({ className = '', isEnglish = false }: WatermarkControlsProps) {
   const {
     currentConfig,
     updateTextStyle,
@@ -56,6 +57,236 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
   // {{ Shrimp-X: Add - 文件名模板状态. Approval: Cunzhi(ID:timestamp). }}
   // 文件命名设置
   const [fileNameTemplate, setFileNameTemplate] = useState(DEFAULT_FILENAME_TEMPLATE);
+  const labels = useMemo(() => isEnglish
+    ? ({
+        settings: 'Watermark settings',
+        enabled: 'Enabled',
+        disabled: 'Disabled',
+        text: 'Text',
+        image: 'Image',
+        fullscreen: 'Full screen',
+        watermarkText: 'Watermark text',
+        watermarkTextPlaceholder: 'Enter watermark text',
+        font: 'Font',
+        chooseFont: 'Choose font',
+        mode: 'Watermark mode',
+        chooseMode: 'Choose watermark mode',
+        percentageMode: 'Percentage mode',
+        fixedMode: 'Fixed size',
+        percentageHelp: 'Watermark size is a percentage of the image size, with position fine-tuning.',
+        fixedHelp: 'Use a fixed pixel size, with position fine-tuning.',
+        watermarkRatio: 'Watermark ratio',
+        ratioHelp: 'Controls the watermark size relative to the image.',
+        fontSize: 'Font size',
+        percentageFontHelp: 'In percentage mode, font size is calculated from image dimensions and the selected ratio.',
+        fontWeight: 'Font weight',
+        chooseWeight: 'Choose weight',
+        normal: 'Normal',
+        bold: 'Bold',
+        thin: 'Thin',
+        light: 'Light',
+        medium: 'Medium',
+        heavy: 'Heavy',
+        black: 'Black',
+        color: 'Color',
+        opacity: 'Opacity',
+        rotation: 'Rotation',
+        strokeWidth: 'Stroke width (relative to font)',
+        strokeColor: 'Stroke color',
+        watermarkImage: 'Watermark image',
+        uploadWatermarkImage: 'Upload watermark image',
+        uploading: 'Uploading...',
+        chooseImage: 'Choose image',
+        changeImage: 'Change image',
+        removeImage: 'Remove image',
+        resetParams: 'Reset parameters',
+        imagePreviewAlt: 'Watermark image preview',
+        supportWatermarkImage: 'Supports JPG, PNG, and WebP. Max 5 MB.',
+        imageScale: 'Scale',
+        fullscreenModeText: 'Text watermark',
+        fullscreenModeImage: 'Image watermark',
+        watermarkContent: 'Watermark content',
+        uploadFullscreenImage: 'Upload watermark image',
+        dragImage: 'Click to choose an image or drag it here',
+        replaceImage: 'Click to replace image',
+        supportFullscreenImage: 'Supports JPG, PNG, and GIF. Max 5 MB.',
+        originalSize: 'Original size',
+        currentSize: 'Current size',
+        tileSpacing: 'Tile spacing',
+        tileDensity: 'Tile density',
+        diagonalMode: 'Diagonal mode',
+        position: 'Position',
+        fineTune: 'Position fine-tuning',
+        fineTuneHelp: 'Use percentages to fine-tune the watermark position and keep relative placement consistent across image sizes.',
+        horizontalOffset: 'Horizontal offset',
+        verticalOffset: 'Vertical offset',
+        resetOffset: 'Reset offset',
+        filenameRule: 'Export filename rule',
+        preview: 'Preview',
+        variables: 'Variables',
+        originalName: 'original name',
+        index: 'index',
+        paddedIndex: 'padded index',
+        date: 'date',
+        batchMode: 'Batch processing mode',
+        batchPercentage: 'Percentage mode - keeps a fixed relative size ratio and supports position fine-tuning.',
+        batchFixed: 'Fixed size - all images use the same pixel size and support position fine-tuning.',
+        willProcess: (count: number, mode: string) => `Will process ${count} ${count === 1 ? 'image' : 'images'} with ${mode === 'fixed' ? 'pixel consistency' : 'ratio consistency'}.`,
+        progress: 'Progress',
+        processing: 'Processing',
+        completed: 'Completed',
+        failedCount: (count: number) => `${count} ${count === 1 ? 'image' : 'images'} failed`,
+        startProcessing: (count: number) => `Start processing (${count} ${count === 1 ? 'image' : 'images'})`,
+        stopProcessing: 'Stop processing',
+        previewResult: 'Preview result',
+        downloadFailed: 'Download failed, but processing is complete',
+        processFailed: 'Processing failed',
+        chooseImageFile: 'Please choose an image file',
+        imageTooLarge: 'Image file size cannot exceed 5 MB',
+        imageLoadFailed: 'Image failed to load. Please choose another image.',
+        uploadFailed: 'Upload failed. Please try again.',
+        imageReadFailed: 'Image read failed. Please try again.',
+        imageUploadFailed: 'Image upload failed. Please try again.',
+        positions: {
+          'top-left': 'Top left',
+          'top-center': 'Top center',
+          'top-right': 'Top right',
+          'middle-left': 'Middle left',
+          'middle-center': 'Center',
+          'middle-right': 'Middle right',
+          'bottom-left': 'Bottom left',
+          'bottom-center': 'Bottom center',
+          'bottom-right': 'Bottom right',
+          custom: 'Custom',
+        } as Record<WatermarkPosition, string>,
+      })
+    : ({
+        settings: '水印设置',
+        enabled: '已启用',
+        disabled: '已禁用',
+        text: '文字',
+        image: '图片',
+        fullscreen: '全屏',
+        watermarkText: '水印文字',
+        watermarkTextPlaceholder: '请输入水印文字',
+        font: '字体',
+        chooseFont: '选择字体',
+        mode: '水印模式',
+        chooseMode: '选择水印模式',
+        percentageMode: '比例模式',
+        fixedMode: '固定尺寸',
+        percentageHelp: '水印大小为图片尺寸的百分比，支持位置微调',
+        fixedHelp: '使用固定的像素尺寸，支持位置微调',
+        watermarkRatio: '水印比例',
+        ratioHelp: '控制水印相对于图片的大小比例',
+        fontSize: '字体大小',
+        percentageFontHelp: '比例模式下，字体大小将根据图片尺寸和设置的比例自动计算',
+        fontWeight: '字重',
+        chooseWeight: '选择字重',
+        normal: '正常',
+        bold: '粗体',
+        thin: '极细',
+        light: '细',
+        medium: '中等',
+        heavy: '粗',
+        black: '极粗',
+        color: '颜色',
+        opacity: '透明度',
+        rotation: '旋转角度',
+        strokeWidth: '描边粗细（相对字号）',
+        strokeColor: '描边颜色',
+        watermarkImage: '水印图片',
+        uploadWatermarkImage: '上传水印图片',
+        uploading: '上传中...',
+        chooseImage: '选择图片',
+        changeImage: '更换图片',
+        removeImage: '移除图片',
+        resetParams: '重置参数',
+        imagePreviewAlt: '水印图片预览',
+        supportWatermarkImage: '支持 JPG、PNG、WebP 格式，最大 5MB',
+        imageScale: '缩放比例',
+        fullscreenModeText: '文字水印',
+        fullscreenModeImage: '图片水印',
+        watermarkContent: '水印内容',
+        uploadFullscreenImage: '上传水印图片',
+        dragImage: '点击选择图片或拖拽到此处',
+        replaceImage: '点击更换图片',
+        supportFullscreenImage: '支持 JPG、PNG、GIF 格式，最大 5MB',
+        originalSize: '原始尺寸',
+        currentSize: '当前尺寸',
+        tileSpacing: '平铺间距',
+        tileDensity: '平铺密度',
+        diagonalMode: '对角线模式',
+        position: '位置',
+        fineTune: '位置微调',
+        fineTuneHelp: '使用百分比微调水印位置，确保在不同尺寸图片上保持一致的相对位置',
+        horizontalOffset: '水平偏移',
+        verticalOffset: '垂直偏移',
+        resetOffset: '重置偏移量',
+        filenameRule: '导出文件名规则',
+        preview: '预览',
+        variables: '可用变量',
+        originalName: '原名',
+        index: '序号',
+        paddedIndex: '补零序号',
+        date: '日期',
+        batchMode: '批量处理模式',
+        batchPercentage: '比例模式 - 保持固定的相对大小比例，支持位置微调',
+        batchFixed: '固定尺寸 - 所有图片使用相同像素大小，支持位置微调',
+        willProcess: (count: number, mode: string) => `将处理 ${count} 张图片，确保${mode === 'fixed' ? '像素一致性' : '比例一致性'}`,
+        progress: '处理进度',
+        processing: '正在处理',
+        completed: '处理完成',
+        failedCount: (count: number) => `${count} 张图片处理失败`,
+        startProcessing: (count: number) => `开始处理 (${count} 张图片)`,
+        stopProcessing: '停止处理',
+        previewResult: '预览效果',
+        downloadFailed: '下载失败，但处理已完成',
+        processFailed: '处理失败',
+        chooseImageFile: '请选择图片文件',
+        imageTooLarge: '图片文件大小不能超过5MB',
+        imageLoadFailed: '图片加载失败，请选择其他图片',
+        uploadFailed: '上传失败，请重试',
+        imageReadFailed: '图片读取失败，请重试',
+        imageUploadFailed: '图片上传失败，请重试',
+        positions: {
+          'top-left': '左上',
+          'top-center': '上中',
+          'top-right': '右上',
+          'middle-left': '左中',
+          'middle-center': '中心',
+          'middle-right': '右中',
+          'bottom-left': '左下',
+          'bottom-center': '下中',
+          'bottom-right': '右下',
+          custom: '自定义',
+        } as Record<WatermarkPosition, string>,
+      }), [isEnglish]);
+
+  useEffect(() => {
+    if (isEnglish) {
+      if (currentConfig.textStyle?.content === '水印文字') {
+        updateTextStyle({ content: 'Watermark text' });
+      }
+      if (currentConfig.fullscreenStyle?.content === '水印') {
+        updateFullscreenStyle({ content: 'Watermark' });
+      }
+      return;
+    }
+
+    if (currentConfig.textStyle?.content === 'Watermark text') {
+      updateTextStyle({ content: '水印文字' });
+    }
+    if (currentConfig.fullscreenStyle?.content === 'Watermark') {
+      updateFullscreenStyle({ content: '水印' });
+    }
+  }, [
+    isEnglish,
+    currentConfig.textStyle?.content,
+    currentConfig.fullscreenStyle?.content,
+    updateTextStyle,
+    updateFullscreenStyle,
+  ]);
 
 
 
@@ -103,7 +334,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
             // {{ Shrimp-X: Modify - 传递文件名模板参数. Approval: Cunzhi(ID:timestamp). }}
             await downloadBatchResults(results, undefined, fileNameTemplate);
           } catch (error) {
-            setProcessingError('下载失败，但处理已完成');
+            setProcessingError(labels.downloadFailed);
           }
         },
         onError: (error, imageId) => {
@@ -114,7 +345,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
       });
 
     } catch (error) {
-      setProcessingError(error instanceof Error ? error.message : '处理失败');
+      setProcessingError(error instanceof Error ? error.message : labels.processFailed);
       setIsProcessing(false);
     }
   };
@@ -136,13 +367,13 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
     // 验证文件类型
     if (!file.type.startsWith('image/')) {
-      alert('请选择图片文件');
+      alert(labels.chooseImageFile);
       return;
     }
 
     // 验证文件大小 (最大5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('图片文件大小不能超过5MB');
+      alert(labels.imageTooLarge);
       return;
     }
 
@@ -184,14 +415,14 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
       img.onerror = () => {
         URL.revokeObjectURL(imageUrl);
-        alert('图片加载失败，请选择其他图片');
+        alert(labels.imageLoadFailed);
         setIsUploadingWatermark(false);
       };
 
       img.src = imageUrl;
     } catch (error) {
       console.error('上传水印图片失败:', error);
-      alert('上传失败，请重试');
+      alert(labels.uploadFailed);
       setIsUploadingWatermark(false);
     }
   };
@@ -216,16 +447,16 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
   ];
 
   const positionLabels: Record<WatermarkPosition, string> = {
-    'top-left': '左上',
-    'top-center': '上中',
-    'top-right': '右上',
-    'middle-left': '左中',
-    'middle-center': '中心',
-    'middle-right': '右中',
-    'bottom-left': '左下',
-    'bottom-center': '下中',
-    'bottom-right': '右下',
-    'custom': '自定义'
+    'top-left': labels.positions['top-left'],
+    'top-center': labels.positions['top-center'],
+    'top-right': labels.positions['top-right'],
+    'middle-left': labels.positions['middle-left'],
+    'middle-center': labels.positions['middle-center'],
+    'middle-right': labels.positions['middle-right'],
+    'bottom-left': labels.positions['bottom-left'],
+    'bottom-center': labels.positions['bottom-center'],
+    'bottom-right': labels.positions['bottom-right'],
+    'custom': labels.positions.custom
   };
 
   // 处理文字内容变化
@@ -277,13 +508,13 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
     // 验证文件类型
     if (!file.type.startsWith('image/')) {
-      alert('请选择图片文件');
+      alert(labels.chooseImageFile);
       return;
     }
 
     // 验证文件大小 (最大5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('图片文件大小不能超过5MB');
+      alert(labels.imageTooLarge);
       return;
     }
 
@@ -326,7 +557,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
       };
 
       reader.onerror = () => {
-        alert('图片读取失败，请重试');
+        alert(labels.imageReadFailed);
         setIsUploadingFullscreenImage(false);
       };
 
@@ -335,7 +566,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
     } catch (error) {
       console.error('图片上传失败:', error);
-      alert('图片上传失败，请重试');
+      alert(labels.imageUploadFailed);
       setIsUploadingFullscreenImage(false);
     } finally {
       // 重置文件输入
@@ -353,7 +584,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Settings className="h-5 w-5" />
-            <h2 className="text-lg font-semibold">水印设置</h2>
+            <h2 className="text-lg font-semibold">{labels.settings}</h2>
           </div>
           <Button
             variant="outline"
@@ -364,12 +595,12 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
             {currentConfig.enabled ? (
               <>
                 <Eye className="h-4 w-4" />
-                <span>已启用</span>
+                <span>{labels.enabled}</span>
               </>
             ) : (
               <>
                 <EyeOff className="h-4 w-4" />
-                <span>已禁用</span>
+                <span>{labels.disabled}</span>
               </>
             )}
           </Button>
@@ -382,20 +613,20 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
           className="w-full"
         >
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="text">文字</TabsTrigger>
-            <TabsTrigger value="image">图片</TabsTrigger>
-            <TabsTrigger value="fullscreen">全屏</TabsTrigger>
+            <TabsTrigger value="text">{labels.text}</TabsTrigger>
+            <TabsTrigger value="image">{labels.image}</TabsTrigger>
+            <TabsTrigger value="fullscreen">{labels.fullscreen}</TabsTrigger>
           </TabsList>
 
           {/* 文字水印控制 */}
           <TabsContent value="text" className="space-y-4 mt-4">
             {/* 水印文字 */}
             <div className="space-y-2">
-              <Label htmlFor="watermark-text">水印文字</Label>
+              <Label htmlFor="watermark-text">{labels.watermarkText}</Label>
               <Input
                 id="watermark-text"
                 type="text"
-                placeholder="请输入水印文字"
+                placeholder={labels.watermarkTextPlaceholder}
                 value={currentConfig.textStyle?.content || ''}
                 onChange={(e) => handleTextChange(e.target.value)}
               />
@@ -403,13 +634,13 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
             {/* 字体选择 */}
             <div className="space-y-2">
-              <Label>字体</Label>
+              <Label>{labels.font}</Label>
               <Select
                 value={currentConfig.textStyle?.fontFamily || 'Arial'}
                 onValueChange={handleFontFamilyChange}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="选择字体" />
+                  <SelectValue placeholder={labels.chooseFont} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Arial">Arial</SelectItem>
@@ -417,31 +648,31 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                   <SelectItem value="Times New Roman">Times New Roman</SelectItem>
                   <SelectItem value="Georgia">Georgia</SelectItem>
                   <SelectItem value="Verdana">Verdana</SelectItem>
-                  <SelectItem value="Microsoft YaHei">微软雅黑</SelectItem>
-                  <SelectItem value="SimHei">黑体</SelectItem>
-                  <SelectItem value="SimSun">宋体</SelectItem>
+                  <SelectItem value="Microsoft YaHei">{isEnglish ? 'Microsoft YaHei' : '微软雅黑'}</SelectItem>
+                  <SelectItem value="SimHei">{isEnglish ? 'SimHei' : '黑体'}</SelectItem>
+                  <SelectItem value="SimSun">{isEnglish ? 'SimSun' : '宋体'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* 水印模式 */}
             <div className="space-y-2">
-              <Label>水印模式</Label>
+              <Label>{labels.mode}</Label>
               <Select
                 value={currentConfig.scaleMode}
                 onValueChange={(value) => setScaleMode(value as 'percentage' | 'fixed')}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="选择水印模式" />
+                  <SelectValue placeholder={labels.chooseMode} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="percentage">📏 比例模式</SelectItem>
-                  <SelectItem value="fixed">📌 固定尺寸</SelectItem>
+                  <SelectItem value="percentage">{labels.percentageMode}</SelectItem>
+                  <SelectItem value="fixed">{labels.fixedMode}</SelectItem>
                 </SelectContent>
               </Select>
               <div className="text-xs text-gray-500">
-                {currentConfig.scaleMode === 'percentage' && '水印大小为图片尺寸的百分比，支持位置微调'}
-                {currentConfig.scaleMode === 'fixed' && '使用固定的像素尺寸，支持位置微调'}
+                {currentConfig.scaleMode === 'percentage' && labels.percentageHelp}
+                {currentConfig.scaleMode === 'fixed' && labels.fixedHelp}
               </div>
             </div>
 
@@ -449,7 +680,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
             {currentConfig.scaleMode === 'percentage' && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label>水印比例</Label>
+                  <Label>{labels.watermarkRatio}</Label>
                   <div className="flex items-center space-x-2">
                     <input
                       type="number"
@@ -475,7 +706,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                   className="w-full"
                 />
                 <div className="text-xs text-gray-500">
-                  控制水印相对于图片的大小比例
+                  {labels.ratioHelp}
                 </div>
 
 
@@ -489,7 +720,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
             {/* 字体大小 */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>字体大小</Label>
+                <Label>{labels.fontSize}</Label>
                 <div className="flex items-center space-x-2">
                   <input
                     type="number"
@@ -517,36 +748,36 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
               />
               {currentConfig.scaleMode === 'percentage' && (
                 <div className="text-xs text-gray-500">
-                  比例模式下，字体大小将根据图片尺寸和设置的比例自动计算
+                  {labels.percentageFontHelp}
                 </div>
               )}
             </div>
 
             {/* 字重 */}
             <div className="space-y-2">
-              <Label>字重</Label>
+              <Label>{labels.fontWeight}</Label>
               <Select
                 value={currentConfig.textStyle?.fontWeight || 'normal'}
                 onValueChange={handleFontWeightChange}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="选择字重" />
+                  <SelectValue placeholder={labels.chooseWeight} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="normal">正常</SelectItem>
-                  <SelectItem value="bold">粗体</SelectItem>
-                  <SelectItem value="100">极细</SelectItem>
-                  <SelectItem value="300">细</SelectItem>
-                  <SelectItem value="500">中等</SelectItem>
-                  <SelectItem value="700">粗</SelectItem>
-                  <SelectItem value="900">极粗</SelectItem>
+                  <SelectItem value="normal">{labels.normal}</SelectItem>
+                  <SelectItem value="bold">{labels.bold}</SelectItem>
+                  <SelectItem value="100">{labels.thin}</SelectItem>
+                  <SelectItem value="300">{labels.light}</SelectItem>
+                  <SelectItem value="500">{labels.medium}</SelectItem>
+                  <SelectItem value="700">{labels.heavy}</SelectItem>
+                  <SelectItem value="900">{labels.black}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* 颜色选择 */}
             <div className="space-y-2">
-              <Label htmlFor="watermark-color">颜色</Label>
+              <Label htmlFor="watermark-color">{labels.color}</Label>
               <div className="flex items-center space-x-2">
                 <Input
                   id="watermark-color"
@@ -568,7 +799,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
             {/* 透明度 */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>透明度</Label>
+                <Label>{labels.opacity}</Label>
                 <div className="flex items-center space-x-2">
                   <input
                     type="number"
@@ -597,7 +828,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
             {/* 旋转角度 */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>旋转角度</Label>
+                <Label>{labels.rotation}</Label>
                 <div className="flex items-center space-x-2">
                   <input
                     type="number"
@@ -626,7 +857,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
             {/* 描边效果 */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>描边粗细（相对字号）</Label>
+                <Label>{labels.strokeWidth}</Label>
                 <div className="flex items-center space-x-2">
                   <input
                     type="number"
@@ -668,7 +899,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
             {currentConfig.textStyle?.stroke?.width && currentConfig.textStyle.stroke.width > 0 && (
               <div className="space-y-2">
-                <Label htmlFor="stroke-color">描边颜色</Label>
+                <Label htmlFor="stroke-color">{labels.strokeColor}</Label>
                 <div className="flex items-center space-x-2">
                   <Input
                     id="stroke-color"
@@ -706,7 +937,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
           <TabsContent value="image" className="space-y-4 mt-4">
             {/* 图片上传 */}
             <div className="space-y-2">
-              <Label>水印图片</Label>
+              <Label>{labels.watermarkImage}</Label>
               {!watermarkImageUrl ? (
                 <div className="space-y-2">
                   <input
@@ -723,10 +954,10 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                     onClick={() => document.getElementById('watermark-image-upload')?.click()}
                     disabled={isUploadingWatermark}
                   >
-                    {isUploadingWatermark ? '上传中...' : '选择图片'}
+                    {isUploadingWatermark ? labels.uploading : labels.chooseImage}
                   </Button>
                   <p className="text-xs text-muted-foreground">
-                    支持 JPG、PNG、GIF 格式，最大 5MB
+                    {labels.supportWatermarkImage}
                   </p>
                 </div>
               ) : (
@@ -735,7 +966,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                   <div className="relative border rounded-lg p-2 bg-gray-50">
                     <img
                       src={watermarkImageUrl}
-                      alt="水印图片预览"
+                      alt={labels.imagePreviewAlt}
                       className="w-full h-20 object-contain rounded"
                     />
                     <Button
@@ -760,7 +991,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                 {/* {{ Shrimp-X: Modify - 改为比例缩放控制. Approval: Cunzhi(ID:timestamp). }} */}
                 {/* 缩放比例控制 */}
                 <div className="space-y-2">
-                  <Label>缩放比例 ({Math.round(currentConfig.imageStyle.scale * 100)}%)</Label>
+                  <Label>{labels.imageScale} ({Math.round(currentConfig.imageStyle.scale * 100)}%)</Label>
                   <Slider
                     value={[currentConfig.imageStyle.scale * 100]}
                     onValueChange={([scale]) => updateImageStyle({ scale: scale / 100 })}
@@ -770,13 +1001,13 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                     className="w-full"
                   />
                   <div className="text-xs text-muted-foreground">
-                    原始尺寸: {currentConfig.imageStyle.width} × {currentConfig.imageStyle.height}
+                    {labels.originalSize}: {currentConfig.imageStyle.width} × {currentConfig.imageStyle.height}
                   </div>
                 </div>
 
                 {/* 透明度控制 */}
                 <div className="space-y-2">
-                  <Label>透明度 ({Math.round(currentConfig.imageStyle.opacity * 100)}%)</Label>
+                  <Label>{labels.opacity} ({Math.round(currentConfig.imageStyle.opacity * 100)}%)</Label>
                   <Slider
                     value={[currentConfig.imageStyle.opacity * 100]}
                     onValueChange={([opacity]) => updateImageStyle({ opacity: opacity / 100 })}
@@ -789,7 +1020,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
                 {/* 旋转角度控制 */}
                 <div className="space-y-2">
-                  <Label>旋转角度 ({currentConfig.imageStyle.rotation}°)</Label>
+                  <Label>{labels.rotation} ({currentConfig.imageStyle.rotation}°)</Label>
                   <Slider
                     value={[currentConfig.imageStyle.rotation]}
                     onValueChange={([rotation]) => updateImageStyle({ rotation })}
@@ -811,7 +1042,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                     rotation: 0
                   })}
                 >
-                  重置参数
+                  {labels.resetParams}
                 </Button>
               </>
             )}
@@ -821,7 +1052,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
           <TabsContent value="fullscreen" className="space-y-4 mt-4">
             {/* 水印模式选择 */}
             <div className="space-y-2">
-              <Label>水印模式</Label>
+              <Label>{labels.mode}</Label>
               <Select
                 value={currentConfig.fullscreenStyle?.mode || 'text'}
                 onValueChange={(value: 'text' | 'image') => updateFullscreenStyle({ mode: value })}
@@ -830,8 +1061,8 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="text">文字水印</SelectItem>
-                  <SelectItem value="image">图片水印</SelectItem>
+                  <SelectItem value="text">{labels.fullscreenModeText}</SelectItem>
+                  <SelectItem value="image">{labels.fullscreenModeImage}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -841,18 +1072,18 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
               <>
                 {/* 水印内容 */}
                 <div className="space-y-2">
-                  <Label>水印内容</Label>
+                  <Label>{labels.watermarkContent}</Label>
                   <Input
                     value={currentConfig.fullscreenStyle?.content || ''}
                     onChange={(e) => updateFullscreenStyle({ content: e.target.value })}
-                    placeholder="输入水印文字"
+                    placeholder={labels.watermarkTextPlaceholder}
                   />
                 </div>
 
                 {/* 字体设置 */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>字体</Label>
+                    <Label>{labels.font}</Label>
                     <Select
                       value={currentConfig.fullscreenStyle?.fontFamily || 'Arial'}
                       onValueChange={(value) => updateFullscreenStyle({ fontFamily: value })}
@@ -871,7 +1102,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>字体大小</Label>
+                    <Label>{labels.fontSize}</Label>
                     <div className="flex items-center space-x-2">
                       <Slider
                         value={[currentConfig.fullscreenStyle?.fontSize || 48]}
@@ -899,7 +1130,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
                 {/* 颜色 */}
                 <div className="space-y-2">
-                  <Label>颜色</Label>
+                  <Label>{labels.color}</Label>
                   <Input
                     type="color"
                     value={currentConfig.fullscreenStyle?.color || '#000000'}
@@ -915,7 +1146,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
               <>
                 {/* 图片上传 */}
                 <div className="space-y-2">
-                  <Label>上传水印图片</Label>
+                  <Label>{labels.uploadFullscreenImage}</Label>
                   <div
                     className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors"
                     onDragOver={(e) => {
@@ -977,14 +1208,14 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                       </div>
                       <div className="text-sm text-gray-600">
                         {isUploadingFullscreenImage
-                          ? '正在上传...'
+                          ? labels.uploading
                           : currentConfig.fullscreenStyle?.imageUrl
-                            ? '点击更换图片'
-                            : '点击选择图片或拖拽到此处'
+                            ? labels.replaceImage
+                            : labels.dragImage
                         }
                       </div>
                       <div className="text-xs text-gray-400">
-                        支持 JPG、PNG、GIF 格式，最大5MB
+                        {labels.supportFullscreenImage}
                       </div>
                     </label>
                   </div>
@@ -994,7 +1225,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                     <div className="mt-2 space-y-2">
                       <img
                         src={currentConfig.fullscreenStyle.imageUrl}
-                        alt="水印预览"
+                        alt={labels.imagePreviewAlt}
                         className="max-w-full h-20 object-contain border rounded"
                       />
                       <Button
@@ -1008,7 +1239,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                         })}
                         className="w-full"
                       >
-                        移除图片
+                        {labels.removeImage}
                       </Button>
                     </div>
                   )}
@@ -1016,7 +1247,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
                 {/* 图片缩放 */}
                 <div className="space-y-2">
-                  <Label>缩放比例</Label>
+                  <Label>{labels.imageScale}</Label>
                   <div className="flex items-center space-x-2">
                     <Slider
                       value={[currentConfig.fullscreenStyle?.imageScale || 1.0]}
@@ -1044,9 +1275,9 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                   {/* 显示实际尺寸信息 */}
                   {currentConfig.fullscreenStyle?.imageOriginalWidth && (
                     <div className="text-xs text-gray-400">
-                      原始尺寸: {currentConfig.fullscreenStyle.imageOriginalWidth} × {currentConfig.fullscreenStyle.imageOriginalHeight}px
+                      {labels.originalSize}: {currentConfig.fullscreenStyle.imageOriginalWidth} × {currentConfig.fullscreenStyle.imageOriginalHeight}px
                       <br />
-                      当前尺寸: {Math.round((currentConfig.fullscreenStyle.imageOriginalWidth || 100) * (currentConfig.fullscreenStyle.imageScale || 1.0))} × {Math.round((currentConfig.fullscreenStyle.imageOriginalHeight || 100) * (currentConfig.fullscreenStyle.imageScale || 1.0))}px
+                      {labels.currentSize}: {Math.round((currentConfig.fullscreenStyle.imageOriginalWidth || 100) * (currentConfig.fullscreenStyle.imageScale || 1.0))} × {Math.round((currentConfig.fullscreenStyle.imageOriginalHeight || 100) * (currentConfig.fullscreenStyle.imageScale || 1.0))}px
                     </div>
                   )}
                 </div>
@@ -1055,7 +1286,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
             {/* 通用控制 - 透明度 */}
             <div className="space-y-2">
-              <Label>透明度</Label>
+              <Label>{labels.opacity}</Label>
               <div className="flex items-center space-x-2">
                 <Slider
                   value={[currentConfig.fullscreenStyle?.opacity || 0.1]}
@@ -1083,7 +1314,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
 
             {/* 旋转角度 */}
             <div className="space-y-2">
-              <Label>旋转角度</Label>
+              <Label>{labels.rotation}</Label>
               <div className="flex items-center space-x-2">
                 <Slider
                   value={[currentConfig.fullscreenStyle?.rotation || -45]}
@@ -1111,7 +1342,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
             {/* 平铺设置 */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>平铺间距</Label>
+                <Label>{labels.tileSpacing}</Label>
                 <div className="flex items-center space-x-2">
                   <Slider
                     value={[currentConfig.fullscreenStyle?.tileSpacing || 200]}
@@ -1137,7 +1368,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>平铺密度</Label>
+                <Label>{labels.tileDensity}</Label>
                 <div className="flex items-center space-x-2">
                   <Slider
                     value={[currentConfig.fullscreenStyle?.tileDensity || 0.5]}
@@ -1172,7 +1403,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                 onChange={(e) => updateFullscreenStyle({ diagonalMode: e.target.checked })}
                 className="rounded"
               />
-              <Label htmlFor="diagonalMode">对角线模式</Label>
+              <Label htmlFor="diagonalMode">{labels.diagonalMode}</Label>
             </div>
           </TabsContent>
         </Tabs>
@@ -1182,7 +1413,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
         {/* 位置控制 - 全屏水印不需要位置选择 */}
         {currentConfig.type !== 'fullscreen' && (
           <div className="space-y-2">
-            <Label>位置</Label>
+            <Label>{labels.position}</Label>
             <div className="grid grid-cols-3 gap-1">
               {positionGrid.map((position) => (
                 <Button
@@ -1203,15 +1434,15 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
         {/* 位置微调 - 全屏水印不需要位置微调 */}
         {currentConfig.type !== 'fullscreen' && (
           <div className="space-y-3">
-            <Label>位置微调</Label>
+            <Label>{labels.fineTune}</Label>
             <div className="text-xs text-gray-500 mb-2">
-              使用百分比微调水印位置，确保在不同尺寸图片上保持一致的相对位置
+              {labels.fineTuneHelp}
             </div>
 
             {/* X轴偏移 */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-sm text-muted-foreground">水平偏移</Label>
+                <Label className="text-sm text-muted-foreground">{labels.horizontalOffset}</Label>
                 <div className="flex items-center space-x-2">
                   <input
                     type="number"
@@ -1242,7 +1473,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
             {/* Y轴偏移 */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-sm text-muted-foreground">垂直偏移</Label>
+                <Label className="text-sm text-muted-foreground">{labels.verticalOffset}</Label>
                 <div className="flex items-center space-x-2">
                   <input
                     type="number"
@@ -1277,7 +1508,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
               className="w-full"
               onClick={() => updatePosition({ offsetX: 0, offsetY: 0 })}
             >
-              重置偏移量
+              {labels.resetOffset}
             </Button>
           </div>
         )}
@@ -1287,7 +1518,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
           {/* {{ Shrimp-X: Add - 文件命名规则设置. Approval: Cunzhi(ID:timestamp). }} */}
           {/* 文件命名设置 */}
           <div className="space-y-2">
-            <Label>导出文件名规则</Label>
+            <Label>{labels.filenameRule}</Label>
             <Input
               type="text"
               placeholder="watermarked-{name}"
@@ -1296,21 +1527,21 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
               className={!isValidTemplate(fileNameTemplate) ? 'border-red-500' : ''}
             />
             <div className="text-xs text-muted-foreground space-y-1">
-              <div>预览: <span className="font-mono bg-gray-100 px-1 rounded">{generatePreviewFileName(fileNameTemplate, 'example')}.jpg</span></div>
-              <div>可用变量: <code className="bg-gray-100 px-1 rounded">{'{name}'}</code> 原名 | <code className="bg-gray-100 px-1 rounded">{'{index}'}</code> 序号 | <code className="bg-gray-100 px-1 rounded">{'{index:03}'}</code> 补零序号 | <code className="bg-gray-100 px-1 rounded">{'{date}'}</code> 日期</div>
+              <div>{labels.preview}: <span className="font-mono bg-gray-100 px-1 rounded">{generatePreviewFileName(fileNameTemplate, 'example')}.jpg</span></div>
+              <div>{labels.variables}: <code className="bg-gray-100 px-1 rounded">{'{name}'}</code> {labels.originalName} | <code className="bg-gray-100 px-1 rounded">{'{index}'}</code> {labels.index} | <code className="bg-gray-100 px-1 rounded">{'{index:03}'}</code> {labels.paddedIndex} | <code className="bg-gray-100 px-1 rounded">{'{date}'}</code> {labels.date}</div>
             </div>
           </div>
 
           {/* 水印模式信息 */}
           {hasImages() && (
             <div className="p-3 bg-blue-50 rounded-lg text-sm">
-              <div className="font-medium text-blue-800 mb-1">批量处理模式</div>
+              <div className="font-medium text-blue-800 mb-1">{labels.batchMode}</div>
               <div className="text-blue-700">
-                {currentConfig.scaleMode === 'percentage' && '📏 比例模式 - 保持固定的相对大小比例，支持位置微调'}
-                {currentConfig.scaleMode === 'fixed' && '📌 固定尺寸 - 所有图片使用相同像素大小，支持位置微调'}
+                {currentConfig.scaleMode === 'percentage' && labels.batchPercentage}
+                {currentConfig.scaleMode === 'fixed' && labels.batchFixed}
               </div>
               <div className="text-xs text-blue-600 mt-1">
-                将处理 {getImageCount()} 张图片，确保{currentConfig.scaleMode === 'fixed' ? '像素一致性' : '比例一致性'}
+                {labels.willProcess(getImageCount(), currentConfig.scaleMode)}
               </div>
             </div>
           )}
@@ -1319,13 +1550,13 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
           {isProcessing && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span>处理进度</span>
+                <span>{labels.progress}</span>
                 <span>{Math.round(processingProgress)}%</span>
               </div>
               <Progress value={processingProgress} className="w-full" />
               {currentProcessingImage && (
                 <p className="text-xs text-muted-foreground truncate">
-                  正在处理: {currentProcessingImage}
+                  {labels.processing}: {currentProcessingImage}
                 </p>
               )}
             </div>
@@ -1343,14 +1574,14 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
           {processingResults.length > 0 && !isProcessing && (
             <div className="text-sm space-y-1">
               <div className="flex items-center justify-between">
-                <span>处理完成</span>
+                <span>{labels.completed}</span>
                 <span className="text-green-600">
                   {processingResults.filter(r => r.success).length}/{processingResults.length}
                 </span>
               </div>
               {processingResults.some(r => !r.success) && (
                 <p className="text-xs text-destructive">
-                  {processingResults.filter(r => !r.success).length} 张图片处理失败
+                  {labels.failedCount(processingResults.filter(r => !r.success).length)}
                 </p>
               )}
             </div>
@@ -1367,7 +1598,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                 onClick={handleStartProcessing}
               >
                 <Play className="h-4 w-4 mr-2" />
-                开始处理 ({getImageCount()} 张图片)
+                {labels.startProcessing(getImageCount())}
               </Button>
             ) : (
               <Button
@@ -1376,7 +1607,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
                 onClick={handleStopProcessing}
               >
                 <Square className="h-4 w-4 mr-2" />
-                停止处理
+                {labels.stopProcessing}
               </Button>
             )}
 
@@ -1386,7 +1617,7 @@ export function WatermarkControls({ className = '' }: WatermarkControlsProps) {
               disabled={isProcessing || !hasImages()}
             >
               <Eye className="h-4 w-4 mr-2" />
-              预览效果
+              {labels.previewResult}
             </Button>
           </div>
         </div>
