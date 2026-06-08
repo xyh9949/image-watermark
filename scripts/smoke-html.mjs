@@ -29,6 +29,16 @@ const htmlPages = [
     english: false,
   },
   {
+    route: '/metadata',
+    file: path.join(appDir, 'metadata.html'),
+    canonical: `${siteUrl}/metadata`,
+    alternates: {
+      'zh-CN': `${siteUrl}/metadata`,
+      en: `${siteUrl}/en/metadata`,
+    },
+    english: false,
+  },
+  {
     route: '/en',
     file: path.join(appDir, 'en.html'),
     canonical: `${siteUrl}/en`,
@@ -45,6 +55,16 @@ const htmlPages = [
     alternates: {
       'zh-CN': `${siteUrl}/compress`,
       en: `${siteUrl}/en/compress`,
+    },
+    english: true,
+  },
+  {
+    route: '/en/metadata',
+    file: path.join(appDir, 'en', 'metadata.html'),
+    canonical: `${siteUrl}/en/metadata`,
+    alternates: {
+      'zh-CN': `${siteUrl}/metadata`,
+      en: `${siteUrl}/en/metadata`,
     },
     english: true,
   },
@@ -158,7 +178,7 @@ if (sitemapMeta?.status !== 200) {
   fail(`/sitemap.xml expected status 200, got ${sitemapMeta?.status ?? 'missing meta status'}`);
 }
 
-for (const route of ['', '/compress', '/en', '/en/compress']) {
+for (const route of ['', '/compress', '/metadata', '/en', '/en/compress', '/en/metadata']) {
   const url = `${siteUrl}${route}`;
   if (!sitemap.includes(url)) {
     fail(`/sitemap.xml missing ${url}`);
@@ -168,7 +188,7 @@ for (const route of ['', '/compress', '/en', '/en/compress']) {
 const llmsFile = path.join(root, 'public', 'llms.txt');
 const llms = readRequired(llmsFile, '/llms.txt');
 
-for (const route of ['/', '/compress', '/en', '/en/compress']) {
+for (const route of ['/', '/compress', '/metadata', '/en', '/en/compress', '/en/metadata']) {
   const url = route === '/' ? `${siteUrl}/` : `${siteUrl}${route}`;
   if (!llms.includes(url)) {
     fail(`/llms.txt missing ${url}`);

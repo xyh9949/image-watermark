@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileArchive, ImageIcon } from 'lucide-react';
+import { FileArchive, ImageIcon, Tags } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getCopy, getLocaleFromPathname } from '@/app/lib/i18n';
 
@@ -12,6 +12,7 @@ export function TopNavigation() {
   const copy = getCopy(locale).nav;
   const watermarkHref = locale === 'en' ? '/en' : '/';
   const compressHref = locale === 'en' ? '/en/compress' : '/compress';
+  const metadataHref = locale === 'en' ? '/en/metadata' : '/metadata';
 
   const navItems = [
     {
@@ -25,6 +26,12 @@ export function TopNavigation() {
       label: copy.compress,
       icon: FileArchive,
       active: pathname === compressHref
+    },
+    {
+      href: metadataHref,
+      label: copy.metadata,
+      icon: Tags,
+      active: pathname === metadataHref
     }
   ];
 

@@ -30,6 +30,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       },
     },
     {
+      url: `${SITE_URL}/metadata`,
+      lastModified,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+      alternates: {
+        languages: {
+          'zh-CN': `${SITE_URL}/metadata`,
+          en: `${SITE_URL}/en/metadata`,
+        },
+      },
+    },
+    {
       url: `${SITE_URL}/en`,
       lastModified,
       changeFrequency: 'weekly',
@@ -50,6 +62,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
         languages: {
           'zh-CN': `${SITE_URL}/compress`,
           en: `${SITE_URL}/en/compress`,
+        },
+      },
+    },
+    {
+      url: `${SITE_URL}/en/metadata`,
+      lastModified,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+      alternates: {
+        languages: {
+          'zh-CN': `${SITE_URL}/metadata`,
+          en: `${SITE_URL}/en/metadata`,
         },
       },
     },
