@@ -111,7 +111,7 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
         setIsReady(true);
         options.onCanvasReady?.(fabricCanvas);
         return true;
-      } catch (error) {
+      } catch {
         return false;
       }
     };
@@ -139,6 +139,7 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
         disposeCanvas(canvas);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Fabric canvas is initialized once for this DOM node.
   }, []);
 
   // 清除所有水印
@@ -178,7 +179,8 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
       console.error('Failed to load image:', error);
       throw error;
     }
-  }, [canvas]); // 简化依赖，避免循环引用
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fitToContainer is called after image load without re-creating the loader callback.
+  }, [canvas]);
 
   // 清除图片
   const clearImage = useCallback(() => {
@@ -205,7 +207,7 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
       }
       
       return watermarkObject;
-    } catch (error) {
+    } catch {
       return null;
     }
   }, [canvas]);
@@ -237,7 +239,7 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
         setWatermarks([watermarkObject]);
         canvas.renderAll(); // 强制重新渲染
       }
-    } catch (error) {
+    } catch {
       // 静默处理错误
     }
   }, [canvas]); // 简化依赖
@@ -330,7 +332,7 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [isReady]);
+  }, [isReady, fitToContainer]);
 
   return {
     canvasRef,

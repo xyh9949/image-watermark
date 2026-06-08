@@ -2,7 +2,7 @@
 
 'use client';
 
-import { WatermarkConfig, ImageInfo, ProcessingStatus } from '../../types';
+import { WatermarkConfig, ImageInfo } from '../../types';
 import { createTextWatermark, createImageWatermark, createFullscreenWatermark } from '../canvas/fabricUtils';
 import { Canvas, FabricImage } from 'fabric';
 import { zip } from 'fflate';
@@ -12,10 +12,8 @@ import {
   DEFAULT_FILENAME_TEMPLATE
 } from '../utils/renamingUtils';
 import {
-  prepareBatchWatermarkConfig,
   adjustWatermarkForImage,
   ScaledWatermarkConfig,
-  generateBatchReport,
   optimizeBatchConfiguration
 } from './batchScalingUtils';
 
@@ -102,19 +100,6 @@ export class BatchWatermarkProcessor {
     const optimization = optimizeBatchConfiguration(watermarkConfig, images);
     this.scaledConfig = optimization.optimizedConfig;
 
-    // 生成批量处理报告
-    const report = generateBatchReport(
-      [watermarkConfig],
-      images,
-      this.scaledConfig.scalingContext!
-    );
-
-    console.log('批量处理优化:', {
-      strategy: optimization.strategy,
-      reason: optimization.reason,
-      report: report.summary
-    });
-
     try {
       for (let i = 0; i < images.length; i++) {
         if (this.shouldStop) {
@@ -132,7 +117,7 @@ export class BatchWatermarkProcessor {
           // {{ Shrimp-X: Modify - 为每张图片调整水印配置，确保一致性. Approval: Cunzhi(ID:timestamp). }}
           // 为当前图片调整水印配置
           const adjustedConfig = this.scaledConfig ?
-            adjustWatermarkForImage(this.scaledConfig, image) :
+            adjustWatermarkForImage(this.scaledConfig) :
             watermarkConfig;
 
           // 处理单张图片
@@ -334,17 +319,6 @@ export class BatchWatermarkProcessor {
     if (watermarkObject) {
       this.canvas.add(watermarkObject);
 
-      // 在比例模式下，记录调试信息
-      if (config.position.mode === 'proportion') {
-        console.log(`比例模式水印应用: ${canvasWidth}x${canvasHeight}`, {
-          position: config.position.position,
-          proportions: config.position.proportions,
-          watermarkSize: {
-            width: watermarkObject.width,
-            height: watermarkObject.height
-          }
-        });
-      }
     }
   }
 

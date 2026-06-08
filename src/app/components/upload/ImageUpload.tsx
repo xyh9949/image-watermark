@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,9 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Upload, 
-  FileImage, 
   AlertCircle, 
-  CheckCircle,
   X,
   Plus
 } from 'lucide-react';
@@ -24,19 +22,20 @@ import {
   MAX_FILE_SIZE,
   formatFileSize 
 } from '@/app/lib/utils/fileValidation';
+import { DEFAULT_LOCALE, getCopy, type Locale } from '@/app/lib/i18n';
 
 interface ImageUploadProps {
   className?: string;
   maxFiles?: number;
   disabled?: boolean;
-  isEnglish?: boolean;
+  locale?: Locale;
 }
 
 export function ImageUpload({
   className = '',
   maxFiles = Infinity,
   disabled = false,
-  isEnglish = false
+  locale = DEFAULT_LOCALE
 }: ImageUploadProps) {
   const {
     images,
@@ -49,9 +48,7 @@ export function ImageUpload({
     removeImages,
     selectImage,
     selectImages,
-    selectAllImages,
     clearSelection,
-    toggleImageSelection,
     setCurrentImage,
     setDragOver,
     hasImages,
@@ -61,41 +58,7 @@ export function ImageUpload({
 
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
-  const labels = useMemo(() => isEnglish
-    ? ({
-        title: 'Image Upload',
-        uploading: 'Uploading...',
-        release: 'Release files to upload',
-        addMoreHint: 'Drag or click to add more images',
-        emptyHint: 'Drag images here or click to upload',
-        support: 'Supports JPG, PNG, SVG, and WebP. Max file size',
-        addMore: 'Add more',
-        choose: 'Choose files',
-        uploaded: 'Uploaded images',
-        deleteSelected: 'Delete selected',
-        maxFiles: (max: number, current: number) => `You can upload up to ${max} images. ${current} already uploaded.`,
-        count: (count: number) => `${count} ${count === 1 ? 'image' : 'images'}`,
-        limitedCount: (count: number, max: number) => `${count} / ${max} images`,
-        uploadFailed: (message: string) => `Upload failed: ${message}`,
-        unknownError: 'Unknown error',
-      })
-    : ({
-        title: '图片上传',
-        uploading: '上传中...',
-        release: '释放文件开始上传',
-        addMoreHint: '拖拽或点击添加更多图片',
-        emptyHint: '拖拽图片到此处或点击上传',
-        support: '支持 JPG、PNG、SVG、WebP 格式，单文件最大',
-        addMore: '添加更多',
-        choose: '选择文件',
-        uploaded: '已上传图片',
-        deleteSelected: '删除选中',
-        maxFiles: (max: number, current: number) => `最多只能上传 ${max} 张图片，当前已有 ${current} 张`,
-        count: (count: number) => `${count} 张图片`,
-        limitedCount: (count: number, max: number) => `${count} / ${max} 张图片`,
-        uploadFailed: (message: string) => `上传失败: ${message}`,
-        unknownError: '未知错误',
-      }), [isEnglish]);
+  const labels = getCopy(locale).upload;
 
   // 处理文件上传
   const handleFilesUpload = useCallback(async (files: File[]) => {
@@ -365,7 +328,7 @@ export function ImageUpload({
               onSelectMultiple={selectImages}
               onRemove={removeImage}
               onPreview={setCurrentImage}
-              isEnglish={isEnglish}
+              locale={locale}
             />
           </div>
         </Card>

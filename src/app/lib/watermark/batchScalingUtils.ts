@@ -3,7 +3,6 @@
 
 import { WatermarkConfig, ImageInfo, PositionMode, ProportionData } from '../../types';
 import { calculateAdaptiveWatermarkSize, ImageDimensions } from '../canvas/adaptiveScaling';
-import { calculateProportions } from '../canvas/proportionUtils';
 
 export interface BatchScalingContext {
   referenceImage?: ImageInfo;
@@ -71,19 +70,13 @@ export function prepareBatchWatermarkConfig(
  * 基于批量处理上下文确保一致性
  */
 export function adjustWatermarkForImage(
-  scaledConfig: ScaledWatermarkConfig,
-  targetImage: ImageInfo
+  scaledConfig: ScaledWatermarkConfig
 ): WatermarkConfig {
   const { scalingContext, originalConfig } = scaledConfig;
   
   if (!scalingContext || !originalConfig) {
     return scaledConfig;
   }
-
-  const targetDimensions: ImageDimensions = {
-    width: targetImage.width,
-    height: targetImage.height
-  };
 
   const adjustedConfig: WatermarkConfig = { ...originalConfig };
 

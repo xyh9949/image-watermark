@@ -1,7 +1,7 @@
 // 自适应缩放工具
 // {{ Shrimp-X: Add - 新增自适应缩放逻辑，支持不同缩放模式. Approval: Cunzhi(ID:timestamp). }}
 
-import { WatermarkConfig, ScaleMode, AdaptiveConfig } from '../../types';
+import { WatermarkConfig } from '../../types';
 
 export interface ScalingResult {
   fontSize?: number;
@@ -27,8 +27,7 @@ export function calculateAdaptiveWatermarkSize(
   imageDimensions: ImageDimensions,
   originalWatermarkSize?: { width: number; height: number }
 ): ScalingResult {
-  const { scaleMode, adaptive } = config;
-  const { width: imageWidth, height: imageHeight } = imageDimensions;
+  const { scaleMode } = config;
 
 
 

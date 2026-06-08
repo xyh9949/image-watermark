@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 /**
  * 健康检查 API 端点
@@ -107,7 +107,7 @@ async function checkDatabase() {
     }
     
     return undefined;
-  } catch (error) {
+  } catch {
     return {
       status: 'error' as const,
       responseTime: undefined,
@@ -133,7 +133,7 @@ async function checkRedis() {
     }
     
     return undefined;
-  } catch (error) {
+  } catch {
     return {
       status: 'error' as const,
       responseTime: undefined,
@@ -153,7 +153,7 @@ async function checkStorage() {
       status: 'available' as const,
       freeSpace: undefined, // 可以添加实际的空间检查
     };
-  } catch (error) {
+  } catch {
     return {
       status: 'error' as const,
       freeSpace: undefined,
@@ -204,7 +204,7 @@ async function performHealthCheck(): Promise<HealthCheckResponse> {
 /**
  * GET 请求处理器
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const healthCheck = await performHealthCheck();
     
@@ -248,7 +248,7 @@ export async function HEAD() {
   try {
     // 简单的存活检查，不返回详细信息
     return new NextResponse(null, { status: 200 });
-  } catch (error) {
+  } catch {
     return new NextResponse(null, { status: 503 });
   }
 }

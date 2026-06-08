@@ -155,7 +155,7 @@ export async function validateFile(file: File): Promise<ValidationResult> {
     const dimensionValidation = validateImageDimensions(dimensions.width, dimensions.height);
     result.errors.push(...dimensionValidation.errors);
     result.warnings.push(...dimensionValidation.warnings);
-  } catch (error) {
+  } catch {
     result.errors.push('无法读取图片信息，可能文件已损坏');
   }
 

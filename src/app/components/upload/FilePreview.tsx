@@ -19,12 +19,13 @@ import {
 } from 'lucide-react';
 import { ImageInfo } from '@/app/types';
 import { formatFileSize } from '@/app/lib/utils/fileValidation';
+import { DEFAULT_LOCALE, getCopy, type Locale } from '@/app/lib/i18n';
 
 interface FilePreviewProps {
   image: ImageInfo;
   isSelected?: boolean;
   showProgress?: boolean;
-  isEnglish?: boolean;
+  locale?: Locale;
   onSelect?: (imageId: string) => void;
   onRemove?: (imageId: string) => void;
   onPreview?: (imageId: string) => void;
@@ -49,36 +50,19 @@ const StatusColor = {
   error: 'bg-red-500',
 };
 
-// 状态文本映射
-const StatusText = {
-  zh: {
-    uploading: '上传中',
-    uploaded: '已上传',
-    processing: '处理中',
-    completed: '已完成',
-    error: '错误',
-  },
-  en: {
-    uploading: 'Uploading',
-    uploaded: 'Uploaded',
-    processing: 'Processing',
-    completed: 'Completed',
-    error: 'Error',
-  },
-};
-
 export function FilePreview({
   image,
   isSelected = false,
   showProgress = false,
-  isEnglish = false,
+  locale = DEFAULT_LOCALE,
   onSelect,
   onRemove,
   onPreview,
   className = ''
 }: FilePreviewProps) {
   const StatusIconComponent = StatusIcon[image.status];
-  const statusText = isEnglish ? StatusText.en : StatusText.zh;
+  const copy = getCopy(locale).filePreview;
+  const statusText = copy.statusText;
   
   const handleSelect = () => {
     onSelect?.(image.id);
@@ -135,7 +119,7 @@ export function FilePreview({
           <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
             <div className="text-center">
               <AlertCircle className="h-6 w-6 mx-auto mb-2 text-red-500" />
-              <p className="text-sm text-red-700">{isEnglish ? 'Upload failed' : '上传失败'}</p>
+              <p className="text-sm text-red-700">{copy.uploadFailed}</p>
             </div>
           </div>
         )}
@@ -198,7 +182,7 @@ export function FilePreview({
           {image.status === 'uploaded' && (
             <Button size="sm" variant="ghost" className="h-6 text-xs">
               <Download className="h-3 w-3 mr-1" />
-              {isEnglish ? 'Download' : '下载'}
+              {copy.download}
             </Button>
           )}
         </div>
@@ -229,7 +213,7 @@ interface FilePreviewListProps {
   images: ImageInfo[];
   selectedIds?: string[];
   showProgress?: boolean;
-  isEnglish?: boolean;
+  locale?: Locale;
   onSelect?: (imageId: string) => void;
   onSelectMultiple?: (imageIds: string[]) => void;
   onRemove?: (imageId: string) => void;
@@ -241,13 +225,15 @@ export function FilePreviewList({
   images,
   selectedIds = [],
   showProgress = false,
-  isEnglish = false,
+  locale = DEFAULT_LOCALE,
   onSelect,
   onSelectMultiple,
   onRemove,
   onPreview,
   className = ''
 }: FilePreviewListProps) {
+  const copy = getCopy(locale).filePreview;
+
   const handleSelectAll = () => {
     const allIds = images.map(img => img.id);
     onSelectMultiple?.(selectedIds.length === images.length ? [] : allIds);
@@ -257,7 +243,7 @@ export function FilePreviewList({
     return (
       <div className="text-center py-8 text-muted-foreground">
         <FileImage className="h-12 w-12 mx-auto mb-2" />
-        <p>{isEnglish ? 'No images yet' : '暂无图片'}</p>
+        <p>{copy.empty}</p>
       </div>
     );
   }
@@ -272,14 +258,10 @@ export function FilePreviewList({
             size="sm"
             onClick={handleSelectAll}
           >
-            {selectedIds.length === images.length
-              ? (isEnglish ? 'Clear selection' : '取消全选')
-              : (isEnglish ? 'Select all' : '全选')}
+            {selectedIds.length === images.length ? copy.clearSelection : copy.selectAll}
           </Button>
           <span className="text-sm text-muted-foreground">
-            {isEnglish
-              ? `Selected ${selectedIds.length} / ${images.length} images`
-              : `已选择 ${selectedIds.length} / ${images.length} 张图片`}
+            {copy.selected(selectedIds.length, images.length)}
           </span>
         </div>
       )}
@@ -295,7 +277,7 @@ export function FilePreviewList({
             onSelect={onSelect}
             onRemove={onRemove}
             onPreview={onPreview}
-            isEnglish={isEnglish}
+            locale={locale}
           />
         ))}
       </div>

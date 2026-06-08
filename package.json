@@ -1,6 +1,6 @@
 {
   "name": "image-watermark",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "private": true,
   "description": "一个现代化的图片水印处理应用，基于 Next.js 15 + Fabric.js 构建，支持批量处理和智能水印定位",
   "keywords": [
@@ -28,7 +28,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "smoke:html": "node scripts/smoke-html.mjs",
+    "verify": "npm run type-check && npm run lint && npm run build && npm run smoke:html"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",

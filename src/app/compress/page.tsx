@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element -- Local object URL previews cannot be optimized by next/image. */
+
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +16,7 @@ import { TopNavigation } from '@/components/TopNavigation';
 import { usePathname } from 'next/navigation';
 import { Upload, FileImage, Download, FileArchive, CheckCircle, XCircle, PackageOpen, Settings, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getCopy, getLocaleFromPathname, type Locale } from '@/app/lib/i18n';
 
 interface CompressedFile {
   id: string;
@@ -59,40 +62,18 @@ function FileUploadPanel({
   onClear,
   onRemoveFile,
   isProcessing,
-  isEnglish
+  locale
 }: {
   files: File[];
   onDrop: (files: File[]) => void;
   onClear: () => void;
   onRemoveFile: (index: number) => void;
   isProcessing: boolean;
-  isEnglish: boolean;
+  locale: Locale;
 }) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState<string>('');
-  const labels = isEnglish
-    ? {
-        title: 'File upload',
-        fileCount: (count: number) => `${count} ${count === 1 ? 'file' : 'files'}`,
-        release: 'Release files to upload',
-        addMoreHint: 'Drag or click to add more files',
-        emptyHint: 'Drag images here or click to upload',
-        support: 'Supports JPEG, PNG, WebP, and GIF',
-        addMore: 'Add more',
-        choose: 'Choose files',
-        pending: 'Pending files',
-      }
-    : {
-        title: '文件上传',
-        fileCount: (count: number) => `${count} 个文件`,
-        release: '释放文件开始上传',
-        addMoreHint: '拖拽或点击添加更多文件',
-        emptyHint: '拖拽图片到此处或点击上传',
-        support: '支持 JPEG、PNG、WebP、GIF 格式',
-        addMore: '添加更多',
-        choose: '选择文件',
-        pending: '待处理文件',
-      };
+  const labels = getCopy(locale).compress.fileUpload;
 
   useEffect(() => {
     return () => {
@@ -295,7 +276,7 @@ function CompressionControlPanel({
   isProcessing,
   progress,
   onStartCompression,
-  isEnglish
+  locale
 }: {
   settings: CompressionSettings;
   onSettingsChange: (settings: CompressionSettings) => void;
@@ -304,7 +285,7 @@ function CompressionControlPanel({
   isProcessing: boolean;
   progress: number;
   onStartCompression: () => void;
-  isEnglish: boolean;
+  locale: Locale;
 }) {
   const completedResults = results.filter(r => r.status === 'completed');
   const totalSaved = completedResults.reduce((sum, r) => sum + (r.originalSize - r.compressedSize), 0);
@@ -320,45 +301,7 @@ function CompressionControlPanel({
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
-  const labels = isEnglish
-    ? {
-        settings: 'Compression settings',
-        quality: 'Compression quality',
-        high: 'High quality (95%)',
-        medium: 'Balanced quality (85%)',
-        low: 'High compression (70%)',
-        removeMetadata: 'Remove metadata',
-        preserveFormat: 'Keep original format',
-        lossless: 'Lossless',
-        metadata: 'Metadata',
-        remove: 'Remove',
-        keep: 'Keep',
-        compressing: (value: number) => `Compressing... ${Math.round(value)}%`,
-        start: (count: number) => `Start compression (${count} ${count === 1 ? 'file' : 'files'})`,
-        stats: 'Compression stats',
-        ratio: 'Ratio',
-        saved: 'Saved',
-        completed: 'Completed',
-      }
-    : {
-        settings: '压缩设置',
-        quality: '压缩质量',
-        high: '高质量 (95%)',
-        medium: '中等质量 (85%)',
-        low: '高压缩 (70%)',
-        removeMetadata: '移除元数据',
-        preserveFormat: '保持原格式',
-        lossless: '无损',
-        metadata: '元数据',
-        remove: '移除',
-        keep: '保留',
-        compressing: (value: number) => `压缩中... ${Math.round(value)}%`,
-        start: (count: number) => `开始压缩 (${count} 个文件)`,
-        stats: '压缩统计',
-        ratio: '压缩率',
-        saved: '节省',
-        completed: '完成',
-      };
+  const labels = getCopy(locale).compress.controls;
 
   return (
     <div className="space-y-4">
@@ -504,13 +447,13 @@ function ResultsPreviewPanel({
   isDownloading,
   onDownloadFile,
   onDownloadAll,
-  isEnglish
+  locale
 }: {
   results: CompressedFile[];
   isDownloading: boolean;
   onDownloadFile: (result: CompressedFile) => void;
   onDownloadAll: () => void;
-  isEnglish: boolean;
+  locale: Locale;
 }) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState<string>('');
@@ -524,21 +467,7 @@ function ResultsPreviewPanel({
   }, [previewImage]);
 
   const completedResults = results.filter(r => r.status === 'completed');
-  const labels = isEnglish
-    ? {
-        waiting: 'Waiting for images',
-        waitingDescription: 'Upload image files and click "Start compression". Results will appear here.',
-        results: 'Results',
-        packaging: 'Packaging...',
-        downloadAll: 'Download all',
-      }
-    : {
-        waiting: '等待处理',
-        waitingDescription: '上传图片文件后点击“开始压缩”，压缩结果将显示在这里',
-        results: '处理结果',
-        packaging: '打包中...',
-        downloadAll: '下载全部',
-      };
+  const labels = getCopy(locale).compress.results;
 
   const formatFileSize = (bytes: number): string => {
     if (!bytes || bytes === 0 || isNaN(bytes)) return '0 Bytes';
@@ -709,7 +638,8 @@ function ResultsPreviewPanel({
 
 export default function Compress() {
   const pathname = usePathname();
-  const isEnglish = pathname.startsWith('/en');
+  const locale = getLocaleFromPathname(pathname);
+  const pageCopy = getCopy(locale).compress.page;
   const [files, setFiles] = useState<File[]>([]);
   const [results, setResults] = useState<CompressedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -789,7 +719,7 @@ export default function Compress() {
                 compressedSize: 0,
                 compressionRatio: 0,
                 status: 'error',
-                error: isEnglish ? 'Compression failed' : '压缩失败'
+                error: pageCopy.compressionFailed
               });
             }
           },
@@ -808,7 +738,7 @@ export default function Compress() {
           compressedSize: 0,
           compressionRatio: 0,
           status: 'error',
-          error: isEnglish ? 'Image failed to load' : '图片加载失败'
+          error: pageCopy.imageLoadFailed
         });
       };
 
@@ -921,7 +851,7 @@ export default function Compress() {
 
   return (
     <div className="min-h-dvh flex flex-col overflow-x-hidden">
-      <h1 className="sr-only">{isEnglish ? 'Free batch image compression tool' : '免费批量图片压缩工具'}</h1>
+      <h1 className="sr-only">{pageCopy.srTitle}</h1>
 
       {/* Top Navigation */}
       <TopNavigation />
@@ -931,10 +861,8 @@ export default function Compress() {
         {/* 页面标题 */}
         <div className="flex-shrink-0 p-4 bg-background">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-1">{isEnglish ? 'Batch Image Compression' : '批量图片压缩'}</h2>
-            <p className="text-sm text-muted-foreground">
-              {isEnglish ? 'Compress images locally in your browser with batch export' : '专业的图片压缩工具，支持多种格式'}
-            </p>
+            <h2 className="text-2xl font-bold mb-1">{pageCopy.mobileTitle}</h2>
+            <p className="text-sm text-muted-foreground">{pageCopy.mobileDescription}</p>
           </div>
         </div>
 
@@ -942,9 +870,9 @@ export default function Compress() {
         <div className="flex-1 overflow-hidden">
           <Tabs defaultValue="upload" className="h-full flex flex-col">
             <TabsList className="flex-shrink-0 grid w-full grid-cols-3 m-4">
-              <TabsTrigger value="upload">{isEnglish ? 'Upload' : '上传'}</TabsTrigger>
-              <TabsTrigger value="preview">{isEnglish ? 'Results' : '结果'}</TabsTrigger>
-              <TabsTrigger value="controls">{isEnglish ? 'Controls' : '控制'}</TabsTrigger>
+              <TabsTrigger value="upload">{pageCopy.uploadTab}</TabsTrigger>
+              <TabsTrigger value="preview">{pageCopy.resultsTab}</TabsTrigger>
+              <TabsTrigger value="controls">{pageCopy.controlsTab}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="upload" className="flex-1 overflow-auto p-4">
@@ -954,7 +882,7 @@ export default function Compress() {
                 onClear={clearFiles}
                 onRemoveFile={removeFile}
                 isProcessing={isProcessing}
-                isEnglish={isEnglish}
+                locale={locale}
               />
             </TabsContent>
 
@@ -964,7 +892,7 @@ export default function Compress() {
                 isDownloading={isDownloading}
                 onDownloadFile={downloadFile}
                 onDownloadAll={downloadAllFiles}
-                isEnglish={isEnglish}
+                locale={locale}
               />
             </TabsContent>
 
@@ -977,7 +905,7 @@ export default function Compress() {
                 isProcessing={isProcessing}
                 progress={progress}
                 onStartCompression={startCompression}
-                isEnglish={isEnglish}
+                locale={locale}
               />
             </TabsContent>
           </Tabs>
@@ -989,10 +917,8 @@ export default function Compress() {
         {/* 页面标题 */}
         <div className="flex-shrink-0 p-4 bg-background">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-1">{isEnglish ? 'Batch Image Compression' : '批量图片压缩'}</h2>
-            <p className="text-sm text-muted-foreground">
-              {isEnglish ? 'Compress JPEG, PNG, WebP, and GIF images locally in your browser' : '专业的图片压缩工具，支持 JPEG、PNG、WebP、GIF 格式'}
-            </p>
+            <h2 className="text-2xl font-bold mb-1">{pageCopy.desktopTitle}</h2>
+            <p className="text-sm text-muted-foreground">{pageCopy.desktopDescription}</p>
           </div>
         </div>
 
@@ -1008,7 +934,7 @@ export default function Compress() {
                 onClear={clearFiles}
                 onRemoveFile={removeFile}
                 isProcessing={isProcessing}
-                isEnglish={isEnglish}
+                locale={locale}
               />
               </div>
             </div>
@@ -1021,7 +947,7 @@ export default function Compress() {
               isDownloading={isDownloading}
               onDownloadFile={downloadFile}
               onDownloadAll={downloadAllFiles}
-              isEnglish={isEnglish}
+              locale={locale}
             />
           </div>
 
@@ -1037,7 +963,7 @@ export default function Compress() {
                   isProcessing={isProcessing}
                   progress={progress}
                   onStartCompression={startCompression}
-                  isEnglish={isEnglish}
+                  locale={locale}
                 />
               </div>
             </div>
@@ -1045,39 +971,17 @@ export default function Compress() {
         </div>
       </div>
 
-      <CompressGeoContent isEnglish={isEnglish} />
+      <CompressGeoContent locale={locale} />
     </div>
   );
 }
 
-function EnglishCompressGeoContent() {
-  const faqs = [
-    {
-      question: 'Is this batch image compression tool free?',
-      answer: 'Yes. Image Watermark includes a free browser-based image compression tool that does not require an account.'
-    },
-    {
-      question: 'Are images uploaded to a server?',
-      answer: 'No. Compression runs locally in your browser, so your image files are not uploaded to a remote server.'
-    },
-    {
-      question: 'Which image formats are supported?',
-      answer: 'The tool supports JPEG, PNG, WebP, and GIF images. It keeps the original format by default and supports batch ZIP downloads.'
-    },
-    {
-      question: 'Can I compress multiple images at once?',
-      answer: 'Yes. You can select multiple images, compress them in a batch, compare file sizes, and download all completed files together.'
-    },
-    {
-      question: 'Who is this useful for?',
-      answer: 'It is useful for website performance work, ecommerce product images, social media assets, email attachments, and team asset archives.'
-    }
-  ];
-
+function CompressGeoContent({ locale }: { locale: Locale }) {
+  const copy = getCopy(locale).compress.geo;
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: faqs.map((item) => ({
+    mainEntity: copy.faqs.map((item) => ({
       '@type': 'Question',
       name: item.question,
       acceptedAnswer: {
@@ -1095,127 +999,29 @@ function EnglishCompressGeoContent() {
       />
       <div className="mx-auto max-w-5xl px-4 py-10 space-y-8">
         <div className="space-y-3">
-          <h2 className="text-2xl font-semibold">Free browser-based batch image compression tool</h2>
-          <p className="text-muted-foreground leading-7">
-            Image Watermark includes a free online batch image compression tool for JPEG, PNG, WebP, and GIF files.
-            Images are read and processed locally in your browser, then exported individually or as a ZIP archive.
-          </p>
-          <p className="text-muted-foreground leading-7">
-            The tool is useful for improving website performance, reducing ecommerce product image sizes, preparing
-            social media assets, shrinking email attachments, and archiving team image files.
-          </p>
+          <h2 className="text-2xl font-semibold">{copy.heading}</h2>
+          {copy.paragraphs.map((paragraph) => (
+            <p key={paragraph} className="text-muted-foreground leading-7">
+              {paragraph}
+            </p>
+          ))}
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <div>
-            <h3 className="font-medium">Multiple formats</h3>
-            <p className="mt-2 text-sm text-muted-foreground leading-6">Compress JPEG, PNG, WebP, and GIF images while keeping the original format by default.</p>
-          </div>
-          <div>
-            <h3 className="font-medium">Batch processing</h3>
-            <p className="mt-2 text-sm text-muted-foreground leading-6">Select multiple images, process them together, and review size savings for each file.</p>
-          </div>
-          <div>
-            <h3 className="font-medium">Local privacy</h3>
-            <p className="mt-2 text-sm text-muted-foreground leading-6">Compression happens in the browser, which reduces exposure for private or work images.</p>
-          </div>
+          {copy.features.map((feature) => (
+            <div key={feature.title}>
+              <h3 className="font-medium">{feature.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground leading-6">
+                {feature.description}
+              </p>
+            </div>
+          ))}
         </div>
 
         <div className="space-y-3">
-          <h2 className="text-xl font-semibold">Frequently asked questions</h2>
+          <h2 className="text-xl font-semibold">{copy.faqHeading}</h2>
           <div className="divide-y rounded border bg-background">
-            {faqs.map((item) => (
-              <details key={item.question} className="group p-4">
-                <summary className="cursor-pointer font-medium">{item.question}</summary>
-                <p className="mt-3 text-sm text-muted-foreground leading-6">{item.answer}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CompressGeoContent({ isEnglish }: { isEnglish: boolean }) {
-  if (isEnglish) {
-    return <EnglishCompressGeoContent />;
-  }
-
-  const faqs = [
-    {
-      question: '这个批量图片压缩工具免费吗？',
-      answer: '是的，图片压缩工具可以免费使用，不需要注册账号。用户可以批量压缩 JPEG、PNG、WebP 和 GIF 图片。'
-    },
-    {
-      question: '压缩图片会上传到服务器吗？',
-      answer: '不会。图片压缩在用户浏览器本地完成，文件不会上传到服务器，适合处理隐私图片、商品图和工作素材。'
-    },
-    {
-      question: '压缩后会改变图片格式吗？',
-      answer: '默认会保持原始图片格式。JPEG、PNG、WebP 和 GIF 文件会按各自格式进行处理，并可在完成后批量打包下载。'
-    },
-    {
-      question: '可以一次压缩多张图片吗？',
-      answer: '可以。工具支持批量选择多张图片，显示每张图片压缩前后的大小、压缩率和处理状态。'
-    },
-    {
-      question: '适合哪些图片压缩场景？',
-      answer: '适合网站图片优化、电商商品图瘦身、社交媒体配图压缩、邮件附件减小和素材归档前批量压缩。'
-    }
-  ];
-
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqs.map((item) => ({
-      '@type': 'Question',
-      name: item.question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: item.answer,
-      },
-    })),
-  };
-
-  return (
-    <section className="border-t bg-muted/20">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <div className="mx-auto max-w-5xl px-4 py-10 space-y-8">
-        <div className="space-y-3">
-          <h2 className="text-2xl font-semibold">免费浏览器端批量图片压缩工具</h2>
-          <p className="text-muted-foreground leading-7">
-            批量图片压缩工具支持 JPEG、PNG、WebP 和 GIF 图片处理，可以在浏览器中压缩多张图片并打包下载。
-            图片文件在本地读取和处理，不上传到服务器，适合需要保护隐私的图片优化任务。
-          </p>
-          <p className="text-muted-foreground leading-7">
-            该工具适合网站性能优化、电商商品图压缩、社交媒体配图瘦身和团队素材归档。处理完成后，
-            页面会显示原始大小、压缩后大小、压缩率和节省空间，便于对比压缩效果。
-          </p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <div>
-            <h3 className="font-medium">多格式压缩</h3>
-            <p className="mt-2 text-sm text-muted-foreground leading-6">支持 JPEG、PNG、WebP 和 GIF，默认保持原格式输出。</p>
-          </div>
-          <div>
-            <h3 className="font-medium">批量处理</h3>
-            <p className="mt-2 text-sm text-muted-foreground leading-6">一次选择多张图片，统一压缩并查看每个文件的处理状态。</p>
-          </div>
-          <div>
-            <h3 className="font-medium">本地隐私</h3>
-            <p className="mt-2 text-sm text-muted-foreground leading-6">压缩过程在浏览器端完成，适合处理不希望上传的图片素材。</p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <h2 className="text-xl font-semibold">常见问题</h2>
-          <div className="divide-y rounded border bg-background">
-            {faqs.map((item) => (
+            {copy.faqs.map((item) => (
               <details key={item.question} className="group p-4">
                 <summary className="cursor-pointer font-medium">{item.question}</summary>
                 <p className="mt-3 text-sm text-muted-foreground leading-6">{item.answer}</p>

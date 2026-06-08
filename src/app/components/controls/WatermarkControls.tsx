@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+/* eslint-disable @next/next/no-img-element -- User-selected data URL previews cannot be optimized by next/image. */
+
+import React, { useEffect, useState, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,18 +11,19 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { Settings, Eye, EyeOff, Play, Square, AlertCircle } from 'lucide-react';
+import { Settings, Eye, EyeOff, Play, Square, AlertCircle, X } from 'lucide-react';
 import { useWatermarkStore, useImageStore } from '@/app/lib/stores';
 import { WatermarkPosition } from '@/app/types';
 import { BatchWatermarkProcessor, downloadBatchResults, BatchProcessingResult } from '@/app/lib/watermark/batchProcessor';
 import { generatePreviewFileName, DEFAULT_FILENAME_TEMPLATE, isValidTemplate } from '@/app/lib/utils/renamingUtils';
+import { DEFAULT_LOCALE, getCopy, type Locale } from '@/app/lib/i18n';
 
 interface WatermarkControlsProps {
   className?: string;
-  isEnglish?: boolean;
+  locale?: Locale;
 }
 
-export function WatermarkControls({ className = '', isEnglish = false }: WatermarkControlsProps) {
+export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: WatermarkControlsProps) {
   const {
     currentConfig,
     updateTextStyle,
@@ -43,6 +46,7 @@ export function WatermarkControls({ className = '', isEnglish = false }: Waterma
   const [currentProcessingImage, setCurrentProcessingImage] = useState('');
   const [processingResults, setProcessingResults] = useState<BatchProcessingResult[]>([]);
   const [processingError, setProcessingError] = useState<string | null>(null);
+  const [controlError, setControlError] = useState<string | null>(null);
   const processorRef = useRef<BatchWatermarkProcessor | null>(null);
 
   // {{ Shrimp-X: Add - 图片水印上传状态管理. Approval: Cunzhi(ID:timestamp). }}
@@ -57,214 +61,11 @@ export function WatermarkControls({ className = '', isEnglish = false }: Waterma
   // {{ Shrimp-X: Add - 文件名模板状态. Approval: Cunzhi(ID:timestamp). }}
   // 文件命名设置
   const [fileNameTemplate, setFileNameTemplate] = useState(DEFAULT_FILENAME_TEMPLATE);
-  const labels = useMemo(() => isEnglish
-    ? ({
-        settings: 'Watermark settings',
-        enabled: 'Enabled',
-        disabled: 'Disabled',
-        text: 'Text',
-        image: 'Image',
-        fullscreen: 'Full screen',
-        watermarkText: 'Watermark text',
-        watermarkTextPlaceholder: 'Enter watermark text',
-        font: 'Font',
-        chooseFont: 'Choose font',
-        mode: 'Watermark mode',
-        chooseMode: 'Choose watermark mode',
-        percentageMode: 'Percentage mode',
-        fixedMode: 'Fixed size',
-        percentageHelp: 'Watermark size is a percentage of the image size, with position fine-tuning.',
-        fixedHelp: 'Use a fixed pixel size, with position fine-tuning.',
-        watermarkRatio: 'Watermark ratio',
-        ratioHelp: 'Controls the watermark size relative to the image.',
-        fontSize: 'Font size',
-        percentageFontHelp: 'In percentage mode, font size is calculated from image dimensions and the selected ratio.',
-        fontWeight: 'Font weight',
-        chooseWeight: 'Choose weight',
-        normal: 'Normal',
-        bold: 'Bold',
-        thin: 'Thin',
-        light: 'Light',
-        medium: 'Medium',
-        heavy: 'Heavy',
-        black: 'Black',
-        color: 'Color',
-        opacity: 'Opacity',
-        rotation: 'Rotation',
-        strokeWidth: 'Stroke width (relative to font)',
-        strokeColor: 'Stroke color',
-        watermarkImage: 'Watermark image',
-        uploadWatermarkImage: 'Upload watermark image',
-        uploading: 'Uploading...',
-        chooseImage: 'Choose image',
-        changeImage: 'Change image',
-        removeImage: 'Remove image',
-        resetParams: 'Reset parameters',
-        imagePreviewAlt: 'Watermark image preview',
-        supportWatermarkImage: 'Supports JPG, PNG, and WebP. Max 5 MB.',
-        imageScale: 'Scale',
-        fullscreenModeText: 'Text watermark',
-        fullscreenModeImage: 'Image watermark',
-        watermarkContent: 'Watermark content',
-        uploadFullscreenImage: 'Upload watermark image',
-        dragImage: 'Click to choose an image or drag it here',
-        replaceImage: 'Click to replace image',
-        supportFullscreenImage: 'Supports JPG, PNG, and GIF. Max 5 MB.',
-        originalSize: 'Original size',
-        currentSize: 'Current size',
-        tileSpacing: 'Tile spacing',
-        tileDensity: 'Tile density',
-        diagonalMode: 'Diagonal mode',
-        position: 'Position',
-        fineTune: 'Position fine-tuning',
-        fineTuneHelp: 'Use percentages to fine-tune the watermark position and keep relative placement consistent across image sizes.',
-        horizontalOffset: 'Horizontal offset',
-        verticalOffset: 'Vertical offset',
-        resetOffset: 'Reset offset',
-        filenameRule: 'Export filename rule',
-        preview: 'Preview',
-        variables: 'Variables',
-        originalName: 'original name',
-        index: 'index',
-        paddedIndex: 'padded index',
-        date: 'date',
-        batchMode: 'Batch processing mode',
-        batchPercentage: 'Percentage mode - keeps a fixed relative size ratio and supports position fine-tuning.',
-        batchFixed: 'Fixed size - all images use the same pixel size and support position fine-tuning.',
-        willProcess: (count: number, mode: string) => `Will process ${count} ${count === 1 ? 'image' : 'images'} with ${mode === 'fixed' ? 'pixel consistency' : 'ratio consistency'}.`,
-        progress: 'Progress',
-        processing: 'Processing',
-        completed: 'Completed',
-        failedCount: (count: number) => `${count} ${count === 1 ? 'image' : 'images'} failed`,
-        startProcessing: (count: number) => `Start processing (${count} ${count === 1 ? 'image' : 'images'})`,
-        stopProcessing: 'Stop processing',
-        previewResult: 'Preview result',
-        downloadFailed: 'Download failed, but processing is complete',
-        processFailed: 'Processing failed',
-        chooseImageFile: 'Please choose an image file',
-        imageTooLarge: 'Image file size cannot exceed 5 MB',
-        imageLoadFailed: 'Image failed to load. Please choose another image.',
-        uploadFailed: 'Upload failed. Please try again.',
-        imageReadFailed: 'Image read failed. Please try again.',
-        imageUploadFailed: 'Image upload failed. Please try again.',
-        positions: {
-          'top-left': 'Top left',
-          'top-center': 'Top center',
-          'top-right': 'Top right',
-          'middle-left': 'Middle left',
-          'middle-center': 'Center',
-          'middle-right': 'Middle right',
-          'bottom-left': 'Bottom left',
-          'bottom-center': 'Bottom center',
-          'bottom-right': 'Bottom right',
-          custom: 'Custom',
-        } as Record<WatermarkPosition, string>,
-      })
-    : ({
-        settings: '水印设置',
-        enabled: '已启用',
-        disabled: '已禁用',
-        text: '文字',
-        image: '图片',
-        fullscreen: '全屏',
-        watermarkText: '水印文字',
-        watermarkTextPlaceholder: '请输入水印文字',
-        font: '字体',
-        chooseFont: '选择字体',
-        mode: '水印模式',
-        chooseMode: '选择水印模式',
-        percentageMode: '比例模式',
-        fixedMode: '固定尺寸',
-        percentageHelp: '水印大小为图片尺寸的百分比，支持位置微调',
-        fixedHelp: '使用固定的像素尺寸，支持位置微调',
-        watermarkRatio: '水印比例',
-        ratioHelp: '控制水印相对于图片的大小比例',
-        fontSize: '字体大小',
-        percentageFontHelp: '比例模式下，字体大小将根据图片尺寸和设置的比例自动计算',
-        fontWeight: '字重',
-        chooseWeight: '选择字重',
-        normal: '正常',
-        bold: '粗体',
-        thin: '极细',
-        light: '细',
-        medium: '中等',
-        heavy: '粗',
-        black: '极粗',
-        color: '颜色',
-        opacity: '透明度',
-        rotation: '旋转角度',
-        strokeWidth: '描边粗细（相对字号）',
-        strokeColor: '描边颜色',
-        watermarkImage: '水印图片',
-        uploadWatermarkImage: '上传水印图片',
-        uploading: '上传中...',
-        chooseImage: '选择图片',
-        changeImage: '更换图片',
-        removeImage: '移除图片',
-        resetParams: '重置参数',
-        imagePreviewAlt: '水印图片预览',
-        supportWatermarkImage: '支持 JPG、PNG、WebP 格式，最大 5MB',
-        imageScale: '缩放比例',
-        fullscreenModeText: '文字水印',
-        fullscreenModeImage: '图片水印',
-        watermarkContent: '水印内容',
-        uploadFullscreenImage: '上传水印图片',
-        dragImage: '点击选择图片或拖拽到此处',
-        replaceImage: '点击更换图片',
-        supportFullscreenImage: '支持 JPG、PNG、GIF 格式，最大 5MB',
-        originalSize: '原始尺寸',
-        currentSize: '当前尺寸',
-        tileSpacing: '平铺间距',
-        tileDensity: '平铺密度',
-        diagonalMode: '对角线模式',
-        position: '位置',
-        fineTune: '位置微调',
-        fineTuneHelp: '使用百分比微调水印位置，确保在不同尺寸图片上保持一致的相对位置',
-        horizontalOffset: '水平偏移',
-        verticalOffset: '垂直偏移',
-        resetOffset: '重置偏移量',
-        filenameRule: '导出文件名规则',
-        preview: '预览',
-        variables: '可用变量',
-        originalName: '原名',
-        index: '序号',
-        paddedIndex: '补零序号',
-        date: '日期',
-        batchMode: '批量处理模式',
-        batchPercentage: '比例模式 - 保持固定的相对大小比例，支持位置微调',
-        batchFixed: '固定尺寸 - 所有图片使用相同像素大小，支持位置微调',
-        willProcess: (count: number, mode: string) => `将处理 ${count} 张图片，确保${mode === 'fixed' ? '像素一致性' : '比例一致性'}`,
-        progress: '处理进度',
-        processing: '正在处理',
-        completed: '处理完成',
-        failedCount: (count: number) => `${count} 张图片处理失败`,
-        startProcessing: (count: number) => `开始处理 (${count} 张图片)`,
-        stopProcessing: '停止处理',
-        previewResult: '预览效果',
-        downloadFailed: '下载失败，但处理已完成',
-        processFailed: '处理失败',
-        chooseImageFile: '请选择图片文件',
-        imageTooLarge: '图片文件大小不能超过5MB',
-        imageLoadFailed: '图片加载失败，请选择其他图片',
-        uploadFailed: '上传失败，请重试',
-        imageReadFailed: '图片读取失败，请重试',
-        imageUploadFailed: '图片上传失败，请重试',
-        positions: {
-          'top-left': '左上',
-          'top-center': '上中',
-          'top-right': '右上',
-          'middle-left': '左中',
-          'middle-center': '中心',
-          'middle-right': '右中',
-          'bottom-left': '左下',
-          'bottom-center': '下中',
-          'bottom-right': '右下',
-          custom: '自定义',
-        } as Record<WatermarkPosition, string>,
-      }), [isEnglish]);
+  const labels = getCopy(locale).watermarkControls;
+  const usesEnglishDefaults = locale === 'en';
 
   useEffect(() => {
-    if (isEnglish) {
+    if (usesEnglishDefaults) {
       if (currentConfig.textStyle?.content === '水印文字') {
         updateTextStyle({ content: 'Watermark text' });
       }
@@ -281,7 +82,7 @@ export function WatermarkControls({ className = '', isEnglish = false }: Waterma
       updateFullscreenStyle({ content: '水印' });
     }
   }, [
-    isEnglish,
+    usesEnglishDefaults,
     currentConfig.textStyle?.content,
     currentConfig.fullscreenStyle?.content,
     updateTextStyle,
@@ -322,9 +123,6 @@ export function WatermarkControls({ className = '', isEnglish = false }: Waterma
           setProcessingProgress(progress);
           setCurrentProcessingImage(imageName);
         },
-        onImageComplete: (imageId, result) => {
-          // 处理完成回调
-        },
         onComplete: async (results) => {
           setProcessingResults(results);
           setIsProcessing(false);
@@ -333,11 +131,14 @@ export function WatermarkControls({ className = '', isEnglish = false }: Waterma
           try {
             // {{ Shrimp-X: Modify - 传递文件名模板参数. Approval: Cunzhi(ID:timestamp). }}
             await downloadBatchResults(results, undefined, fileNameTemplate);
-          } catch (error) {
+          } catch {
             setProcessingError(labels.downloadFailed);
           }
         },
-        onError: (error, imageId) => {
+        onImageComplete: () => {
+          // 处理完成回调
+        },
+        onError: (error) => {
           setProcessingError(error.message);
         },
         // {{ Shrimp-X: Modify - 移除硬编码格式，保留原始图片格式. Approval: Cunzhi(ID:timestamp). }}
@@ -364,16 +165,17 @@ export function WatermarkControls({ className = '', isEnglish = false }: Waterma
   const handleWatermarkImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    setControlError(null);
 
     // 验证文件类型
     if (!file.type.startsWith('image/')) {
-      alert(labels.chooseImageFile);
+      setControlError(labels.chooseImageFile);
       return;
     }
 
     // 验证文件大小 (最大5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert(labels.imageTooLarge);
+      setControlError(labels.imageTooLarge);
       return;
     }
 
@@ -403,26 +205,19 @@ export function WatermarkControls({ className = '', isEnglish = false }: Waterma
           maintainAspectRatio: true
         });
 
-        console.log('图片水印配置已更新:', {
-          imageUrl: imageUrl,
-          width: Math.min(img.width, 200),
-          height: Math.min(img.height, 200),
-          originalSize: { width: img.width, height: img.height }
-        });
-
         setIsUploadingWatermark(false);
       };
 
       img.onerror = () => {
         URL.revokeObjectURL(imageUrl);
-        alert(labels.imageLoadFailed);
+        setControlError(labels.imageLoadFailed);
         setIsUploadingWatermark(false);
       };
 
       img.src = imageUrl;
     } catch (error) {
       console.error('上传水印图片失败:', error);
-      alert(labels.uploadFailed);
+      setControlError(labels.uploadFailed);
       setIsUploadingWatermark(false);
     }
   };
@@ -491,7 +286,6 @@ export function WatermarkControls({ className = '', isEnglish = false }: Waterma
 
   // 处理位置选择
   const handlePositionSelect = (position: WatermarkPosition) => {
-    console.log('选择位置:', position);
     setPosition(position);
   };
 
@@ -505,16 +299,17 @@ export function WatermarkControls({ className = '', isEnglish = false }: Waterma
   const handleFullscreenImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    setControlError(null);
 
     // 验证文件类型
     if (!file.type.startsWith('image/')) {
-      alert(labels.chooseImageFile);
+      setControlError(labels.chooseImageFile);
       return;
     }
 
     // 验证文件大小 (最大5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert(labels.imageTooLarge);
+      setControlError(labels.imageTooLarge);
       return;
     }
 
@@ -557,7 +352,7 @@ export function WatermarkControls({ className = '', isEnglish = false }: Waterma
       };
 
       reader.onerror = () => {
-        alert(labels.imageReadFailed);
+        setControlError(labels.imageReadFailed);
         setIsUploadingFullscreenImage(false);
       };
 
@@ -566,7 +361,7 @@ export function WatermarkControls({ className = '', isEnglish = false }: Waterma
 
     } catch (error) {
       console.error('图片上传失败:', error);
-      alert(labels.imageUploadFailed);
+      setControlError(labels.imageUploadFailed);
       setIsUploadingFullscreenImage(false);
     } finally {
       // 重置文件输入
@@ -605,6 +400,21 @@ export function WatermarkControls({ className = '', isEnglish = false }: Waterma
             )}
           </Button>
         </div>
+
+        {controlError && (
+          <div className="flex items-center space-x-2 text-sm text-destructive bg-destructive/10 p-2 rounded">
+            <AlertCircle className="h-4 w-4" />
+            <span className="flex-1">{controlError}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2"
+              onClick={() => setControlError(null)}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
 
         {/* 水印类型选择 */}
         <Tabs
@@ -648,9 +458,9 @@ export function WatermarkControls({ className = '', isEnglish = false }: Waterma
                   <SelectItem value="Times New Roman">Times New Roman</SelectItem>
                   <SelectItem value="Georgia">Georgia</SelectItem>
                   <SelectItem value="Verdana">Verdana</SelectItem>
-                  <SelectItem value="Microsoft YaHei">{isEnglish ? 'Microsoft YaHei' : '微软雅黑'}</SelectItem>
-                  <SelectItem value="SimHei">{isEnglish ? 'SimHei' : '黑体'}</SelectItem>
-                  <SelectItem value="SimSun">{isEnglish ? 'SimSun' : '宋体'}</SelectItem>
+                  <SelectItem value="Microsoft YaHei">{labels.microsoftYaHei}</SelectItem>
+                  <SelectItem value="SimHei">{labels.simHei}</SelectItem>
+                  <SelectItem value="SimSun">{labels.simSun}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

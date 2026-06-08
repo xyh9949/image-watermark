@@ -166,7 +166,7 @@ export function calculateGridPositionInfo(
  */
 export function isEdgePosition(position: WatermarkPosition): boolean {
   // 所有位置都完全贴边，不使用默认margin
-  return true;
+  return Boolean(position);
 }
 
 /**

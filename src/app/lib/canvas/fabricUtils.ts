@@ -5,15 +5,11 @@ import * as fabric from 'fabric';
 import { CanvasConfig, FabricWatermarkObject } from '../../types/watermark';
 import { WatermarkConfig, ImageInfo } from '../../types';
 import {
-  calculateAnchorPosition,
   calculateEdgeAlignedAnchorPosition,
-  isEdgePosition,
   getOriginFromPosition
 } from './positionUtils';
 import {
-  calculateProportionPosition,
-  convertProportionToPixel,
-  calculateProportionalFontSize
+  calculateProportionPosition
 } from './proportionUtils';
 import {
   calculateAdaptiveWatermarkSize,
@@ -117,8 +113,8 @@ export function loadImageToCanvas(
 
       // 将图片移到最底层
       try {
-        canvas.bringObjectToFront && canvas.bringObjectToFront(img);
-      } catch (error) {
+        canvas.bringObjectToFront?.(img);
+      } catch {
         // 继续执行，不影响主要功能
       }
 
@@ -183,7 +179,6 @@ export function createTextWatermark(
       originY = positionInfo.originY;
     } else if (config.position.position !== 'custom') {
       // 像素模式：使用现有的九宫格对齐逻辑，但使用自适应边距
-      const margin = scalingResult.marginX;
       const offsetX = config.position.offsetX || 0;
       const offsetY = config.position.offsetY || 0;
 
@@ -248,13 +243,6 @@ export function createTextWatermark(
       originX = 'left';
       originY = 'top';
 
-      console.log('createTextWatermark: 完全贴边位置计算', {
-        position,
-        canvasSize: { width: canvasWidth, height: canvasHeight },
-        textSize: { width: textWidth, height: textHeight },
-        final: { left, top },
-        offset: { x: offsetX, y: offsetY }
-      });
     }
   }
 
@@ -314,13 +302,6 @@ export function createTextWatermark(
       top: adjustedTop
     });
 
-    console.log('createTextWatermark: 边距调整', {
-      position: pos,
-      original: { left, top },
-      bounds: { left: bounds.left, top: bounds.top },
-      diff: { left: leftDiff, top: topDiff },
-      adjusted: { left: adjustedLeft, top: adjustedTop }
-    });
   }
 
   return text;
@@ -334,14 +315,7 @@ export function createImageWatermark(
   canvasWidth?: number,
   canvasHeight?: number
 ): Promise<FabricImage | null> {
-  console.log('createImageWatermark: 开始创建图片水印', {
-    hasImageUrl: !!config.imageStyle?.imageUrl,
-    imageUrl: config.imageStyle?.imageUrl?.substring(0, 50) + '...',
-    imageStyle: config.imageStyle
-  });
-
   if (!config.imageStyle?.imageUrl) {
-    console.log('createImageWatermark: 图片URL为空');
     return Promise.resolve(null);
   }
 
@@ -357,19 +331,6 @@ export function createImageWatermark(
 
     // {{ Shrimp-X: Modify - 重写图片水印缩放逻辑，使用比例缩放和正确的位置计算. Approval: Cunzhi(ID:timestamp). }}
     const imageStyle = config.imageStyle!;
-
-    console.log('createImageWatermark: 原始图片尺寸', {
-      width: img.width,
-      height: img.height
-    });
-    console.log('createImageWatermark: Canvas尺寸', {
-      canvasWidth,
-      canvasHeight
-    });
-    console.log('createImageWatermark: 配置尺寸', {
-      width: imageStyle.width,
-      height: imageStyle.height
-    });
 
     // {{ Shrimp-X: Modify - 使用用户设置的缩放比例，基于Canvas尺寸计算合适的基础大小. Approval: Cunzhi(ID:timestamp). }}
     // 计算基于Canvas尺寸和用户缩放比例的水印大小
@@ -408,12 +369,6 @@ export function createImageWatermark(
       scaleX = targetWidth / (img.width || 1);
       scaleY = targetHeight / (img.height || 1);
 
-      console.log('createImageWatermark: 缩放计算', {
-        baseSize: { width: baseWidth.toFixed(1), height: baseHeight.toFixed(1) },
-        userScale: imageStyle.scale,
-        targetSize: { width: targetWidth.toFixed(1), height: targetHeight.toFixed(1) },
-        finalScale: { x: scaleX.toFixed(3), y: scaleY.toFixed(3) }
-      });
     } else {
       // 如果没有Canvas尺寸，直接使用用户缩放比例
       const baseScale = 0.5; // 基础缩放
@@ -469,13 +424,6 @@ export function createImageWatermark(
         // 'top' 不需要调整
       }
 
-      console.log('createImageWatermark: 位置计算', {
-        position: config.position.position,
-        canvasSize: { width: cWidth, height: cHeight },
-        watermarkSize: { width: targetWidth.toFixed(1), height: targetHeight.toFixed(1) },
-        final: { left: left.toFixed(1), top: top.toFixed(1) },
-        margin: '完全贴边'
-      });
     } else {
       // 自定义位置
       left = config.position.x || 0;
@@ -493,12 +441,6 @@ export function createImageWatermark(
       angle: imageStyle.rotation,
       selectable: false,
       evented: false,
-    });
-
-    console.log('createImageWatermark: Fabric.js设置', {
-      position: { left: left.toFixed(1), top: top.toFixed(1) },
-      watermarkSize: { width: targetWidth.toFixed(1), height: targetHeight.toFixed(1) },
-      scale: { x: scaleX.toFixed(3), y: scaleY.toFixed(3) }
     });
 
     return img;
@@ -748,7 +690,7 @@ export async function createFullscreenWatermark(
 
     return fullscreenRect;
 
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -803,7 +745,7 @@ export async function applyWatermarkToCanvas(
       fabricObject,
       config,
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 }

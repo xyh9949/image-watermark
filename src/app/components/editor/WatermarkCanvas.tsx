@@ -2,13 +2,11 @@
 
 'use client';
 
-import React, { useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  ZoomIn,
-  ZoomOut,
   RotateCcw,
   Download,
   Eye,
@@ -18,18 +16,19 @@ import {
 import { useCanvas } from '@/app/hooks/useCanvas';
 import { useImageStore, useWatermarkStore } from '@/app/lib/stores';
 import type { ImageInfo, WatermarkConfig } from '@/app/types';
+import { DEFAULT_LOCALE, getCopy, type Locale } from '@/app/lib/i18n';
 
 interface WatermarkCanvasProps {
   className?: string;
   showControls?: boolean;
-  isEnglish?: boolean;
+  locale?: Locale;
   onExport?: (dataUrl: string) => void;
 }
 
 export function WatermarkCanvas({
   className = '',
   showControls = true,
-  isEnglish = false,
+  locale = DEFAULT_LOCALE,
   onExport
 }: WatermarkCanvasProps) {
   const currentImage = useImageStore(s => s.images.find(img => img.id === s.currentImageId) || null);
@@ -43,7 +42,6 @@ export function WatermarkCanvas({
     watermarks,
     loadImage,
     addWatermark,
-    updateWatermark,
     clearAllWatermarks,
     exportImage,
     fitToContainer,
@@ -52,51 +50,17 @@ export function WatermarkCanvas({
     width: 800,
     height: 600,
     backgroundColor: '#f8f9fa',
-    onCanvasReady: (canvas) => {
+    onCanvasReady: () => {
       // Canvas 准备就绪
     },
-    onObjectAdded: (object) => {
+    onObjectAdded: () => {
       // 对象已添加
     },
-    onSelectionChanged: (objects) => {
+    onSelectionChanged: () => {
       // 选择已改变
     }
   });
-  const labels = useMemo(() => isEnglish
-    ? ({
-        editor: 'Watermark editor',
-        fit: 'Fit to window',
-        preview: 'Preview',
-        clear: 'Clear watermark',
-        export: 'Export',
-        exportTitle: 'Export image',
-        selectImage: 'Select an image to edit',
-        initializing: 'Initializing editor...',
-        watermarkCount: 'Watermarks',
-        zoom: 'Zoom',
-        watermark: 'Watermark',
-        enabled: 'Watermark enabled',
-        disabled: 'Watermark disabled',
-        initializingAlert: 'Canvas is initializing. Please wait...',
-        previewTitle: 'Watermark Preview',
-      })
-    : ({
-        editor: '水印编辑器',
-        fit: '适应窗口',
-        preview: '预览',
-        clear: '清除水印',
-        export: '导出',
-        exportTitle: '导出图片',
-        selectImage: '请先选择要编辑的图片',
-        initializing: '初始化编辑器...',
-        watermarkCount: '水印数量',
-        zoom: '缩放',
-        watermark: '水印',
-        enabled: '水印已启用',
-        disabled: '水印已禁用',
-        initializingAlert: 'Canvas初始化中，请稍候...',
-        previewTitle: '水印预览',
-      }), [isEnglish]);
+  const labels = getCopy(locale).watermarkCanvas;
 
   // 当选中的图片改变时，加载到Canvas，并在完成后刷新水印
   useEffect(() => {
@@ -142,7 +106,7 @@ export function WatermarkCanvas({
     };
 
     updateCanvasWatermark();
-  }, [isReady, canvasImage, currentConfig]); // 移除函数依赖避免无限循环
+  }, [isReady, canvasImage, currentConfig, clearAllWatermarks, addWatermark]);
 
   // {{ Shrimp-X: Modify - 根据原始图片格式导出，保留原始格式. Approval: Cunzhi(ID:timestamp). }}
   // 导出图片

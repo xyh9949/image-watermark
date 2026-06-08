@@ -307,8 +307,9 @@ export const useImageStore = create<ImageState>()(
       // 移除处理任务
       removeProcessingTask: (imageId) => {
         set((state) => {
-          const { [imageId]: removed, ...rest } = state.processingTasks;
-          return { processingTasks: rest };
+          const processingTasks = { ...state.processingTasks };
+          delete processingTasks[imageId];
+          return { processingTasks };
         });
       },
 

@@ -18,7 +18,6 @@ import {
 import { safeUUID } from '@/lib/utils';
 import {
   calculateProportions,
-  convertPixelToProportion,
   createDefaultProportions
 } from '../canvas/proportionUtils';
 

@@ -59,7 +59,7 @@ function healthCheck() {
               timestamp: new Date().toISOString()
             });
           }
-        } catch (error) {
+        } catch {
           reject({
             status: 'unhealthy',
             statusCode: res.statusCode,

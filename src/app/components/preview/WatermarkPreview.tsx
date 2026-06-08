@@ -31,6 +31,7 @@ export function WatermarkPreview({ isOpen, onClose }: WatermarkPreviewProps) {
     // {{ Shrimp-X: Modify - 优化Canvas清理时序，确保图片切换时正确清理和重绘. Approval: Cunzhi(ID:timestamp). }}
     // 立即清理当前canvas内容
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- entering loading state is tied to this imperative canvas redraw.
     setIsReady(false);
 
     const img = new Image();
@@ -142,17 +143,6 @@ export function WatermarkPreview({ isOpen, onClose }: WatermarkPreviewProps) {
           // 绘制文字
           ctx.fillText(textStyle.content, textX, textY);
 
-          // {{ Shrimp-X: Add - 添加文字水印调试信息. Approval: Cunzhi(ID:timestamp). }}
-          if (process.env.NODE_ENV === 'development') {
-            console.log('WatermarkPreview - 文字水印详情:', {
-              adaptiveFontSize,
-              finalFontSize,
-              adaptiveMargin,
-              finalMargin,
-              position: { textX, textY },
-              textSize: { textWidth, textHeight }
-            });
-          }
         }
 
         ctx.restore();
@@ -269,17 +259,6 @@ export function WatermarkPreview({ isOpen, onClose }: WatermarkPreviewProps) {
         }
 
         ctx.restore();
-      }
-
-      // {{ Shrimp-X: Add - 添加调试信息验证修复效果. Approval: Cunzhi(ID:timestamp). }}
-      if (process.env.NODE_ENV === 'development') {
-        console.log('WatermarkPreview - 预览渲染完成:', {
-          originalImage: { width: img.width, height: img.height },
-          previewCanvas: { width: canvas.width, height: canvas.height },
-          previewScale: scale,
-          watermarkEnabled: currentConfig.enabled,
-          watermarkType: currentConfig.type
-        });
       }
 
       setIsReady(true);
