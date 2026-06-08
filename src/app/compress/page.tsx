@@ -834,7 +834,9 @@ export default function Compress() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col overflow-hidden">
+    <div className="min-h-dvh flex flex-col overflow-x-hidden">
+      <h1 className="sr-only">免费批量图片压缩工具</h1>
+
       {/* Top Navigation */}
       <TopNavigation />
 
@@ -843,7 +845,7 @@ export default function Compress() {
         {/* 页面标题 */}
         <div className="flex-shrink-0 p-4 bg-background">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-1">批量图片压缩</h1>
+            <h2 className="text-2xl font-bold mb-1">批量图片压缩</h2>
             <p className="text-sm text-muted-foreground">
               专业的图片压缩工具，支持多种格式
             </p>
@@ -898,7 +900,7 @@ export default function Compress() {
         {/* 页面标题 */}
         <div className="flex-shrink-0 p-4 bg-background">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-1">批量图片压缩</h1>
+            <h2 className="text-2xl font-bold mb-1">批量图片压缩</h2>
             <p className="text-sm text-muted-foreground">
               专业的图片压缩工具，支持 JPEG、PNG、WebP、GIF 格式
             </p>
@@ -950,6 +952,95 @@ export default function Compress() {
           </div>
         </div>
       </div>
+
+      <CompressGeoContent />
     </div>
+  );
+}
+
+function CompressGeoContent() {
+  const faqs = [
+    {
+      question: '这个批量图片压缩工具免费吗？',
+      answer: '是的，图片压缩工具可以免费使用，不需要注册账号。用户可以批量压缩 JPEG、PNG、WebP 和 GIF 图片。'
+    },
+    {
+      question: '压缩图片会上传到服务器吗？',
+      answer: '不会。图片压缩在用户浏览器本地完成，文件不会上传到服务器，适合处理隐私图片、商品图和工作素材。'
+    },
+    {
+      question: '压缩后会改变图片格式吗？',
+      answer: '默认会保持原始图片格式。JPEG、PNG、WebP 和 GIF 文件会按各自格式进行处理，并可在完成后批量打包下载。'
+    },
+    {
+      question: '可以一次压缩多张图片吗？',
+      answer: '可以。工具支持批量选择多张图片，显示每张图片压缩前后的大小、压缩率和处理状态。'
+    },
+    {
+      question: '适合哪些图片压缩场景？',
+      answer: '适合网站图片优化、电商商品图瘦身、社交媒体配图压缩、邮件附件减小和素材归档前批量压缩。'
+    }
+  ];
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  };
+
+  return (
+    <section className="border-t bg-muted/20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <div className="mx-auto max-w-5xl px-4 py-10 space-y-8">
+        <div className="space-y-3">
+          <h2 className="text-2xl font-semibold">免费浏览器端批量图片压缩工具</h2>
+          <p className="text-muted-foreground leading-7">
+            批量图片压缩工具支持 JPEG、PNG、WebP 和 GIF 图片处理，可以在浏览器中压缩多张图片并打包下载。
+            图片文件在本地读取和处理，不上传到服务器，适合需要保护隐私的图片优化任务。
+          </p>
+          <p className="text-muted-foreground leading-7">
+            该工具适合网站性能优化、电商商品图压缩、社交媒体配图瘦身和团队素材归档。处理完成后，
+            页面会显示原始大小、压缩后大小、压缩率和节省空间，便于对比压缩效果。
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <div>
+            <h3 className="font-medium">多格式压缩</h3>
+            <p className="mt-2 text-sm text-muted-foreground leading-6">支持 JPEG、PNG、WebP 和 GIF，默认保持原格式输出。</p>
+          </div>
+          <div>
+            <h3 className="font-medium">批量处理</h3>
+            <p className="mt-2 text-sm text-muted-foreground leading-6">一次选择多张图片，统一压缩并查看每个文件的处理状态。</p>
+          </div>
+          <div>
+            <h3 className="font-medium">本地隐私</h3>
+            <p className="mt-2 text-sm text-muted-foreground leading-6">压缩过程在浏览器端完成，适合处理不希望上传的图片素材。</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h2 className="text-xl font-semibold">常见问题</h2>
+          <div className="divide-y rounded border bg-background">
+            {faqs.map((item) => (
+              <details key={item.question} className="group p-4">
+                <summary className="cursor-pointer font-medium">{item.question}</summary>
+                <p className="mt-3 text-sm text-muted-foreground leading-6">{item.answer}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
