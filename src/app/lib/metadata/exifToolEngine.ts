@@ -105,11 +105,34 @@ export async function writeMetadataEntries(
   outputSuffix = 'metadata'
 ): Promise<MetadataWriteResult> {
   const exifTool = await loadExifTool();
+  const entryList = Object.entries(entries);
   const failedTags: MetadataWriteResult['failedTags'] = [];
   let workingFile = file;
   let wroteAnyTag = false;
 
-  for (const [key, value] of Object.entries(entries)) {
+  if (entryList.length === 0) {
+    return {
+      success: true,
+      file,
+      failedTags,
+    };
+  }
+
+  const batchResult = await exifTool.writeMetadata(file, entries, {
+    fetch: fetchWasmAsset,
+  });
+
+  if (batchResult.success) {
+    return {
+      success: true,
+      file: createOutputFile(file, batchResult.data, outputSuffix),
+      failedTags,
+    };
+  }
+
+  const batchError = batchResult.error || 'ExifTool could not write metadata to this file.';
+
+  for (const [key, value] of entryList) {
     const result = await exifTool.writeMetadata(workingFile, { [key]: value }, {
       fetch: fetchWasmAsset,
     });
@@ -129,7 +152,7 @@ export async function writeMetadataEntries(
     return {
       success: false,
       failedTags,
-      error: failedTags[0]?.error,
+      error: batchError,
     };
   }
 
@@ -148,12 +171,22 @@ export async function writeMetadataEntries(
   };
 }
 
-export async function clearMetadata(file: File): Promise<MetadataWriteResult> {
-  return writeWithRawArgs(file, ['-all='], 'clean');
+export async function copyWritableMetadata(
+  sourceFile: File,
+  targetFile: File,
+  outputSuffix = 'metadata'
+): Promise<MetadataWriteResult> {
+  const tags = await readMetadata(sourceFile);
+  const entries = buildWritableMetadataEntries(tags);
+  return writeMetadataEntries(targetFile, entries, outputSuffix);
 }
 
-export async function clearGps(file: File): Promise<MetadataWriteResult> {
-  return writeWithRawArgs(file, ['-gps:all=', '-xmp:geotag=', '-xmp:geotime='], 'nogps');
+export async function clearMetadata(file: File, outputSuffix = 'clean'): Promise<MetadataWriteResult> {
+  return writeWithRawArgs(file, ['-all='], outputSuffix);
+}
+
+export async function clearGps(file: File, outputSuffix = 'nogps'): Promise<MetadataWriteResult> {
+  return writeWithRawArgs(file, ['-gps:all=', '-xmp:geotag=', '-xmp:geotime='], outputSuffix);
 }
 
 export async function clearSelectedMetadata(file: File, tagKeys: string[]): Promise<MetadataWriteResult> {
@@ -325,7 +358,8 @@ function normalizeGroup(rawGroup: string, name: string) {
   if (rawGroup.startsWith('WebP')) return 'WebP';
   if (rawGroup === 'Composite') return 'Composite';
   if (rawGroup === 'ExifTool') return 'ExifTool';
-  if (rawGroup === 'File' || rawGroup === 'System') return 'File';
+  if (rawGroup === 'System') return 'System';
+  if (rawGroup === 'File') return 'File';
   if (['EXIF', 'IFD0', 'IFD1', 'ExifIFD', 'GPS', 'InteropIFD', 'MakerNotes'].includes(rawGroup)) return 'EXIF';
   return rawGroup || 'File';
 }
@@ -360,6 +394,35 @@ function findTagDisplayValue(tags: MetadataTag[], aliases: string[]) {
 
 function normalizeTagName(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function buildWritableMetadataEntries(tags: MetadataTag[]): ExifTags {
+  const entries: ExifTags = {};
+
+  for (const tag of tags) {
+    if (!tag.editable) continue;
+
+    const value = toWritableTagValue(tag.value);
+    if (typeof value === 'undefined') continue;
+
+    entries[tag.key] = value;
+  }
+
+  return entries;
+}
+
+function toWritableTagValue(value: unknown): ExifTags[string] | undefined {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+
+  if (!Array.isArray(value)) return undefined;
+
+  const primitiveValues = value.filter((item): item is string | number | boolean => (
+    typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean'
+  ));
+
+  return primitiveValues.length === value.length ? primitiveValues : undefined;
 }
 
 function toDateTimeLocal(value: string) {

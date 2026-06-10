@@ -266,7 +266,6 @@ export const appCopy = {
         medium: '中等质量 (85%)',
         low: '高压缩 (70%)',
         removeMetadata: '移除元数据',
-        preserveFormat: '保持原格式',
         lossless: '无损',
         metadata: '元数据',
         remove: '移除',
@@ -313,7 +312,7 @@ export const appCopy = {
         features: [
           {
             title: '多格式压缩',
-            description: '支持 JPEG、PNG、WebP 和 GIF，默认保持原格式输出。',
+            description: '支持 JPEG、PNG、WebP 和 GIF，可批量压缩并按需移除图片元数据。',
           },
           {
             title: '批量处理',
@@ -731,7 +730,6 @@ export const appCopy = {
         medium: 'Balanced quality (85%)',
         low: 'High compression (70%)',
         removeMetadata: 'Remove metadata',
-        preserveFormat: 'Keep original format',
         lossless: 'Lossless',
         metadata: 'Metadata',
         remove: 'Remove',
@@ -778,7 +776,7 @@ export const appCopy = {
         features: [
           {
             title: 'Multiple formats',
-            description: 'Compress JPEG, PNG, WebP, and GIF images while keeping the original format by default.',
+            description: 'Compress JPEG, PNG, WebP, and GIF images and remove image metadata when needed.',
           },
           {
             title: 'Batch processing',
@@ -801,7 +799,7 @@ export const appCopy = {
           },
           {
             question: 'Which image formats are supported?',
-            answer: 'The tool supports JPEG, PNG, WebP, and GIF images. It keeps the original format by default and supports batch ZIP downloads.',
+            answer: 'The tool supports JPEG, PNG, WebP, and GIF images, optional metadata removal, and batch ZIP downloads.',
           },
           {
             question: 'Can I compress multiple images at once?',

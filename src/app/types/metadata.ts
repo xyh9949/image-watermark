@@ -8,6 +8,7 @@ export type MetadataGroup =
   | 'WebP'
   | 'Composite'
   | 'ExifTool'
+  | 'System'
   | string;
 
 export type MetadataStatus = 'idle' | 'reading' | 'ready' | 'writing' | 'error';

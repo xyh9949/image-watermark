@@ -1,7 +1,7 @@
 # 图片水印处理系统 - Docker 配置文件
 
-# 使用官方 Node.js 18 Alpine 镜像作为基础镜像
-FROM node:18-alpine AS base
+# 使用官方 Node.js 22 Alpine 镜像作为基础镜像
+FROM node:22-alpine AS base
 
 # 安装必要的系统依赖
 RUN apk add --no-cache libc6-compat
@@ -61,6 +61,7 @@ RUN chown -R nextjs:nodejs /app
 
 # 复制构建产物
 COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/healthcheck.js ./healthcheck.js
 
 # 复制 Next.js 构建输出
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./

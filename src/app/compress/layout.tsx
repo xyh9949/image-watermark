@@ -4,7 +4,7 @@ import { OG_IMAGE_URL, SITE_NAME, SITE_URL } from '../lib/site';
 
 export const metadata: Metadata = {
   title: '批量图片压缩工具 - 免费在线压缩 JPEG/PNG/WebP/GIF',
-  description: '免费的浏览器端批量图片压缩工具，支持 JPEG、PNG、WebP 和 GIF 图片压缩，保持原格式，可批量处理并打包下载，图片不上传服务器。',
+  description: '免费的浏览器端批量图片压缩工具，支持 JPEG、PNG、WebP 和 GIF 图片压缩，可批量处理、移除元数据并打包下载，图片不上传服务器。',
   alternates: {
     canonical: `${SITE_URL}/compress`,
     languages: {

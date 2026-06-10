@@ -4,7 +4,7 @@ import { OG_IMAGE_URL, SITE_NAME, SITE_URL } from '../../lib/site';
 
 export const metadata: Metadata = {
   title: 'Batch Image Compression Tool - Free Online JPEG PNG WebP GIF Compressor',
-  description: 'Free browser-based batch image compression tool for JPEG, PNG, WebP, and GIF images. Compress multiple files locally, keep the original format, and download results as a ZIP archive.',
+  description: 'Free browser-based batch image compression tool for JPEG, PNG, WebP, and GIF images. Compress multiple files locally, remove metadata when needed, and download results as a ZIP archive.',
   alternates: {
     canonical: `${SITE_URL}/en/compress`,
     languages: {

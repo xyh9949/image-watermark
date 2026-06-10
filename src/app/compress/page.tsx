@@ -32,7 +32,47 @@ interface CompressedFile {
 interface CompressionSettings {
   quality: 'high' | 'medium' | 'low';
   removeMetadata: boolean;
-  preserveFormat: boolean;
+}
+
+const COMPRESS_METADATA_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+function getOutputFileName(fileName: string, mimeType: string) {
+  const currentExtension = fileName.split('.').pop()?.toLowerCase() ?? '';
+
+  if (mimeType === 'image/jpeg' && ['jpg', 'jpeg'].includes(currentExtension)) {
+    return fileName;
+  }
+
+  const nextExtension = mimeType === 'image/jpeg'
+    ? 'jpg'
+    : mimeType === 'image/png'
+      ? 'png'
+      : mimeType === 'image/webp'
+        ? 'webp'
+        : '';
+
+  if (!nextExtension || currentExtension === nextExtension) return fileName;
+
+  return fileName.includes('.')
+    ? fileName.replace(/\.[^.]+$/, `.${nextExtension}`)
+    : `${fileName}.${nextExtension}`;
+}
+
+async function finalizeCompressedFile(sourceFile: File, compressedFile: File, removeMetadata: boolean) {
+  if (!COMPRESS_METADATA_MIME_TYPES.has(sourceFile.type) || !COMPRESS_METADATA_MIME_TYPES.has(compressedFile.type)) {
+    return compressedFile;
+  }
+
+  try {
+    const metadataEngine = await import('@/app/lib/metadata/exifToolEngine');
+    const result = removeMetadata
+      ? await metadataEngine.clearMetadata(compressedFile, 'compressed')
+      : await metadataEngine.copyWritableMetadata(sourceFile, compressedFile, 'compressed');
+
+    return result.success && result.file ? result.file : compressedFile;
+  } catch {
+    return compressedFile;
+  }
 }
 
 function ObjectUrlImage({
@@ -346,16 +386,6 @@ function CompressionControlPanel({
                 }
               />
             </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="preserve-format" className="text-sm">{labels.preserveFormat}</Label>
-              <Switch
-                id="preserve-format"
-                checked={settings.preserveFormat}
-                onCheckedChange={(checked) =>
-                  onSettingsChange({ ...settings, preserveFormat: checked })
-                }
-              />
-            </div>
           </div>
 
           {/* 质量预览 */}
@@ -647,8 +677,7 @@ export default function Compress() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [settings, setSettings] = useState<CompressionSettings>({
     quality: 'medium',
-    removeMetadata: true,
-    preserveFormat: true
+    removeMetadata: true
   });
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -692,21 +721,23 @@ export default function Compress() {
         }
 
         canvas.toBlob(
-          (blob) => {
+          async (blob) => {
             if (blob) {
-              const compressedFile = new File([blob], file.name, {
-                type: outputType,
+              const actualOutputType = blob.type || outputType;
+              const compressedFile = new File([blob], getOutputFileName(file.name, actualOutputType), {
+                type: actualOutputType,
                 lastModified: file.lastModified
               });
+              const finalizedFile = await finalizeCompressedFile(file, compressedFile, settings.removeMetadata);
 
-              const compressionRatio = 1 - (blob.size / file.size);
+              const compressionRatio = 1 - (finalizedFile.size / file.size);
 
               resolve({
                 id: `${file.name}_${Date.now()}`,
                 originalFile: file,
-                compressedFile,
+                compressedFile: finalizedFile,
                 originalSize: file.size,
-                compressedSize: blob.size,
+                compressedSize: finalizedFile.size,
                 compressionRatio,
                 status: 'completed'
               });

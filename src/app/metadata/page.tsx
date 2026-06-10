@@ -48,7 +48,7 @@ import {
 } from '@/app/lib/metadata/exifToolEngine';
 import type { MetadataEditDraft, MetadataFileState, MetadataTag } from '@/app/types/metadata';
 
-const GROUP_OPTIONS = ['all', 'File', 'EXIF', 'XMP', 'IPTC', 'ICC', 'PNG', 'WebP', 'Composite'];
+const GROUP_OPTIONS = ['all', 'File', 'EXIF', 'XMP', 'IPTC', 'ICC', 'PNG', 'WebP', 'Composite', 'System'];
 
 type MetadataCopy = ReturnType<typeof getCopy>['metadata'];
 type OperationMode = 'clearAll' | 'clearGps' | 'clearSelected' | 'apply' | 'batchAll' | 'batchGps' | null;
@@ -627,10 +627,20 @@ function UploadPanel({
           <div className="flex-1 overflow-y-auto p-3">
             <div className="space-y-2">
               {files.map((fileState) => (
-                <button
+                <div
                   key={fileState.id}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={activeId === fileState.id}
+                  aria-label={fileState.currentFile.name}
                   onClick={() => onSelectFile(fileState.id)}
+                  onKeyDown={(event) => {
+                    if (event.target !== event.currentTarget) return;
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      onSelectFile(fileState.id);
+                    }
+                  }}
                   className={cn(
                     'w-full text-left flex items-center gap-3 p-2 rounded border transition-colors',
                     activeId === fileState.id ? 'bg-primary/10 border-primary/40' : 'bg-muted/30 hover:bg-muted/50'
@@ -675,7 +685,7 @@ function UploadPanel({
                   >
                     <X className="w-4 h-4" />
                   </Button>
-                </button>
+                </div>
               ))}
             </div>
           </div>
