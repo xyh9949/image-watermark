@@ -12,7 +12,9 @@ import {
   Upload, 
   AlertCircle, 
   X,
-  Plus
+  Plus,
+  FolderOpen,
+  FolderTree
 } from 'lucide-react';
 import { useImageStore } from '@/app/lib/stores';
 import { FilePreviewList } from './FilePreview';
@@ -23,6 +25,11 @@ import {
   formatFileSize 
 } from '@/app/lib/utils/fileValidation';
 import { DEFAULT_LOCALE, getCopy, type Locale } from '@/app/lib/i18n';
+
+type DirectoryInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
+  webkitdirectory?: string;
+  directory?: string;
+};
 
 interface ImageUploadProps {
   className?: string;
@@ -73,19 +80,29 @@ export function ImageUpload({
       return;
     }
 
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+    if (imageFiles.length === 0) {
+      setValidationErrors([labels.noImagesInFolder]);
+      setValidationWarnings([]);
+      return;
+    }
+
     // 验证文件
-    const validationResults = await validateFiles(files);
+    const validationResults = await validateFiles(imageFiles);
     const errors: string[] = [];
     const warnings: string[] = [];
     const validFiles: File[] = [];
 
-    Object.entries(validationResults).forEach(([filename, result]) => {
+    imageFiles.forEach((file, index) => {
+      const result = validationResults[index];
+      const displayName = file.webkitRelativePath || file.name;
+
       if (result.isValid) {
-        const file = files.find(f => f.name === filename);
-        if (file) validFiles.push(file);
+        validFiles.push(file);
         warnings.push(...result.warnings);
       } else {
-        errors.push(`${filename}: ${result.errors.join(', ')}`);
+        errors.push(`${displayName}: ${result.errors.join(', ')}`);
       }
     });
 
@@ -141,6 +158,14 @@ export function ImageUpload({
       handleFilesUpload(files);
     }
     // 清空input值，允许重复选择同一文件
+    event.target.value = '';
+  }, [handleFilesUpload]);
+
+  const handleFolderSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length > 0) {
+      handleFilesUpload(files);
+    }
     event.target.value = '';
   }, [handleFilesUpload]);
 
@@ -220,10 +245,36 @@ export function ImageUpload({
                     )}
                   </div>
 
-                  <div className="flex items-center justify-center">
+                  <div className="flex flex-wrap items-center justify-center gap-2">
                     <Button variant="outline" size={hasImages() ? 'sm' : 'default'} disabled={disabled}>
                       <Plus className="h-4 w-4 mr-2" />
                       {hasImages() ? labels.addMore : labels.choose}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size={hasImages() ? 'sm' : 'default'}
+                      disabled={disabled}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        document.getElementById('folder-upload')?.click();
+                      }}
+                    >
+                      <FolderOpen className="h-4 w-4 mr-2" />
+                      {labels.chooseFolder}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size={hasImages() ? 'sm' : 'default'}
+                      disabled={disabled}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        document.getElementById('parent-folder-upload')?.click();
+                      }}
+                    >
+                      <FolderTree className="h-4 w-4 mr-2" />
+                      {labels.chooseParentFolder}
                     </Button>
                   </div>
                 </>
@@ -240,6 +291,32 @@ export function ImageUpload({
             className="hidden"
             id="file-upload"
             disabled={disabled || isUploading}
+          />
+          <input
+            {...({
+              type: 'file',
+              multiple: true,
+              accept: SUPPORTED_IMAGE_TYPES.join(','),
+              onChange: handleFolderSelect,
+              className: 'hidden',
+              id: 'folder-upload',
+              disabled: disabled || isUploading,
+              webkitdirectory: '',
+              directory: ''
+            } satisfies DirectoryInputProps)}
+          />
+          <input
+            {...({
+              type: 'file',
+              multiple: true,
+              accept: SUPPORTED_IMAGE_TYPES.join(','),
+              onChange: handleFolderSelect,
+              className: 'hidden',
+              id: 'parent-folder-upload',
+              disabled: disabled || isUploading,
+              webkitdirectory: '',
+              directory: ''
+            } satisfies DirectoryInputProps)}
           />
         </div>
       </Card>

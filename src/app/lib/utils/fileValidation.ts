@@ -19,7 +19,7 @@ export const SUPPORTED_EXTENSIONS = [
 ] as const;
 
 // 文件大小限制（字节）
-export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+export const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1024MB
 export const MIN_FILE_SIZE = 1024; // 1KB
 
 // 图片尺寸限制
@@ -166,11 +166,11 @@ export async function validateFile(file: File): Promise<ValidationResult> {
 /**
  * 批量验证文件
  */
-export async function validateFiles(files: File[]): Promise<Record<string, ValidationResult>> {
-  const results: Record<string, ValidationResult> = {};
+export async function validateFiles(files: File[]): Promise<ValidationResult[]> {
+  const results: ValidationResult[] = [];
   
   for (const file of files) {
-    results[file.name] = await validateFile(file);
+    results.push(await validateFile(file));
   }
   
   return results;

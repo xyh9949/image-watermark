@@ -351,20 +351,6 @@ export function createImageWatermark(
       targetWidth = baseWidth * imageStyle.scale;
       targetHeight = baseHeight * imageStyle.scale;
 
-      // 限制最大尺寸（防止过大）
-      const maxWidth = canvasWidth * 0.6;
-      const maxHeight = canvasHeight * 0.6;
-
-      if (targetWidth > maxWidth) {
-        targetWidth = maxWidth;
-        targetHeight = targetWidth / aspectRatio;
-      }
-
-      if (targetHeight > maxHeight) {
-        targetHeight = maxHeight;
-        targetWidth = targetHeight * aspectRatio;
-      }
-
       // 计算最终缩放比例
       scaleX = targetWidth / (img.width || 1);
       scaleY = targetHeight / (img.height || 1);

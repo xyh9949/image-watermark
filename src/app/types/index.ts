@@ -133,6 +133,10 @@ export interface ImageInfo {
   id: string;
   file: File;
   name: string;
+  relativePath?: string;
+  sourceRootName?: string;
+  sourceDirectory?: string;
+  uploadSourceType?: 'files' | 'folder';
   size: number;
   type: string;
   width: number;

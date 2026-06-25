@@ -20,6 +20,8 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["lucide-react"],
   },
 
+  devIndicators: false,
+
   compress: true,
   poweredByHeader: false,
 

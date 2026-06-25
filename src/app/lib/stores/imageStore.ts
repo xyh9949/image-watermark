@@ -72,18 +72,28 @@ export interface ImageState {
 const createImageId = () => safeUUID();
 
 // 创建图片信息
-const createImageInfo = (file: File): ImageInfo => ({
-  id: createImageId(),
-  file,
-  name: file.name,
-  size: file.size,
-  type: file.type,
-  width: 0,
-  height: 0,
-  url: '',
-  uploadProgress: 0,
-  status: 'uploading',
-});
+const createImageInfo = (file: File): ImageInfo => {
+  const relativePath = file.webkitRelativePath || '';
+  const pathParts = relativePath.split('/').filter(Boolean);
+  const sourceDirectory = pathParts.length > 1 ? pathParts.slice(0, -1).join('/') : '';
+
+  return {
+    id: createImageId(),
+    file,
+    name: file.name,
+    relativePath: relativePath || undefined,
+    sourceRootName: pathParts[0],
+    sourceDirectory: sourceDirectory || undefined,
+    uploadSourceType: relativePath ? 'folder' : 'files',
+    size: file.size,
+    type: file.type,
+    width: 0,
+    height: 0,
+    url: '',
+    uploadProgress: 0,
+    status: 'uploading',
+  };
+};
 
 // 获取图片尺寸
 const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {

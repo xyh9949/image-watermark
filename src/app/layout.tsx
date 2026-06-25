@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { GITHUB_URL, OG_IMAGE_URL, SITE_NAME, SITE_URL } from './lib/site';
+import { OG_IMAGE_URL, SITE_NAME, SITE_URL } from './lib/site';
 import { SiteChrome } from '@/components/SiteChrome';
 
 // 基础metadata用于SSR
@@ -82,7 +82,6 @@ export default function RootLayout({
               "applicationCategory": "MultimediaApplication",
               "operatingSystem": "Web Browser",
               "url": SITE_URL,
-              "sameAs": GITHUB_URL,
               "offers": {
                 "@type": "Offer",
                 "price": "0",

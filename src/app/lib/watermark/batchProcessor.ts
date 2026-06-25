@@ -32,10 +32,30 @@ export interface BatchProcessingOptions {
 export interface BatchProcessingResult {
   imageId: string;
   imageName: string;
+  relativePath?: string;
+  sourceRootName?: string;
+  sourceDirectory?: string;
   success: boolean;
   dataUrl?: string;
   error?: string;
   processingTime: number;
+}
+
+export type WritableDirectoryHandle = {
+  getDirectoryHandle: (name: string, options?: { create?: boolean }) => Promise<WritableDirectoryHandle>;
+  getFileHandle: (name: string, options?: { create?: boolean }) => Promise<{
+    createWritable: () => Promise<{
+      write: (data: ArrayBuffer) => Promise<void>;
+      close: () => Promise<void>;
+    }>;
+  }>;
+};
+
+export interface BatchDownloadOptions {
+  zipName?: string;
+  fileNameTemplate?: string;
+  folderNameTemplate?: string;
+  directoryHandle?: WritableDirectoryHandle | null;
 }
 
 export class BatchWatermarkProcessor {
@@ -127,6 +147,9 @@ export class BatchWatermarkProcessor {
           const result: BatchProcessingResult = {
             imageId: image.id,
             imageName: image.name,
+            relativePath: image.relativePath,
+            sourceRootName: image.sourceRootName,
+            sourceDirectory: image.sourceDirectory,
             success: true,
             dataUrl,
             processingTime
@@ -355,7 +378,7 @@ export class BatchWatermarkProcessor {
  */
 export async function downloadBatchResults(
   results: BatchProcessingResult[],
-  zipName?: string,
+  zipNameOrOptions?: string | BatchDownloadOptions,
   fileNameTemplate?: string
 ): Promise<void> {
   const successResults = results.filter(r => r.success && r.dataUrl);
@@ -364,28 +387,35 @@ export async function downloadBatchResults(
     throw new Error('No successful results to download');
   }
 
-  // 使用默认模板或自定义模板
-  const template = fileNameTemplate || DEFAULT_FILENAME_TEMPLATE;
+  const options: BatchDownloadOptions = typeof zipNameOrOptions === 'object'
+    ? zipNameOrOptions
+    : {
+      zipName: zipNameOrOptions,
+      fileNameTemplate
+    };
 
-  if (successResults.length === 1) {
+  if (options.directoryHandle) {
+    await saveToDirectory(successResults, options);
+    return;
+  }
+
+  const template = options.fileNameTemplate || DEFAULT_FILENAME_TEMPLATE;
+
+  const shouldPreserveDirectories = successResults.some(result => result.sourceDirectory);
+
+  if (successResults.length === 1 && !shouldPreserveDirectories) {
     // 单张图片直接下载
     const result = successResults[0];
     const link = document.createElement('a');
 
-    // 使用模板生成文件名
-    const nameWithoutExt = getFileNameWithoutExtension(result.imageName);
-    const generatedName = parseFileNameTemplate(template, nameWithoutExt, 1);
+    const generatedName = createOutputFileName(result, 1, template);
 
-    // 根据dataURL的格式确定扩展名
-    const isJpeg = result.dataUrl!.startsWith('data:image/jpeg');
-    const extension = isJpeg ? '.jpg' : '.png';
-
-    link.download = `${generatedName}${extension}`;
+    link.download = generatedName;
     link.href = result.dataUrl!;
     link.click();
   } else {
     // 多张图片打包成ZIP下载
-    await downloadAsZip(successResults, zipName, template);
+    await downloadAsZip(successResults, options);
   }
 }
 
@@ -395,33 +425,19 @@ export async function downloadBatchResults(
  */
 async function downloadAsZip(
   results: BatchProcessingResult[],
-  zipName?: string,
-  fileNameTemplate?: string
+  options: BatchDownloadOptions
 ): Promise<void> {
   const files: Record<string, Uint8Array> = {};
 
-  // 使用默认模板或自定义模板
-  const template = fileNameTemplate || DEFAULT_FILENAME_TEMPLATE;
+  const template = options.fileNameTemplate || DEFAULT_FILENAME_TEMPLATE;
 
   // 添加每张图片到ZIP
   let index = 1;
   for (const result of results) {
     if (result.dataUrl) {
-      // 将dataURL转换为Uint8Array
-      const response = await fetch(result.dataUrl);
-      const arrayBuffer = await response.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-
-      // 使用模板生成文件名
-      const nameWithoutExt = getFileNameWithoutExtension(result.imageName);
-      const generatedName = parseFileNameTemplate(template, nameWithoutExt, index);
-
-      // 根据dataURL的格式确定扩展名
-      const isJpeg = result.dataUrl.startsWith('data:image/jpeg');
-      const extension = isJpeg ? '.jpg' : '.png';
-
-      const fileName = `${generatedName}${extension}`;
-      files[fileName] = uint8Array;
+      const uint8Array = await dataUrlToUint8Array(result.dataUrl);
+      const outputPath = createOutputPath(result, index, template, options.folderNameTemplate);
+      files[outputPath] = uint8Array;
       index++;
     }
   }
@@ -440,7 +456,7 @@ async function downloadAsZip(
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
 
-      const finalZipName = zipName || `watermarked-images-${new Date().toISOString().slice(0, 10)}.zip`;
+      const finalZipName = options.zipName || `watermarked-images-${new Date().toISOString().slice(0, 10)}.zip`;
       link.download = finalZipName;
       link.href = url;
       link.click();
@@ -452,6 +468,93 @@ async function downloadAsZip(
       }, 1000);
     });
   });
+}
+
+async function saveToDirectory(
+  results: BatchProcessingResult[],
+  options: BatchDownloadOptions
+): Promise<void> {
+  if (!options.directoryHandle) {
+    throw new Error('No directory selected');
+  }
+
+  const template = options.fileNameTemplate || DEFAULT_FILENAME_TEMPLATE;
+
+  for (let index = 0; index < results.length; index++) {
+    const result = results[index];
+    if (!result.dataUrl) continue;
+
+    const outputPath = createOutputPath(result, index + 1, template, options.folderNameTemplate);
+    const pathParts = outputPath.split('/').filter(Boolean);
+    const fileName = pathParts.pop();
+    if (!fileName) continue;
+
+    let currentDirectory = options.directoryHandle;
+    for (const directoryName of pathParts) {
+      currentDirectory = await currentDirectory.getDirectoryHandle(directoryName, { create: true });
+    }
+
+    const fileHandle = await currentDirectory.getFileHandle(fileName, { create: true });
+    const writable = await fileHandle.createWritable();
+    const bytes = await dataUrlToUint8Array(result.dataUrl);
+    const arrayBuffer = new ArrayBuffer(bytes.byteLength);
+    new Uint8Array(arrayBuffer).set(bytes);
+    await writable.write(arrayBuffer);
+    await writable.close();
+  }
+}
+
+async function dataUrlToUint8Array(dataUrl: string): Promise<Uint8Array> {
+  const response = await fetch(dataUrl);
+  const arrayBuffer = await response.arrayBuffer();
+  return new Uint8Array(arrayBuffer);
+}
+
+function createOutputPath(
+  result: BatchProcessingResult,
+  index: number,
+  fileNameTemplate: string,
+  folderNameTemplate?: string
+): string {
+  const directoryPath = createOutputDirectoryPath(result, folderNameTemplate);
+  const fileName = createOutputFileName(result, index, fileNameTemplate);
+  return directoryPath ? `${directoryPath}/${fileName}` : fileName;
+}
+
+function createOutputFileName(
+  result: BatchProcessingResult,
+  index: number,
+  fileNameTemplate: string
+): string {
+  const nameWithoutExt = getFileNameWithoutExtension(result.imageName);
+  const generatedName = parseFileNameTemplate(fileNameTemplate, nameWithoutExt, index);
+  const extension = getDataUrlExtension(result.dataUrl);
+  return sanitizePathSegment(`${generatedName}${extension}`);
+}
+
+function createOutputDirectoryPath(
+  result: BatchProcessingResult,
+  folderNameTemplate?: string
+): string {
+  const sourceDirectory = result.sourceDirectory;
+  if (!sourceDirectory) return '';
+
+  const template = folderNameTemplate || '{name}';
+  return sourceDirectory
+    .split('/')
+    .filter(Boolean)
+    .map((segment, index) => sanitizePathSegment(parseFileNameTemplate(template, segment, index + 1)))
+    .join('/');
+}
+
+function getDataUrlExtension(dataUrl?: string): string {
+  if (dataUrl?.startsWith('data:image/jpeg')) return '.jpg';
+  if (dataUrl?.startsWith('data:image/webp')) return '.webp';
+  return '.png';
+}
+
+function sanitizePathSegment(segment: string): string {
+  return segment.replace(/[<>:"/\\|?*]/g, '_').trim() || 'untitled';
 }
 
 /**

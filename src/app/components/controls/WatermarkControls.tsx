@@ -11,12 +11,26 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { Settings, Eye, EyeOff, Play, Square, AlertCircle, X } from 'lucide-react';
+import { Settings, Eye, EyeOff, Play, Square, AlertCircle, X, FolderOpen, Save } from 'lucide-react';
 import { useWatermarkStore, useImageStore } from '@/app/lib/stores';
 import { WatermarkPosition } from '@/app/types';
 import { BatchWatermarkProcessor, downloadBatchResults, BatchProcessingResult } from '@/app/lib/watermark/batchProcessor';
 import { generatePreviewFileName, DEFAULT_FILENAME_TEMPLATE, isValidTemplate } from '@/app/lib/utils/renamingUtils';
 import { DEFAULT_LOCALE, getCopy, type Locale } from '@/app/lib/i18n';
+
+type SaveStatus = 'idle' | 'success' | 'error';
+type SaveDirectoryHandle = {
+  getDirectoryHandle: (name: string, options?: { create?: boolean }) => Promise<SaveDirectoryHandle>;
+  getFileHandle: (name: string, options?: { create?: boolean }) => Promise<{
+    createWritable: () => Promise<{
+      write: (data: ArrayBuffer) => Promise<void>;
+      close: () => Promise<void>;
+    }>;
+  }>;
+};
+type WindowWithDirectoryPicker = Window & {
+  showDirectoryPicker?: () => Promise<SaveDirectoryHandle>;
+};
 
 interface WatermarkControlsProps {
   className?: string;
@@ -38,7 +52,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
     updateAdaptive,
   } = useWatermarkStore();
 
-  const { images, hasImages, getImageCount } = useImageStore();
+  const { images, hasImages, getImageCount, clearImages } = useImageStore();
 
   // 批量处理状态
   const [isProcessing, setIsProcessing] = useState(false);
@@ -61,6 +75,11 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
   // {{ Shrimp-X: Add - 文件名模板状态. Approval: Cunzhi(ID:timestamp). }}
   // 文件命名设置
   const [fileNameTemplate, setFileNameTemplate] = useState(DEFAULT_FILENAME_TEMPLATE);
+  const [folderNameTemplate, setFolderNameTemplate] = useState('{name}');
+  const [saveDirectoryHandle, setSaveDirectoryHandle] = useState<SaveDirectoryHandle | null>(null);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [lastResults, setLastResults] = useState<BatchProcessingResult[] | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const labels = getCopy(locale).watermarkControls;
   const usesEnglishDefaults = locale === 'en';
 
@@ -90,12 +109,53 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
   ]);
 
 
+  const handleChooseSaveFolder = async () => {
+    setSaveStatus('idle');
+    setSaveMessage(null);
 
+    const directoryPicker = (window as WindowWithDirectoryPicker).showDirectoryPicker;
+    if (!directoryPicker) {
+      setSaveMessage(labels.folderSaveUnsupported);
+      return;
+    }
 
+    try {
+      const handle = await directoryPicker();
+      setSaveDirectoryHandle(handle);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      setSaveStatus('error');
+      setSaveMessage(labels.saveFailed);
+    }
+  };
 
+  const handleSaveResults = async (results: BatchProcessingResult[]) => {
+    try {
+      await downloadBatchResults(results, {
+        fileNameTemplate,
+        folderNameTemplate,
+        directoryHandle: saveDirectoryHandle
+      });
+      setSaveStatus('success');
+      setSaveMessage(labels.saveSuccess);
+      setLastResults(null);
+      clearImages();
+    } catch {
+      setSaveStatus('error');
+      setSaveMessage(labels.saveFailed);
+      setLastResults(results);
+      throw new Error(labels.saveFailed);
+    }
+  };
 
-
-
+  const handleRetrySave = async () => {
+    if (!lastResults) return;
+    try {
+      await handleSaveResults(lastResults);
+    } catch {
+      // 状态已在 handleSaveResults 中更新
+    }
+  };
 
   // 批量处理函数
   const handleStartProcessing = async () => {
@@ -129,10 +189,9 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
 
           // 自动下载结果
           try {
-            // {{ Shrimp-X: Modify - 传递文件名模板参数. Approval: Cunzhi(ID:timestamp). }}
-            await downloadBatchResults(results, undefined, fileNameTemplate);
+            await handleSaveResults(results);
           } catch {
-            setProcessingError(labels.downloadFailed);
+            setProcessingError(labels.saveFailed);
           }
         },
         onImageComplete: () => {
@@ -373,7 +432,92 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
   };
 
   return (
-    <Card className={`p-6 h-full ${className}`}>
+    <div className={`space-y-4 ${className}`}>
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Save className="h-5 w-5" />
+            <h2 className="text-lg font-semibold">{labels.saveSettings}</h2>
+          </div>
+
+          <div className="space-y-2">
+            <Label>{labels.saveLocation}</Label>
+            <div className="rounded border bg-muted/30 p-3 text-sm">
+              {saveDirectoryHandle ? labels.folderSelected : labels.browserDownload}
+            </div>
+            {saveMessage && (
+              <div className={`text-sm ${saveStatus === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                {saveMessage}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleChooseSaveFolder}
+              >
+                <FolderOpen className="h-4 w-4 mr-2" />
+                {labels.chooseSaveFolder}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!saveDirectoryHandle}
+                onClick={() => {
+                  setSaveDirectoryHandle(null);
+                  setSaveStatus('idle');
+                  setSaveMessage(null);
+                }}
+              >
+                <X className="h-4 w-4 mr-2" />
+                {labels.clearSaveFolder}
+              </Button>
+            </div>
+            {saveStatus === 'error' && lastResults && (
+              <Button
+                type="button"
+                variant="destructive"
+                className="w-full"
+                onClick={handleRetrySave}
+              >
+                {labels.saveRetry}
+              </Button>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>{labels.filenameRule}</Label>
+            <Input
+              type="text"
+              placeholder="watermarked-{name}"
+              value={fileNameTemplate}
+              onChange={(e) => setFileNameTemplate(e.target.value)}
+              className={!isValidTemplate(fileNameTemplate) ? 'border-red-500' : ''}
+            />
+            <div className="text-xs text-muted-foreground space-y-1">
+              <div>{labels.preview}: <span className="font-mono bg-gray-100 px-1 rounded">{generatePreviewFileName(fileNameTemplate, 'example')}.jpg</span></div>
+              <div>{labels.variables}: <code className="bg-gray-100 px-1 rounded">{'{name}'}</code> {labels.originalName} | <code className="bg-gray-100 px-1 rounded">{'{index}'}</code> {labels.index} | <code className="bg-gray-100 px-1 rounded">{'{index:03}'}</code> {labels.paddedIndex} | <code className="bg-gray-100 px-1 rounded">{'{date}'}</code> {labels.date}</div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>{labels.folderNameRule}</Label>
+            <Input
+              type="text"
+              placeholder="{name}"
+              value={folderNameTemplate}
+              onChange={(e) => setFolderNameTemplate(e.target.value)}
+              className={!isValidTemplate(folderNameTemplate) ? 'border-red-500' : ''}
+            />
+            <div className="text-xs text-muted-foreground space-y-1">
+              <div>{labels.preview}: <span className="font-mono bg-gray-100 px-1 rounded">{generatePreviewFileName(folderNameTemplate, 'folder')}</span></div>
+              <div>{labels.variables}: <code className="bg-gray-100 px-1 rounded">{'{name}'}</code> {labels.originalName} | <code className="bg-gray-100 px-1 rounded">{'{index}'}</code> {labels.index}</div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-6 h-full">
       <div className="space-y-4">
         {/* 标题栏 */}
         <div className="flex items-center justify-between">
@@ -806,8 +950,8 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                     value={[currentConfig.imageStyle.scale * 100]}
                     onValueChange={([scale]) => updateImageStyle({ scale: scale / 100 })}
                     min={10}
-                    max={300}
-                    step={5}
+                    max={1000}
+                    step={10}
                     className="w-full"
                   />
                   <div className="text-xs text-muted-foreground">
@@ -1325,23 +1469,6 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
 
         {/* 处理按钮 */}
         <div className="space-y-3 pt-4">
-          {/* {{ Shrimp-X: Add - 文件命名规则设置. Approval: Cunzhi(ID:timestamp). }} */}
-          {/* 文件命名设置 */}
-          <div className="space-y-2">
-            <Label>{labels.filenameRule}</Label>
-            <Input
-              type="text"
-              placeholder="watermarked-{name}"
-              value={fileNameTemplate}
-              onChange={(e) => setFileNameTemplate(e.target.value)}
-              className={!isValidTemplate(fileNameTemplate) ? 'border-red-500' : ''}
-            />
-            <div className="text-xs text-muted-foreground space-y-1">
-              <div>{labels.preview}: <span className="font-mono bg-gray-100 px-1 rounded">{generatePreviewFileName(fileNameTemplate, 'example')}.jpg</span></div>
-              <div>{labels.variables}: <code className="bg-gray-100 px-1 rounded">{'{name}'}</code> {labels.originalName} | <code className="bg-gray-100 px-1 rounded">{'{index}'}</code> {labels.index} | <code className="bg-gray-100 px-1 rounded">{'{index:03}'}</code> {labels.paddedIndex} | <code className="bg-gray-100 px-1 rounded">{'{date}'}</code> {labels.date}</div>
-            </div>
-          </div>
-
           {/* 水印模式信息 */}
           {hasImages() && (
             <div className="p-3 bg-blue-50 rounded-lg text-sm">
@@ -1433,5 +1560,6 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
         </div>
       </div>
     </Card>
+    </div>
   );
 }
