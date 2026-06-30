@@ -1,256 +1,160 @@
-# 🖼️ Image Batch Processing Tool
+# Image Watermark
 
-**[English](README.md) | [中文](README_CN.md)**
+Browser-based image tools for batch watermarking, image compression, and EXIF / metadata editing. Files are processed locally in the browser and are not uploaded to a server.
 
-## Visit [https://iw.vidocat.com](https://iw.vidocat.com/) for live preview
+[Live demo](https://iw.vidocat.com/) · [Chinese README](README_CN.md) · [Roadmap](ROADMAP.md) · [Report an issue](https://github.com/xyh9949/image-watermark/issues)
 
-A modern image batch processing application built with Next.js 16, integrating watermarking and image compression features with intelligent optimization and batch processing capabilities.
-
+![GitHub stars](https://img.shields.io/github/stars/xyh9949/image-watermark?style=flat-square)
+![License](https://img.shields.io/github/license/xyh9949/image-watermark?style=flat-square)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
-![Fabric.js](https://img.shields.io/badge/Fabric.js-6-orange?style=flat-square)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC?style=flat-square&logo=tailwind-css)
 
-## ✨ Key Features
+![Image Watermark preview](public/og-image.png)
 
-### 🏷️ Watermark Tool
+## Why This Project
 
-#### 🎯 Smart Watermark Positioning
-- **Nine-Grid Alignment**: 9 preset positions for precise watermark control
-- **Ratio Mode**: Cross-resolution consistency, ensuring uniform watermark effects across different image sizes
-- **Pixel Mode**: Precise pixel-level positioning, suitable for single resolution processing
-- **Real-time Preview**: WYSIWYG watermark effect preview
+Most quick image tools require uploads, accounts, or server-side processing. Image Watermark is designed for privacy-sensitive workflows where the browser should do the work:
 
-#### 🖼️ Multiple Watermark Types
-- **Text Watermark**: Customizable font, color, transparency, rotation, stroke, and shadow
-- **Image Watermark**: Supports PNG, JPG, WebP formats with adjustable size and transparency
-- **Full-screen Tiling**: Repeating tile mode, suitable for copyright protection
+- No image upload for watermarking, compression, or metadata editing.
+- No account, database, or server-side file storage.
+- Batch workflows for repeated publishing tasks.
+- Chinese and English routes for both users and search engines.
+- SEO / GEO support with sitemap, canonical links, hreflang, FAQ content, and `llms.txt`.
 
-### 🗜️ Compression Tool
+## Tools
 
-#### 📦 Lossless Compression Technology
-- **Format Preservation**: Maintains original image formats (JPEG, PNG, WebP, GIF)
-- **Smart Optimization**: Automatically selects optimal compression strategies based on image characteristics
-- **Metadata Cleaning**: Optional removal of EXIF, XMP and other non-essential information
-- **Quality Control**: Three compression levels (light, standard, deep)
+### Batch Watermark Tool
 
-#### 🚀 Efficient Processing
-- **Batch Compression**: Supports processing multiple images simultaneously
-- **Real-time Preview**: Before and after compression comparison
-- **Statistics**: Detailed data including compression ratio and space saved
-- **One-click Download**: Supports individual download or batch ZIP packaging
+- Add text watermarks, image watermarks, or full-screen tiled watermarks.
+- Use nine-position presets or custom placement.
+- Tune opacity, rotation, size, stroke, shadow, and color.
+- Preview the result before exporting.
+- Process multiple images and download the final files.
 
-### ⚡ Universal Features
-- **Parallel Processing**: High-performance rendering and processing engine
-- **Progress Monitoring**: Real-time display of processing progress and status
-- **Error Recovery**: Comprehensive error handling and retry mechanisms
-- **Multi-format Support**: Supports PNG, JPEG, WebP, GIF and other mainstream formats
+### Batch Compression Tool
 
-### 🎨 Modern Interface
-- **Responsive Design**: Perfect adaptation for desktop and mobile devices
-- **Dark Theme**: Beautiful interface based on shadcn/ui
-- **Drag & Drop Upload**: Intuitive file upload experience
-- **Keyboard Shortcuts**: Enhanced operational efficiency
+- Compress JPEG, PNG, WebP, and GIF files in the browser.
+- Choose high, balanced, or high-compression quality presets.
+- Remove image metadata when needed.
+- See original size, compressed size, saved space, and compression ratio.
+- Download individual files or a ZIP archive.
 
-## 🚀 Quick Start
+### EXIF / Metadata Tool
 
-### 📋 Requirements
-- Node.js 18.0+
-- npm/yarn/pnpm
+- View metadata from JPG, JPEG, PNG, and WebP files.
+- Edit common fields such as title, description, keywords, author, copyright, camera, lens, date, comments, and GPS.
+- Browse advanced EXIF, IPTC, XMP, ICC, PNG, WebP, File, System, and Composite tags.
+- Clear all metadata, GPS metadata, or selected fields.
+- Batch clear metadata and download results as ZIP.
 
-### 🔧 Local Development
+## Good Fit For
+
+- Photographers who need to remove GPS data before publishing.
+- Ecommerce teams preparing product images in batches.
+- Bloggers and creators adding repeatable brand watermarks.
+- Designers protecting draft assets before sharing.
+- Developers who want a local-first image utility built with Next.js.
+
+## Tech Stack
+
+| Area | Technology |
+| --- | --- |
+| Framework | Next.js 16, React 19 |
+| Language | TypeScript |
+| Styling | Tailwind CSS 4 |
+| Canvas | Fabric.js |
+| Metadata engine | ExifTool via `@uswriting/exiftool` WASM |
+| ZIP export | `fflate` |
+| UI primitives | Radix UI |
+
+## Getting Started
+
+### Requirements
+
+- Node.js 20.9+ recommended. Node.js 22 is used for Docker.
+- npm 10+ recommended.
+
+### Local Development
 
 ```bash
-# Clone the project
 git clone https://github.com/xyh9949/image-watermark.git
 cd image-watermark
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) to start using.
+Open [http://localhost:3000](http://localhost:3000).
 
-### 🏗️ Build & Deploy
+### Quality Check
 
 ```bash
-# Build production version
-npm run build
-
-# Start production server
-npm start
+npm run verify
 ```
 
-### 🐳 Docker Deployment
+`verify` runs type checking, linting, production build, and HTML smoke checks for the localized routes.
+
+### Production Build
 
 ```bash
-# Build image
-docker build -t image-watermark .
+npm run build
+npm run start
+```
 
-# Run container
+### Docker
+
+```bash
+docker build -t image-watermark .
 docker run -p 3000:3000 image-watermark
 ```
 
-## 📖 User Guide
+## Routes
 
-### 🏷️ Watermark Tool Usage
+| Route | Description |
+| --- | --- |
+| `/` | Chinese watermark tool |
+| `/compress` | Chinese compression tool |
+| `/metadata` | Chinese EXIF / metadata tool |
+| `/en` | English watermark tool |
+| `/en/compress` | English compression tool |
+| `/en/metadata` | English EXIF / metadata tool |
+| `/sitemap.xml` | Sitemap |
+| `/llms.txt` | AI-readable project summary |
 
-1. **📁 Upload Images**
-   - Drag files to upload area
-   - Or click to select files
-   - Supports JPG, PNG, WebP formats
+## Privacy Model
 
-2. **⚙️ Configure Watermark**
-   - Select watermark type (text/image/fullscreen)
-   - Adjust style parameters (color, size, transparency, etc.)
-   - Choose position (nine-grid positioning)
+Image Watermark is a local-first web app. The image file is read by the browser and processed on the user's device. The app does not require a backend upload flow, user account, or database for the core tools.
 
-3. **🎨 Preview Effects**
-   - Real-time watermark effect preview
-   - Support zoom and pan to view details
+Metadata editing uses a WebAssembly build of ExifTool loaded in the browser. Output files are generated as new downloads; original files are not overwritten.
 
-4. **🚀 Batch Processing**
-   - Click "Start Processing" button
-   - View processing progress
-   - Automatic download of processing results
+## Project Scripts
 
-### 🗜️ Compression Tool Usage
-
-1. **📂 Select Images**
-   - Drag or select image files to compress
-   - Supports JPEG, PNG, WebP, GIF formats
-   - Can select multiple images simultaneously
-
-2. **⚙️ Set Compression Parameters**
-   - Choose compression level (light/standard/deep)
-   - Configure metadata processing options
-   - View estimated compression effects
-
-3. **📊 View Results**
-   - Real-time compression progress display
-   - Before and after compression comparison
-   - Statistics on space saved and compression ratio
-
-4. **💾 Download Files**
-   - Individual file download
-   - Batch ZIP packaging download
-   - Maintains original file formats
-
-### 💡 Advanced Features
-
-#### Watermark Tool Advanced Features
-- **Smart Positioning Modes**
-  - Pixel Mode: Precise pixel positioning, suitable for single resolution
-  - Ratio Mode: Relative ratio positioning, ensuring cross-resolution consistency
-- **Batch Processing Tips**
-  - Recommend processing no more than 50 images at once
-  - For large images, consider reducing output quality to improve speed
-
-#### Compression Tool Advanced Features
-- **Compression Strategies**
-  - JPEG: Lossless re-encoding with optimized Huffman tables
-  - PNG: DEFLATE compression optimization with palette reordering
-  - WebP: Prediction mode and entropy coding optimization
-- **Batch Optimization Tips**
-  - Supports parallel processing for improved speed
-  - Smart format recognition and optimization suggestions
-  - Optional preservation of important metadata
-
-#### Universal Tips
-- Support mid-process cancellation and error retry
-- Browser-based local processing for privacy protection
-- Responsive design with mobile device support
-
-## 🏗️ Technical Architecture
-
-### 🛠️ Tech Stack
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Next.js | 16.x | React full-stack framework |
-| TypeScript | 5.x | Type safety |
-| Fabric.js | 6.x | Canvas rendering engine |
-| Zustand | 5.x | State management |
-| shadcn/ui | Latest | UI component library |
-| Tailwind CSS | 4.x | Styling framework |
-
-### 📁 Project Structure
-```
-src/app/
-├── components/           # React components
-│   ├── controls/        # Watermark control panel components
-│   ├── editor/          # Watermark editor components
-│   ├── upload/          # File upload components
-│   └── preview/         # Preview components
-├── compress/            # Compression tool pages
-│   └── components/      # Compression tool components
-├── lib/                 # Core logic
-│   ├── canvas/          # Canvas-related tools
-│   ├── stores/          # State management
-│   ├── utils/           # Utility functions
-│   ├── watermark/       # Watermark processing core
-│   └── compress/        # Compression processing core
-├── types/               # TypeScript type definitions
-├── hooks/               # Custom Hooks
-└── api/                 # API routes
-```
-
-## 🔧 Development Guide
-
-### 🚀 Development Commands
 ```bash
-npm run dev          # Start development server
-npm run build        # Build production version
-npm run start        # Start production server
-npm run lint         # Code linting
-npm run type-check   # Type checking
+npm run dev          # Start the development server
+npm run build        # Build for production
+npm run start        # Start the production server
+npm run lint         # Run ESLint
+npm run type-check   # Run TypeScript checks
+npm run smoke:html   # Check static HTML metadata and localized pages
+npm run verify       # Run the full local verification suite
 ```
 
-### 📝 Code Standards
-- Use TypeScript for type safety
-- Follow ESLint and Prettier configurations
-- Use functional components + Hooks
-- State management with Zustand
-- Styling with Tailwind CSS
+## Contributing
 
-## 🤝 Contributing
+Issues and pull requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
 
-Issues and Pull Requests are welcome!
+Useful first contributions:
 
-### 🔄 Contribution Process
-1. Fork this repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
+- Improve README examples or screenshots.
+- Report metadata tags that fail on a specific file format.
+- Add localized copy improvements.
+- Improve accessibility and keyboard navigation.
+- Help test large batch workflows.
 
-### 🐛 Issue Reporting
-- Use [GitHub Issues](https://github.com/xyh9949/image-watermark/issues) to report bugs
-- Provide detailed reproduction steps and environment information
-- Suggest new features or improvements
+## Security
 
-## 📄 License
+Please do not open public issues for security-sensitive reports. See [SECURITY.md](SECURITY.md).
 
-This project is licensed under the [MIT License](LICENSE).
+## License
 
-## 🙏 Acknowledgments
-
-Thanks to the following open source projects:
-
-- [Next.js](https://nextjs.org/) - React full-stack framework
-- [Fabric.js](http://fabricjs.com/) - Powerful Canvas library
-- [shadcn/ui](https://ui.shadcn.com/) - Beautiful UI components
-- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
-- [Zustand](https://github.com/pmndrs/zustand) - Lightweight state management
-
----
-
-<div align="center">
-
-**⭐ If this project helps you, please give it a Star!**
-
-[🐛 Report Issues](https://github.com/xyh9949/image-watermark/issues) · [💡 Feature Requests](https://github.com/xyh9949/image-watermark/issues) · [📖 Documentation](https://github.com/xyh9949/image-watermark)
-
-</div>
+MIT License. See [LICENSE](LICENSE).

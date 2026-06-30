@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Live demo
+    url: https://iw.vidocat.com/
+    about: Try the latest deployed version before reporting an issue.
+  - name: Roadmap
+    url: https://github.com/xyh9949/image-watermark/blob/master/ROADMAP.md
+    about: Check planned directions and non-goals.

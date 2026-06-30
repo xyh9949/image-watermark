@@ -1,34 +1,43 @@
-# Pull Request
+## Summary
 
-## 描述
-请简要描述此 PR 的更改内容。
+-
 
-## 更改类型
-请删除不相关的选项：
+## Type Of Change
 
-- [ ] Bug 修复（不破坏现有功能的非破坏性更改）
-- [ ] 新功能（添加功能的非破坏性更改）
-- [ ] 破坏性更改（会导致现有功能无法正常工作的修复或功能）
-- [ ] 此更改需要文档更新
+- [ ] Bug fix
+- [ ] Feature
+- [ ] Documentation
+- [ ] Refactor
+- [ ] Test / CI
 
-## 测试
-请描述你为验证更改而运行的测试。请提供重现的说明。还请列出你测试配置的任何相关详细信息。
+## Routes Tested
 
-- [ ] 测试 A
-- [ ] 测试 B
+- [ ] `/`
+- [ ] `/compress`
+- [ ] `/metadata`
+- [ ] `/en`
+- [ ] `/en/compress`
+- [ ] `/en/metadata`
 
-**测试配置**:
-* 固件版本：
-* 硬件：
-* 工具链：
-* SDK：
+## Verification
 
-## 检查清单：
+- [ ] `npm run type-check`
+- [ ] `npm run lint`
+- [ ] `npm run build`
+- [ ] `npm run smoke:html`
+- [ ] `npm run verify`
 
-- [ ] 我的代码遵循此项目的样式指南
-- [ ] 我已经对自己的代码进行了自我审查
-- [ ] 我已经对我的代码进行了注释，特别是在难以理解的区域
-- [ ] 我已经对我的更改进行了相应的文档更改
-- [ ] 我的更改不会产生新的警告
-- [ ] 我已经添加了证明我的修复有效或我的功能有效的测试
-- [ ] 新的和现有的单元测试在我的更改下都通过了本地测试
+## UI Changes
+
+Screenshots or short recording:
+
+## Metadata / Image Processing Notes
+
+If this changes image processing or metadata behavior, list tested formats:
+
+- [ ] JPG / JPEG
+- [ ] PNG
+- [ ] WebP
+- [ ] GIF
+
+Notes:

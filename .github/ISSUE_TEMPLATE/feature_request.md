@@ -1,20 +1,40 @@
 ---
-name: 功能请求
-about: 为这个项目建议一个想法
-title: '[FEATURE] '
-labels: 'enhancement'
-assignees: ''
-
+name: Feature request
+about: Suggest a workflow or improvement
+title: "[Feature]: "
+labels: enhancement
+assignees: ""
 ---
 
-**你的功能请求是否与问题相关？请描述。**
-简洁明了地描述问题是什么。例如：我总是很沮丧，当 [...]
+## Problem
 
-**描述你想要的解决方案**
-简洁明了地描述你想要发生的事情。
+What are you trying to do, and what is difficult today?
 
-**描述你考虑过的替代方案**
-简洁明了地描述你考虑过的任何替代解决方案或功能。
 
-**附加信息**
-在此添加关于功能请求的任何其他信息或截图。
+## Proposed Solution
+
+
+## Who Is This For?
+
+- [ ] Photographer
+- [ ] Ecommerce team
+- [ ] Blogger / creator
+- [ ] Designer
+- [ ] Developer
+- [ ] Other:
+
+## Affected Tool
+
+- [ ] Watermark
+- [ ] Compression
+- [ ] EXIF / metadata
+- [ ] Documentation
+- [ ] SEO / GEO
+- [ ] Other:
+
+## Alternatives Considered
+
+
+## Example Files Or References
+
+Please only attach images that are safe to share publicly.

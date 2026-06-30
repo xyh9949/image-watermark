@@ -1,36 +1,49 @@
 ---
-name: Bug 报告
-about: 创建一个 Bug 报告来帮助我们改进
-title: '[BUG] '
-labels: 'bug'
-assignees: ''
-
+name: Bug report
+about: Report a reproducible problem
+title: "[Bug]: "
+labels: bug
+assignees: ""
 ---
 
-**Bug 描述**
-简洁明了地描述这个 Bug。
+## What Happened?
 
-**复现步骤**
-复现该 Bug 的步骤：
-1. 进入 '...'
-2. 点击 '....'
-3. 滚动到 '....'
-4. 看到错误
 
-**预期行为**
-简洁明了地描述你期望发生的事情。
+## Steps To Reproduce
 
-**实际行为**
-简洁明了地描述实际发生的事情。
+1.
+2.
+3.
 
-**截图**
-如果适用，请添加截图来帮助解释你的问题。
+## Expected Behavior
 
-**环境信息 (请完成以下信息):**
- - 操作系统: [例如 iOS, Windows, macOS]
- - 浏览器: [例如 Chrome, Safari, Firefox]
- - 浏览器版本: [例如 22]
- - 设备: [例如 iPhone6, Desktop]
 
-**附加信息**
-在此添加关于该问题的任何其他信息。
+## Affected Tool
+
+- [ ] Watermark
+- [ ] Compression
+- [ ] EXIF / metadata
+- [ ] SEO / routing
+- [ ] Build / deployment
+
+## Environment
+
+- Browser:
+- Operating system:
+- Device: desktop / mobile
+- Route:
+- App version:
+
+## Image Details
+
+Only include this section if the issue involves image processing.
+
+- Format: JPG / PNG / WebP / GIF
+- File size:
+- Batch size:
+- Metadata action, if relevant:
+
+## Screenshots Or Recording
+
+
+## Additional Context

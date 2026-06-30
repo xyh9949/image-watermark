@@ -1,13 +1,12 @@
-name: Deploy Readiness
+name: CI
 
 on:
-  push:
+  pull_request:
     branches:
       - master
-  workflow_dispatch:
 
 jobs:
-  verify-production-build:
+  verify:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,5 +22,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify production readiness
+      - name: Verify
         run: npm run verify
