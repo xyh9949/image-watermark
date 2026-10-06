@@ -73,9 +73,13 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
       return;
     }
 
+    // 清理本次 effect 创建的实例，而不是闭包中尚未更新的 canvas state。
+    let ownedCanvas: Canvas | null = null;
+    let disposed = false;
+    let retryTimer: ReturnType<typeof setTimeout>;
     // Canvas初始化函数
     const initCanvas = () => {
-      if (!canvasRef.current) {
+      if (disposed || !canvasRef.current) {
         return false;
       }
 
@@ -85,6 +89,7 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
           height: options.height || 600,
           backgroundColor: options.backgroundColor || '#ffffff',
         });
+        ownedCanvas = fabricCanvas;
 
       // 设置事件监听器
       fabricCanvas.on('object:added', (e) => {
@@ -121,23 +126,24 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
     const maxRetries = 10;
 
     const tryInit = () => {
+      if (disposed) return;
       if (initCanvas()) {
         return; // 成功初始化
       }
 
       retryCount++;
       if (retryCount < maxRetries) {
-        setTimeout(tryInit, 100 * retryCount); // 递增延迟
+        retryTimer = setTimeout(tryInit, 100 * retryCount); // 递增延迟
       }
     };
 
     // 开始初始化
-    setTimeout(tryInit, 50);
+    retryTimer = setTimeout(tryInit, 50);
 
     return () => {
-      if (canvas) {
-        disposeCanvas(canvas);
-      }
+      disposed = true;
+      clearTimeout(retryTimer);
+      if (ownedCanvas) disposeCanvas(ownedCanvas);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps -- Fabric canvas is initialized once for this DOM node.
   }, []);
@@ -268,11 +274,12 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
   const fitToContainer = useCallback(() => {
     if (!canvas || !canvasRef.current) return;
 
-    const container = canvasRef.current.parentElement;
+    const container = canvasRef.current.closest('[data-canvas-container]') ?? canvasRef.current.parentElement;
     if (!container) return;
 
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
+    if (containerWidth === 0 || containerHeight === 0) return;
     
     // 保持宽高比
     const canvasAspectRatio = canvas.getWidth() / canvas.getHeight();
@@ -324,13 +331,19 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
       fitToContainer();
     };
 
+    // 标签切换不会触发 window.resize，观察实际容器才能在重新显示时适配画布。
+    const container = canvasRef.current?.closest('[data-canvas-container]');
+    const observer = new ResizeObserver(handleResize);
+    if (container) observer.observe(container);
     window.addEventListener('resize', handleResize);
     
     // 初始调整
-    setTimeout(handleResize, 100);
+    const timer = setTimeout(handleResize, 100);
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      observer.disconnect();
+      clearTimeout(timer);
     };
   }, [isReady, fitToContainer]);
 

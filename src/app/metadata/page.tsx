@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- Local object URL previews cannot be optimized by next/image. */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useDropzone } from 'react-dropzone';
 import {
@@ -28,7 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToolWorkspace } from '@/components/ToolWorkspace';
 import { TopNavigation } from '@/components/TopNavigation';
 import { cn } from '@/lib/utils';
 import { getCopy, getLocaleFromPathname, type Locale } from '@/app/lib/i18n';
@@ -43,6 +43,7 @@ import {
   formatFileSize,
   getSupportedMetadataFormats,
   isSupportedMetadataFile,
+  hasInvalidGpsDraft,
   readMetadata,
   writeMetadataEntries,
 } from '@/app/lib/metadata/exifToolEngine';
@@ -236,6 +237,10 @@ export default function MetadataPage() {
 
   const applyEdits = async () => {
     if (!activeFile) return;
+    if (hasInvalidGpsDraft(activeFile.draft)) {
+      setError(copy.messages.invalidGps);
+      return;
+    }
 
     setOperationMode('apply');
     setNotice(null);
@@ -333,8 +338,12 @@ export default function MetadataPage() {
     }
 
     if (completedFiles.length > 0) {
-      await downloadZip(completedFiles, mode === 'all' ? 'metadata_cleaned' : 'metadata_gps_removed');
-      setNotice(copy.messages.batchSuccess(completedFiles.length));
+      try {
+        await downloadZip(completedFiles, mode === 'all' ? 'metadata_cleaned' : 'metadata_gps_removed');
+        setNotice(copy.messages.batchSuccess(completedFiles.length));
+      } catch {
+        setError(copy.messages.downloadFailed);
+      }
     }
 
     if (failedNames.length > 0) {
@@ -376,130 +385,42 @@ export default function MetadataPage() {
       <h1 className="sr-only">{copy.page.srTitle}</h1>
       <TopNavigation />
 
-      <div className="lg:hidden flex flex-col h-full">
-        <div className="flex-shrink-0 p-4 bg-background text-center">
-          <h2 className="text-2xl font-bold mb-1">{copy.page.mobileTitle}</h2>
-          <p className="text-sm text-muted-foreground">{copy.page.mobileDescription}</p>
-        </div>
-
-        <Tabs defaultValue="upload" className="h-full flex flex-col">
-          <TabsList className="flex-shrink-0 grid w-[calc(100%-2rem)] grid-cols-3 m-4">
-            <TabsTrigger value="upload">{copy.page.uploadTab}</TabsTrigger>
-            <TabsTrigger value="view">{copy.page.viewTab}</TabsTrigger>
-            <TabsTrigger value="edit">{copy.page.editTab}</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="upload" className="flex-1 overflow-auto p-4">
-            <UploadPanel
-              copy={copy}
-              files={files}
-              activeId={activeId}
-              selectedFileIds={selectedFileIds}
-              isBusy={isBusy}
-              onDrop={onDrop}
-              onClear={clearFiles}
-              onRemoveFile={removeFile}
-              onSelectFile={setActiveId}
-              onToggleFileSelection={toggleFileSelection}
-            />
-          </TabsContent>
-
-          <TabsContent value="view" className="flex-1 overflow-auto">
-            <MetadataViewerPanel
-              copy={copy}
-              fileState={activeFile}
-              onTagChange={updateTagValue}
-              onToggleTagSelection={toggleTagSelection}
-            />
-          </TabsContent>
-
-          <TabsContent value="edit" className="flex-1 overflow-auto p-4">
-            <EditPanel
-              copy={copy}
-              locale={locale}
-              fileState={activeFile}
-              selectedFileCount={selectedFiles.length}
-              operationMode={operationMode}
-              hasChangedFields={hasChangedFields}
-              onDraftChange={updateDraft}
-              onApplyEdits={applyEdits}
-              onClearAll={() => void runSingleClear('all')}
-              onClearGps={() => void runSingleClear('gps')}
-              onClearSelected={() => void runSingleClear('selected')}
-              onBatchClearAll={() => void runBatchClear('all')}
-              onBatchClearGps={() => void runBatchClear('gps')}
-              onDownload={downloadActiveFile}
-            />
-          </TabsContent>
-        </Tabs>
+      <div className="p-4 bg-background text-center">
+        <h2 className="text-2xl font-bold mb-1">{copy.page.desktopTitle}</h2>
+        <p className="text-sm text-muted-foreground">{copy.page.desktopDescription}</p>
       </div>
-
-      <div className="hidden lg:flex flex-col h-full">
-        <div className="flex-shrink-0 p-4 bg-background text-center">
-          <h2 className="text-2xl font-bold mb-1">{copy.page.desktopTitle}</h2>
-          <p className="text-sm text-muted-foreground">{copy.page.desktopDescription}</p>
-        </div>
-
-        {(notice || error) && (
-          <div className="px-4 pb-3">
-            <StatusMessage notice={notice} error={error} copy={copy} />
-          </div>
-        )}
-
-        <div className="flex-1 flex overflow-hidden">
-          <div className="flex-[3] min-w-0 border-r bg-background">
-            <div className="h-full overflow-auto p-4">
-              <UploadPanel
-                copy={copy}
-                files={files}
-                activeId={activeId}
-                selectedFileIds={selectedFileIds}
-                isBusy={isBusy}
-                onDrop={onDrop}
-                onClear={clearFiles}
-                onRemoveFile={removeFile}
-                onSelectFile={setActiveId}
-                onToggleFileSelection={toggleFileSelection}
-              />
-            </div>
-          </div>
-
-          <div className="flex-[6] min-w-0 overflow-hidden bg-muted/20">
-            <MetadataViewerPanel
-              copy={copy}
-              fileState={activeFile}
-              onTagChange={updateTagValue}
-              onToggleTagSelection={toggleTagSelection}
-            />
-          </div>
-
-          <div className="flex-[3] min-w-0 border-l bg-background">
-            <div className="h-full overflow-auto p-4">
-              <EditPanel
-                copy={copy}
-                locale={locale}
-                fileState={activeFile}
-                selectedFileCount={selectedFiles.length}
-                operationMode={operationMode}
-                hasChangedFields={hasChangedFields}
-                onDraftChange={updateDraft}
-                onApplyEdits={applyEdits}
-                onClearAll={() => void runSingleClear('all')}
-                onClearGps={() => void runSingleClear('gps')}
-                onClearSelected={() => void runSingleClear('selected')}
-                onBatchClearAll={() => void runBatchClear('all')}
-                onBatchClearGps={() => void runBatchClear('gps')}
-                onDownload={downloadActiveFile}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="lg:hidden px-4 pb-4">
+      <div className="px-4" aria-live="polite">
         <StatusMessage notice={notice} error={error} copy={copy} />
+        {files.some((file) => file.status === 'reading') && (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin" />{copy.messages.reading}
+          </p>
+        )}
       </div>
-
+      <ToolWorkspace panels={[
+        {
+          id: 'upload', label: copy.page.uploadTab,
+          content: <UploadPanel copy={copy} files={files} activeId={activeId}
+            selectedFileIds={selectedFileIds} isBusy={isBusy} onDrop={onDrop}
+            onClear={clearFiles} onRemoveFile={removeFile} onSelectFile={setActiveId}
+            onToggleFileSelection={toggleFileSelection} />,
+        },
+        {
+          id: 'view', label: copy.page.viewTab,
+          content: <MetadataViewerPanel copy={copy} fileState={activeFile}
+            onTagChange={updateTagValue} onToggleTagSelection={toggleTagSelection} />,
+        },
+        {
+          id: 'edit', label: copy.page.editTab,
+          content: <EditPanel copy={copy} locale={locale} fileState={activeFile}
+            selectedFileCount={selectedFiles.length} operationMode={operationMode}
+            hasChangedFields={hasChangedFields} onDraftChange={updateDraft} onApplyEdits={applyEdits}
+            onClearAll={() => void runSingleClear('all')} onClearGps={() => void runSingleClear('gps')}
+            onClearSelected={() => void runSingleClear('selected')}
+            onBatchClearAll={() => void runBatchClear('all')} onBatchClearGps={() => void runBatchClear('gps')}
+            onDownload={downloadActiveFile} />,
+        },
+      ]} />
       <MetadataGeoContent locale={locale} />
     </div>
   );
@@ -629,18 +550,6 @@ function UploadPanel({
               {files.map((fileState) => (
                 <div
                   key={fileState.id}
-                  role="button"
-                  tabIndex={0}
-                  aria-pressed={activeId === fileState.id}
-                  aria-label={fileState.currentFile.name}
-                  onClick={() => onSelectFile(fileState.id)}
-                  onKeyDown={(event) => {
-                    if (event.target !== event.currentTarget) return;
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      onSelectFile(fileState.id);
-                    }
-                  }}
                   className={cn(
                     'w-full text-left flex items-center gap-3 p-2 rounded border transition-colors',
                     activeId === fileState.id ? 'bg-primary/10 border-primary/40' : 'bg-muted/30 hover:bg-muted/50'
@@ -654,14 +563,16 @@ function UploadPanel({
                     className="h-4 w-4 shrink-0"
                     aria-label={copy.upload.selectFile}
                   />
-                  <div className="w-11 h-11 rounded bg-muted overflow-hidden shrink-0">
+                  <button type="button" className="min-w-0 flex-1 flex items-center gap-3 text-left"
+                    onClick={() => onSelectFile(fileState.id)} aria-pressed={activeId === fileState.id}>
+                  <span className="w-11 h-11 rounded bg-muted overflow-hidden shrink-0">
                     <ObjectUrlImage
                       file={fileState.currentFile}
                       alt={fileState.currentFile.name}
                       className="w-full h-full object-cover"
                     />
-                  </div>
-                  <div className="min-w-0 flex-1">
+                  </span>
+                  <span className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{fileState.currentFile.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {formatFileSize(fileState.currentFile.size)}
@@ -673,7 +584,8 @@ function UploadPanel({
                     {fileState.error && (
                       <p className="mt-1 text-xs text-destructive line-clamp-2">{fileState.error}</p>
                     )}
-                  </div>
+                  </span>
+                  </button>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -682,6 +594,7 @@ function UploadPanel({
                       onRemoveFile(fileState.id);
                     }}
                     disabled={isBusy}
+                    aria-label={`${copy.upload.removeFile}: ${fileState.currentFile.name}`}
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -899,7 +812,7 @@ function EditPanel({
   onBatchClearGps: () => void;
   onDownload: () => void;
 }) {
-  const isWriting = operationMode !== null;
+  const isWriting = operationMode !== null || fileState?.status === 'reading' || fileState?.status === 'writing';
   const selectedTagCount = fileState?.selectedTagKeys.length ?? 0;
 
   if (!fileState) {
@@ -979,11 +892,11 @@ function EditPanel({
           </Button>
 
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" onClick={onClearGps} disabled={isWriting}>
+            <Button variant="outline" className="h-auto min-h-9 whitespace-normal" onClick={onClearGps} disabled={isWriting}>
               {operationMode === 'clearGps' ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPinOff className="w-4 h-4" />}
               {copy.editor.clearGps}
             </Button>
-            <Button variant="outline" onClick={onClearSelected} disabled={isWriting || selectedTagCount === 0}>
+            <Button variant="outline" className="h-auto min-h-9 whitespace-normal" onClick={onClearSelected} disabled={isWriting || selectedTagCount === 0}>
               {operationMode === 'clearSelected' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eraser className="w-4 h-4" />}
               {copy.editor.clearSelected(selectedTagCount)}
             </Button>
@@ -993,6 +906,7 @@ function EditPanel({
             {operationMode === 'clearAll' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
             {copy.editor.clearAll}
           </Button>
+          <p className="text-xs text-muted-foreground">{copy.messages.clearAllNote}</p>
         </CardContent>
       </Card>
 
@@ -1006,11 +920,11 @@ function EditPanel({
         <CardContent className="space-y-2">
           <Badge variant="secondary">{copy.editor.selectedFiles(selectedFileCount)}</Badge>
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" onClick={onBatchClearGps} disabled={isWriting || selectedFileCount === 0}>
+            <Button variant="outline" className="h-auto min-h-9 whitespace-normal" onClick={onBatchClearGps} disabled={isWriting || selectedFileCount === 0}>
               {operationMode === 'batchGps' ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPinOff className="w-4 h-4" />}
               {copy.editor.batchGps}
             </Button>
-            <Button variant="outline" onClick={onBatchClearAll} disabled={isWriting || selectedFileCount === 0}>
+            <Button variant="outline" className="h-auto min-h-9 whitespace-normal" onClick={onBatchClearAll} disabled={isWriting || selectedFileCount === 0}>
               {operationMode === 'batchAll' ? <Loader2 className="w-4 h-4 animate-spin" /> : <PackageOpen className="w-4 h-4" />}
               {copy.editor.batchAll}
             </Button>
@@ -1033,10 +947,11 @@ function TextField({
   type?: string;
   onChange: (value: string) => void;
 }) {
+  const id = useId();
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs">{label}</Label>
-      <Input type={type} value={value} onChange={(event) => onChange(event.target.value)} />
+      <Label htmlFor={id} className="text-xs">{label}</Label>
+      <Input id={id} type={type} value={value} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
 }
@@ -1050,10 +965,12 @@ function TextareaField({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const id = useId();
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs">{label}</Label>
+      <Label htmlFor={id} className="text-xs">{label}</Label>
       <textarea
+        id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 min-h-20 w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]"

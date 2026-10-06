@@ -72,7 +72,7 @@ Most quick image tools require uploads, accounts, or server-side processing. Ima
 
 ### Requirements
 
-- Node.js 20.9+ recommended. Node.js 22 is used for Docker.
+- Node.js 22.15+ for local verification. CI and Docker use Node.js 22.
 - npm 10+ recommended.
 
 ### Local Development
@@ -92,7 +92,7 @@ Open [http://localhost:3000](http://localhost:3000).
 npm run verify
 ```
 
-`verify` runs type checking, linting, production build, and HTML smoke checks for the localized routes.
+`verify` runs type checking, zero-warning linting, metadata regression tests, a production build, and HTML smoke checks for the localized routes. The metadata tests use local WASM and generated fixtures without uploading files.
 
 ### Production Build
 

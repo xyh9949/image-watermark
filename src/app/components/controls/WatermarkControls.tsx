@@ -14,7 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { Settings, Eye, EyeOff, Play, Square, AlertCircle, X } from 'lucide-react';
 import { useWatermarkStore, useImageStore } from '@/app/lib/stores';
 import { WatermarkPosition } from '@/app/types';
-import { BatchWatermarkProcessor, downloadBatchResults, BatchProcessingResult } from '@/app/lib/watermark/batchProcessor';
+import type { BatchWatermarkProcessor, BatchProcessingResult } from '@/app/lib/watermark/batchProcessor';
 import { generatePreviewFileName, DEFAULT_FILENAME_TEMPLATE, isValidTemplate } from '@/app/lib/utils/renamingUtils';
 import { DEFAULT_LOCALE, getCopy, type Locale } from '@/app/lib/i18n';
 
@@ -48,6 +48,17 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [controlError, setControlError] = useState<string | null>(null);
   const processorRef = useRef<BatchWatermarkProcessor | null>(null);
+  const mountedRef = useRef(true);
+
+  // 页面离开时停止批处理并释放离屏画布；异步加载完成后也不能创建遗留实例。
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      processorRef.current?.dispose();
+      processorRef.current = null;
+    };
+  }, []);
 
   // {{ Shrimp-X: Add - 图片水印上传状态管理. Approval: Cunzhi(ID:timestamp). }}
   // 图片水印状态
@@ -110,6 +121,9 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
     try {
       // 创建处理器
       if (!processorRef.current) {
+        // 批处理引擎仅在用户开始导出时加载。
+        const { BatchWatermarkProcessor } = await import('@/app/lib/watermark/batchProcessor');
+        if (!mountedRef.current) return;
         processorRef.current = new BatchWatermarkProcessor();
       }
 
@@ -124,12 +138,14 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
           setCurrentProcessingImage(imageName);
         },
         onComplete: async (results) => {
+          if (!mountedRef.current) return;
           setProcessingResults(results);
           setIsProcessing(false);
 
           // 自动下载结果
           try {
             // {{ Shrimp-X: Modify - 传递文件名模板参数. Approval: Cunzhi(ID:timestamp). }}
+            const { downloadBatchResults } = await import('@/app/lib/watermark/batchProcessor');
             await downloadBatchResults(results, undefined, fileNameTemplate);
           } catch {
             setProcessingError(labels.downloadFailed);

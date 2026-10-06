@@ -72,7 +72,7 @@
 
 ### 环境要求
 
-- 推荐 Node.js 20.9+。Docker 使用 Node.js 22。
+- 本地验证需要 Node.js 22.15+。CI 和 Docker 使用 Node.js 22。
 - 推荐 npm 10+。
 
 ### 开发模式
@@ -92,7 +92,7 @@ npm run dev
 npm run verify
 ```
 
-`verify` 会执行类型检查、lint、生产构建和 HTML smoke 检查。
+`verify` 会执行类型检查、零警告 lint、元数据回归测试、生产构建和 HTML smoke 检查。元数据测试使用本地 WASM 和测试图片，不上传文件。
 
 ### 生产构建
 

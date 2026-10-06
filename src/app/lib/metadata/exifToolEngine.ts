@@ -1,7 +1,7 @@
 import type { ExifTags } from '@uswriting/exiftool';
 import type { MetadataEditDraft, MetadataTag, MetadataWriteResult } from '@/app/types/metadata';
 
-const WASM_ASSET_PATH = '/zeroperl.wasm';
+const WASM_ASSET_PATH = process.env.NEXT_PUBLIC_METADATA_WASM_URL || '/zeroperl.wasm';
 const SUPPORTED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const SUPPORTED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp']);
 
@@ -51,9 +51,20 @@ type ExifToolJsonRow = Record<string, unknown>;
 type ExifToolModule = typeof import('@uswriting/exiftool');
 
 let exifToolPromise: Promise<ExifToolModule> | null = null;
+let operationQueue: Promise<unknown> = Promise.resolve();
+
+// ExifTool 共享 WASM 实例、临时文件和输出缓冲，必须串行访问；失败不能阻塞后续任务。
+function withExifTool<T>(operation: () => Promise<T>): Promise<T> {
+  const result = operationQueue.then(operation);
+  operationQueue = result.catch(() => undefined);
+  return result;
+}
 
 function loadExifTool() {
-  exifToolPromise ??= import('@uswriting/exiftool');
+  exifToolPromise ??= import('@uswriting/exiftool').catch((error) => {
+    exifToolPromise = null;
+    throw error;
+  });
   return exifToolPromise;
 }
 
@@ -74,7 +85,11 @@ export function getSupportedMetadataFormats() {
   return 'JPG, JPEG, PNG, WebP';
 }
 
-export async function readMetadata(file: File): Promise<MetadataTag[]> {
+export function readMetadata(file: File): Promise<MetadataTag[]> {
+  return withExifTool(() => readMetadataInternal(file));
+}
+
+async function readMetadataInternal(file: File): Promise<MetadataTag[]> {
   if (!isSupportedMetadataFile(file)) {
     throw new Error(`Unsupported file format. Supported formats: ${getSupportedMetadataFormats()}.`);
   }
@@ -103,6 +118,17 @@ export async function writeMetadataEntries(
   file: File,
   entries: ExifTags,
   outputSuffix = 'metadata'
+): Promise<MetadataWriteResult> {
+  try {
+    return await withExifTool(() => writeMetadataEntriesInternal(file, entries, outputSuffix));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Metadata engine failed.';
+    return { success: false, failedTags: Object.keys(entries).map((key) => ({ key, error: message })), error: message };
+  }
+}
+
+async function writeMetadataEntriesInternal(
+  file: File, entries: ExifTags, outputSuffix: string
 ): Promise<MetadataWriteResult> {
   const exifTool = await loadExifTool();
   const entryList = Object.entries(entries);
@@ -182,11 +208,13 @@ export async function copyWritableMetadata(
 }
 
 export async function clearMetadata(file: File, outputSuffix = 'clean'): Promise<MetadataWriteResult> {
-  return writeWithRawArgs(file, ['-all='], outputSuffix);
+  // 删除 ICC 是清除全部元数据的预期行为。双 -q 仅抑制警告，实际错误及非零退出码仍返回失败。
+  return writeWithRawArgs(file, ['-all=', '-q', '-q'], outputSuffix);
 }
 
 export async function clearGps(file: File, outputSuffix = 'nogps'): Promise<MetadataWriteResult> {
-  return writeWithRawArgs(file, ['-gps:all=', '-xmp:geotag=', '-xmp:geotime='], outputSuffix);
+  // 同时移除 EXIF 和 XMP 中的 GPS 字段，避免另一份坐标残留。
+  return writeWithRawArgs(file, ['-gps:all=', '-gps*=', '-xmp:geotag=', '-xmp:geotime='], outputSuffix);
 }
 
 export async function clearSelectedMetadata(file: File, tagKeys: string[]): Promise<MetadataWriteResult> {
@@ -219,9 +247,9 @@ export function buildDraftFromTags(tags: MetadataTag[]): MetadataEditDraft {
     orientation: findTagDisplayValue(tags, ['Orientation']),
     software: findTagDisplayValue(tags, ['Software']),
     comment: findTagDisplayValue(tags, ['Comment', 'UserComment']),
-    gpsLatitude: extractCoordinate(findTagDisplayValue(tags, ['GPSLatitude'])),
-    gpsLongitude: extractCoordinate(findTagDisplayValue(tags, ['GPSLongitude'])),
-    gpsAltitude: findTagDisplayValue(tags, ['GPSAltitude']).replace(/\s*m$/i, ''),
+    gpsLatitude: extractCoordinate(findTagDisplayValue(tags, ['GPSLatitude']), findTagDisplayValue(tags, ['GPSLatitudeRef'])),
+    gpsLongitude: extractCoordinate(findTagDisplayValue(tags, ['GPSLongitude']), findTagDisplayValue(tags, ['GPSLongitudeRef'])),
+    gpsAltitude: extractAltitude(findTagDisplayValue(tags, ['GPSAltitude']), findTagDisplayValue(tags, ['GPSAltitudeRef'])),
   };
 }
 
@@ -259,6 +287,17 @@ export function buildCommonMetadataEntries(
   addGpsEntries(entries, draft, baseDraft);
 
   return entries;
+}
+
+// 空值代表删除字段；其余输入必须是完整数字，不能把非法坐标静默转成删除或截断值。
+export function hasInvalidGpsDraft(draft: MetadataEditDraft): boolean {
+  return (['gpsLatitude', 'gpsLongitude', 'gpsAltitude'] as const).some((field) => {
+    const text = draft[field].trim();
+    if (!text) return false;
+    const value = Number(text);
+    const limit = field === 'gpsLatitude' ? 90 : field === 'gpsLongitude' ? 180 : Infinity;
+    return !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text) || !Number.isFinite(value) || Math.abs(value) > limit;
+  });
 }
 
 export function formatFileSize(bytes: number): string {
@@ -301,7 +340,8 @@ function addGpsEntries(entries: ExifTags, draft: MetadataEditDraft, baseDraft: M
     const altitude = Number.parseFloat(draft.gpsAltitude);
     if (Number.isFinite(altitude)) {
       entries.GPSAltitude = Math.abs(altitude);
-      entries.GPSAltitudeRef = altitude < 0 ? 1 : 0;
+      // # 关闭 ExifTool 的显示值转换，确保 1 写成“海平面以下”而非无效的枚举文本。
+      entries['GPSAltitudeRef#'] = altitude < 0 ? 1 : 0;
     } else {
       entries.GPSAltitude = '';
       entries.GPSAltitudeRef = '';
@@ -310,6 +350,14 @@ function addGpsEntries(entries: ExifTags, draft: MetadataEditDraft, baseDraft: M
 }
 
 async function writeWithRawArgs(file: File, args: string[], outputSuffix: string): Promise<MetadataWriteResult> {
+  try {
+    return await withExifTool(() => writeWithRawArgsInternal(file, args, outputSuffix));
+  } catch (error) {
+    return { success: false, failedTags: [], error: error instanceof Error ? error.message : 'Metadata engine failed.' };
+  }
+}
+
+async function writeWithRawArgsInternal(file: File, args: string[], outputSuffix: string): Promise<MetadataWriteResult> {
   const exifTool = await loadExifTool();
   const result = await exifTool.writeMetadata(file, {}, {
     args,
@@ -401,6 +449,8 @@ function buildWritableMetadataEntries(tags: MetadataTag[]): ExifTags {
 
   for (const tag of tags) {
     if (!tag.editable) continue;
+    // Canvas 已应用方向并重新编码像素，不能拷回旧方向或旧像素尺寸。
+    if (['orientation', 'exifimagewidth', 'exifimageheight', 'pixelxdimension', 'pixelydimension'].includes(normalizeTagName(tag.name))) continue;
 
     const value = toWritableTagValue(tag.value);
     if (typeof value === 'undefined') continue;
@@ -449,25 +499,25 @@ function splitKeywords(value: string) {
     .filter(Boolean);
 }
 
-function extractCoordinate(value: string) {
+function extractCoordinate(value: string, reference = '') {
   if (!value) return '';
 
-  const decimal = Number.parseFloat(value);
-  if (Number.isFinite(decimal) && /^-?\d+(\.\d+)?/.test(value.trim())) {
-    return String(decimal);
-  }
-
-  const dms = value.match(/(\d+(?:\.\d+)?)\D+(\d+(?:\.\d+)?)?\D*(\d+(?:\.\d+)?)?.*?([NSEW])/i);
-  if (!dms) return value;
-
-  const degrees = Number.parseFloat(dms[1] ?? '0');
-  const minutes = Number.parseFloat(dms[2] ?? '0');
-  const seconds = Number.parseFloat(dms[3] ?? '0');
-  const direction = dms[4]?.toUpperCase();
-  const sign = direction === 'S' || direction === 'W' ? -1 : 1;
-  const coordinate = sign * (degrees + minutes / 60 + seconds / 3600);
-
+  // 先解析度分秒；parseFloat 会把 "33 deg 51... S" 错截为正数 33。
+  const dms = value.match(/^\s*(-?\d+(?:\.\d+)?)\s*(?:deg|°)\s*(\d+(?:\.\d+)?)\s*['′]\s*(\d+(?:\.\d+)?)/i);
+  const direction = value.trim().match(/([NSEW])$/i)?.[1] || reference[0] || '';
+  const sign = /[SW]/i.test(direction) || value.trim().startsWith('-') ? -1 : 1;
+  const decimal = Number(value.trim().replace(/\s*[NSEW]$/i, ''));
+  const coordinate = dms
+    ? sign * (Math.abs(Number(dms[1])) + Number(dms[2]) / 60 + Number(dms[3]) / 3600)
+    : sign * Math.abs(decimal);
   return Number.isFinite(coordinate) ? String(Number(coordinate.toFixed(6))) : value;
+}
+
+function extractAltitude(value: string, reference: string) {
+  if (!value) return '';
+  const altitude = Number.parseFloat(value);
+  const belowSeaLevel = /below/i.test(`${value} ${reference}`) || reference === '1';
+  return Number.isFinite(altitude) ? String(belowSeaLevel ? -Math.abs(altitude) : altitude) : value;
 }
 
 function createOutputFile(sourceFile: File, data: ArrayBuffer, suffix: string) {

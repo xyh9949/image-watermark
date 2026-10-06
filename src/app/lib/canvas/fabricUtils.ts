@@ -16,6 +16,10 @@ import {
   ImageDimensions
 } from './adaptiveScaling';
 
+// Fabric 7 默认使用中心原点；延续已有左上角坐标语义，避免旧水印配置发生偏移。
+FabricObject.ownDefaults.originX = 'left';
+FabricObject.ownDefaults.originY = 'top';
+
 // 默认Canvas配置
 export const DEFAULT_CANVAS_CONFIG: CanvasConfig = {
   width: 800,

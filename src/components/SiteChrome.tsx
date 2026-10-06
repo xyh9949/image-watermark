@@ -54,11 +54,11 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <div className="hidden lg:flex h-16">
-          <div className="flex-[3] bg-background px-4 flex items-center">
+        <div className="hidden lg:flex h-16 items-center justify-between gap-4 px-4">
+          <div className="min-w-0 bg-background flex items-center">
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-2">
-                <div className="text-xl font-bold">{copy.brandName}</div>
+                <div className="text-xl font-bold whitespace-nowrap">{copy.brandName}</div>
                 <span className="text-sm text-muted-foreground">v{APP_VERSION}</span>
               </div>
               <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
@@ -67,7 +67,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <div className="flex-[9] px-4 flex items-center justify-end gap-5">
+          <div className="shrink-0 flex items-center justify-end gap-5">
             <Link
               href={languageHref}
               className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"

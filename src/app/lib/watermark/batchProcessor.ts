@@ -341,11 +341,13 @@ export class BatchWatermarkProcessor {
    */
   dispose(): void {
     if (this.canvas) {
-      this.canvas.dispose();
+      // Fabric 销毁包装层后会恢复原 canvas，需再移除我们挂到 body 的节点。
+      const element = this.canvas.getElement();
+      void this.canvas.dispose().catch(() => undefined).finally(() => element.remove());
       this.canvas = null;
     }
     this.isProcessing = false;
-    this.shouldStop = false;
+    this.shouldStop = true;
   }
 }
 

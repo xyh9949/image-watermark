@@ -4,7 +4,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToolWorkspace } from '@/components/ToolWorkspace';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -27,6 +27,7 @@ interface CompressedFile {
   compressionRatio: number;
   status: 'pending' | 'processing' | 'completed' | 'error';
   error?: string;
+  warning?: string;
 }
 
 interface CompressionSettings {
@@ -58,9 +59,10 @@ function getOutputFileName(fileName: string, mimeType: string) {
     : `${fileName}.${nextExtension}`;
 }
 
-async function finalizeCompressedFile(sourceFile: File, compressedFile: File, removeMetadata: boolean) {
+async function finalizeCompressedFile(sourceFile: File, compressedFile: File, removeMetadata: boolean, locale: Locale) {
+  const copy = getCopy(locale).compress.page;
   if (!COMPRESS_METADATA_MIME_TYPES.has(sourceFile.type) || !COMPRESS_METADATA_MIME_TYPES.has(compressedFile.type)) {
-    return compressedFile;
+    return { file: compressedFile, warning: copy.staticFrameOnly };
   }
 
   try {
@@ -69,9 +71,14 @@ async function finalizeCompressedFile(sourceFile: File, compressedFile: File, re
       ? await metadataEngine.clearMetadata(compressedFile, 'compressed')
       : await metadataEngine.copyWritableMetadata(sourceFile, compressedFile, 'compressed');
 
-    return result.success && result.file ? result.file : compressedFile;
+    // 元数据清理失败必须阻止下载，不能把未确认清理的文件标记为成功。
+    if (!result.success || !result.file) throw new Error(copy.metadataFailed);
+    return {
+      file: new File([result.file], compressedFile.name, { type: compressedFile.type, lastModified: compressedFile.lastModified }),
+      warning: result.failedTags.length ? copy.metadataPartial : undefined,
+    };
   } catch {
-    return compressedFile;
+    throw new Error(copy.metadataFailed);
   }
 }
 
@@ -131,7 +138,8 @@ function FileUploadPanel({
       'image/webp': ['.webp'],
       'image/gif': ['.gif']
     },
-    multiple: true
+    multiple: true,
+    disabled: isProcessing,
   });
 
   const formatFileSize = (bytes: number): string => {
@@ -329,9 +337,9 @@ function CompressionControlPanel({
 }) {
   const completedResults = results.filter(r => r.status === 'completed');
   const totalSaved = completedResults.reduce((sum, r) => sum + (r.originalSize - r.compressedSize), 0);
-  const averageCompression = completedResults.length > 0
-    ? completedResults.reduce((sum, r) => sum + r.compressionRatio, 0) / completedResults.length
-    : 0;
+  // 总压缩率按字节加权，与“节省空间”使用同一口径。
+  const totalOriginal = completedResults.reduce((sum, r) => sum + r.originalSize, 0);
+  const averageCompression = totalOriginal > 0 ? totalSaved / totalOriginal : 0;
 
   const formatFileSize = (bytes: number): string => {
     if (!bytes || bytes === 0 || isNaN(bytes)) return '0 Bytes';
@@ -359,6 +367,7 @@ function CompressionControlPanel({
             <Label className="text-sm">{labels.quality}</Label>
             <Select
               value={settings.quality}
+              disabled={isProcessing}
               onValueChange={(value: 'high' | 'medium' | 'low') =>
                 onSettingsChange({ ...settings, quality: value })
               }
@@ -380,6 +389,7 @@ function CompressionControlPanel({
               <Label htmlFor="remove-metadata" className="text-sm">{labels.removeMetadata}</Label>
               <Switch
                 id="remove-metadata"
+                disabled={isProcessing}
                 checked={settings.removeMetadata}
                 onCheckedChange={(checked) =>
                   onSettingsChange({ ...settings, removeMetadata: checked })
@@ -615,13 +625,18 @@ function ResultsPreviewPanel({
                     )}
                   </span>
                   {result.status === 'completed' && (
-                    <Badge variant="secondary" className="bg-green-500/20 text-green-700 dark:text-green-400 text-xs">
-                      -{(result.compressionRatio * 100).toFixed(1)}%
+                    <Badge variant="secondary" className={cn('text-xs', result.compressionRatio >= 0
+                      ? 'bg-green-500/20 text-green-700 dark:text-green-400'
+                      : 'bg-amber-500/20 text-amber-800 dark:text-amber-300')}>
+                      {result.compressionRatio >= 0 ? '-' : '+'}{Math.abs(result.compressionRatio * 100).toFixed(1)}%
                     </Badge>
                   )}
                 </div>
                 {result.error && (
                   <p className="text-xs text-red-600 mt-1">{result.error}</p>
+                )}
+                {result.warning && (
+                  <p className="text-xs text-amber-700 mt-1" role="status">{result.warning}</p>
                 )}
               </div>
 
@@ -689,92 +704,55 @@ export default function Compress() {
   }, []);
 
   const compressFile = async (file: File): Promise<CompressedFile> => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+    const canvas = document.createElement('canvas');
+    const objectUrl = URL.createObjectURL(file);
+    const baseResult = {
+      id: crypto.randomUUID(),
+      originalFile: file,
+      originalSize: file.size,
+    };
+
+    // 统一捕获解码、编码和元数据失败，确保每个文件结束后都能继续处理队列。
+    try {
       const img = new Image();
-      const objectUrl = URL.createObjectURL(file);
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error(pageCopy.imageLoadFailed));
+        img.src = objectUrl;
+      });
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error(pageCopy.compressionFailed);
+      ctx.drawImage(img, 0, 0);
 
-      img.onload = () => {
-        URL.revokeObjectURL(objectUrl);
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx?.drawImage(img, 0, 0);
-
-        let quality = 0.9;
-        const outputType = file.type;
-
-        if (file.type === 'image/png') {
-          quality = 1.0;
-        } else if (file.type === 'image/jpeg') {
-          switch (settings.quality) {
-            case 'high': quality = 0.95; break;
-            case 'medium': quality = 0.85; break;
-            case 'low': quality = 0.7; break;
-          }
-        } else if (file.type === 'image/webp') {
-          switch (settings.quality) {
-            case 'high': quality = 0.92; break;
-            case 'medium': quality = 0.8; break;
-            case 'low': quality = 0.65; break;
-          }
-        }
-
-        canvas.toBlob(
-          async (blob) => {
-            if (blob) {
-              const actualOutputType = blob.type || outputType;
-              const compressedFile = new File([blob], getOutputFileName(file.name, actualOutputType), {
-                type: actualOutputType,
-                lastModified: file.lastModified
-              });
-              const finalizedFile = await finalizeCompressedFile(file, compressedFile, settings.removeMetadata);
-
-              const compressionRatio = 1 - (finalizedFile.size / file.size);
-
-              resolve({
-                id: `${file.name}_${Date.now()}`,
-                originalFile: file,
-                compressedFile: finalizedFile,
-                originalSize: file.size,
-                compressedSize: finalizedFile.size,
-                compressionRatio,
-                status: 'completed'
-              });
-            } else {
-              resolve({
-                id: `${file.name}_${Date.now()}`,
-                originalFile: file,
-                compressedFile: null,
-                originalSize: file.size,
-                compressedSize: 0,
-                compressionRatio: 0,
-                status: 'error',
-                error: pageCopy.compressionFailed
-              });
-            }
-          },
-          outputType,
-          quality
-        );
+      const quality = file.type === 'image/jpeg'
+        ? { high: 0.95, medium: 0.85, low: 0.7 }[settings.quality]
+        : file.type === 'image/webp'
+          ? { high: 0.92, medium: 0.8, low: 0.65 }[settings.quality]
+          : 1;
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((output) => output ? resolve(output) : reject(new Error(pageCopy.compressionFailed)), file.type, quality);
+      });
+      const outputType = blob.type || file.type;
+      const compressedFile = new File([blob], getOutputFileName(file.name, outputType), {
+        type: outputType, lastModified: file.lastModified,
+      });
+      const finalized = await finalizeCompressedFile(file, compressedFile, settings.removeMetadata, locale);
+      return {
+        ...baseResult, compressedFile: finalized.file, compressedSize: finalized.file.size,
+        compressionRatio: 1 - finalized.file.size / file.size, status: 'completed', warning: finalized.warning,
       };
-
-      img.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        resolve({
-          id: `${file.name}_${Date.now()}`,
-          originalFile: file,
-          compressedFile: null,
-          originalSize: file.size,
-          compressedSize: 0,
-          compressionRatio: 0,
-          status: 'error',
-          error: pageCopy.imageLoadFailed
-        });
+    } catch (error) {
+      return {
+        ...baseResult, compressedFile: null, compressedSize: 0, compressionRatio: 0, status: 'error',
+        error: error instanceof Error ? error.message : pageCopy.compressionFailed,
       };
-
-      img.src = objectUrl;
-    });
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+      canvas.width = 0;
+      canvas.height = 0;
+    }
   };
 
   const startCompression = async () => {
@@ -830,10 +808,11 @@ export default function Compress() {
 
       const zipFiles: Record<string, Uint8Array> = {};
 
-      for (const result of completedFiles) {
+      for (const [index, result] of completedFiles.entries()) {
         if (result.compressedFile) {
           const arrayBuffer = await result.compressedFile.arrayBuffer();
-          zipFiles[result.compressedFile.name] = new Uint8Array(arrayBuffer);
+          // 与元数据页一致，为同名图片加序号，避免 ZIP 中后一个文件覆盖前一个。
+          zipFiles[`${String(index + 1).padStart(2, '0')}_${result.compressedFile.name}`] = new Uint8Array(arrayBuffer);
         }
       }
 
@@ -887,121 +866,28 @@ export default function Compress() {
       {/* Top Navigation */}
       <TopNavigation />
 
-      {/* 移动端：垂直布局 */}
-      <div className="lg:hidden flex flex-col h-full">
-        {/* 页面标题 */}
-        <div className="flex-shrink-0 p-4 bg-background">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-1">{pageCopy.mobileTitle}</h2>
-            <p className="text-sm text-muted-foreground">{pageCopy.mobileDescription}</p>
-          </div>
-        </div>
-
-        {/* 移动端内容区域 */}
-        <div className="flex-1 overflow-hidden">
-          <Tabs defaultValue="upload" className="h-full flex flex-col">
-            <TabsList className="flex-shrink-0 grid w-full grid-cols-3 m-4">
-              <TabsTrigger value="upload">{pageCopy.uploadTab}</TabsTrigger>
-              <TabsTrigger value="preview">{pageCopy.resultsTab}</TabsTrigger>
-              <TabsTrigger value="controls">{pageCopy.controlsTab}</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="upload" className="flex-1 overflow-auto p-4">
-              <FileUploadPanel
-                files={files}
-                onDrop={onDrop}
-                onClear={clearFiles}
-                onRemoveFile={removeFile}
-                isProcessing={isProcessing}
-                locale={locale}
-              />
-            </TabsContent>
-
-            <TabsContent value="preview" className="flex-1 overflow-auto">
-              <ResultsPreviewPanel
-                results={results}
-                isDownloading={isDownloading}
-                onDownloadFile={downloadFile}
-                onDownloadAll={downloadAllFiles}
-                locale={locale}
-              />
-            </TabsContent>
-
-            <TabsContent value="controls" className="flex-1 overflow-auto p-4">
-              <CompressionControlPanel
-                settings={settings}
-                onSettingsChange={setSettings}
-                files={files}
-                results={results}
-                isProcessing={isProcessing}
-                progress={progress}
-                onStartCompression={startCompression}
-                locale={locale}
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
+      <div className="p-4 bg-background text-center">
+        <h2 className="text-2xl font-bold mb-1">{pageCopy.desktopTitle}</h2>
+        <p className="text-sm text-muted-foreground">{pageCopy.desktopDescription}</p>
       </div>
-
-      {/* 桌面端：固定三栏布局 */}
-      <div className="hidden lg:flex flex-col h-full">
-        {/* 页面标题 */}
-        <div className="flex-shrink-0 p-4 bg-background">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-1">{pageCopy.desktopTitle}</h2>
-            <p className="text-sm text-muted-foreground">{pageCopy.desktopDescription}</p>
-          </div>
-        </div>
-
-        {/* 主要内容区域 */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* 左侧：文件上传区域 - 使用3/12的比例 */}
-          <div className="flex-[3] min-w-0 border-r bg-background">
-            <div className="h-full overflow-auto">
-              <div className="p-4">
-                <FileUploadPanel
-                  files={files}
-                  onDrop={onDrop}
-                onClear={clearFiles}
-                onRemoveFile={removeFile}
-                isProcessing={isProcessing}
-                locale={locale}
-              />
-              </div>
-            </div>
-          </div>
-
-          {/* 中间：结果预览区域 - 使用6/12的比例 */}
-          <div className="flex-[6] min-w-0 overflow-hidden bg-muted/20">
-            <ResultsPreviewPanel
-              results={results}
-              isDownloading={isDownloading}
-              onDownloadFile={downloadFile}
-              onDownloadAll={downloadAllFiles}
-              locale={locale}
-            />
-          </div>
-
-          {/* 右侧：控制面板 - 使用3/12的比例 */}
-          <div className="flex-[3] min-w-0 border-l bg-background">
-            <div className="h-full overflow-auto">
-              <div className="p-4">
-                <CompressionControlPanel
-                  settings={settings}
-                  onSettingsChange={setSettings}
-                  files={files}
-                  results={results}
-                  isProcessing={isProcessing}
-                  progress={progress}
-                  onStartCompression={startCompression}
-                  locale={locale}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <ToolWorkspace panels={[
+        {
+          id: 'upload', label: pageCopy.uploadTab,
+          content: <FileUploadPanel files={files} onDrop={onDrop} onClear={clearFiles}
+            onRemoveFile={removeFile} isProcessing={isProcessing} locale={locale} />,
+        },
+        {
+          id: 'preview', label: pageCopy.resultsTab,
+          content: <ResultsPreviewPanel results={results} isDownloading={isDownloading}
+            onDownloadFile={downloadFile} onDownloadAll={downloadAllFiles} locale={locale} />,
+        },
+        {
+          id: 'controls', label: pageCopy.controlsTab,
+          content: <CompressionControlPanel settings={settings} onSettingsChange={setSettings}
+            files={files} results={results} isProcessing={isProcessing} progress={progress}
+            onStartCompression={startCompression} locale={locale} />,
+        },
+      ]} />
       <CompressGeoContent locale={locale} />
     </div>
   );

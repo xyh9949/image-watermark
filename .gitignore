@@ -12,6 +12,8 @@
 /.kiro
 # testing
 /coverage
+/output/playwright/
+/.playwright-cli/
 /.vscode
 # next.js
 /.next/

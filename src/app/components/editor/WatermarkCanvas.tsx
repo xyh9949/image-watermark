@@ -179,7 +179,7 @@ export function WatermarkCanvas({
       <div className="space-y-4">
         {/* 控制栏 */}
         {showControls && (
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center space-x-2">
               <h3 className="text-sm font-medium">{labels.editor}</h3>
               {currentImage && (
@@ -232,7 +232,7 @@ export function WatermarkCanvas({
 
         {/* Canvas容器 */}
         <div className="relative border rounded-lg overflow-hidden bg-gray-50">
-          <div className="flex items-center justify-center min-h-96">
+          <div data-canvas-container className="flex items-center justify-center h-96 min-w-0">
             <canvas
               ref={canvasRef}
               className="max-w-full max-h-full touch-none"
@@ -273,8 +273,8 @@ export function WatermarkCanvas({
 
         {/* 状态信息 */}
         {isReady && (
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2">
               <span>Canvas: {canvas?.getWidth()} × {canvas?.getHeight()}</span>
               <span>{labels.zoom}: 100%</span>
               <span>{labels.watermark}: {watermarks.length}</span>

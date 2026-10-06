@@ -39,20 +39,20 @@ export function TopNavigation() {
     <nav className="border-b bg-background">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex h-16 items-center justify-center">
-          <div className="flex items-center bg-muted rounded-lg p-1 max-w-full overflow-x-auto">
+          <div className="grid grid-cols-3 items-center bg-muted rounded-lg p-1 w-full sm:w-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
-                <Link key={item.href} href={item.href}>
+                <Link key={item.href} href={item.href} aria-current={item.active ? 'page' : undefined} className="min-w-0">
                   <div
                     className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                      "flex items-center justify-center gap-2 px-1.5 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors",
                       item.active 
                         ? "bg-background text-foreground shadow-sm" 
                         : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                     )}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="hidden sm:block w-4 h-4 shrink-0" />
                     {item.label}
                   </div>
                 </Link>

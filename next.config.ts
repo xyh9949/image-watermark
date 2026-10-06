@@ -1,7 +1,18 @@
 import type { NextConfig } from "next";
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+
+// 内容变化时自动更换 URL；只有哈希地址使用长期缓存，旧客户端仍可访问原地址。
+const wasmHash = createHash('sha256').update(readFileSync('public/zeroperl.wasm')).digest('hex').slice(0, 16);
+const wasmUrl = `/metadata-engine/zeroperl-${wasmHash}.wasm`;
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  env: { NEXT_PUBLIC_METADATA_WASM_URL: wasmUrl },
+
+  async rewrites() {
+    return [{ source: wasmUrl, destination: '/zeroperl.wasm' }];
+  },
 
   images: {
     remotePatterns: [
@@ -54,6 +65,10 @@ const nextConfig: NextConfig = {
     ];
 
     return [
+      {
+        source: wasmUrl,
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
       {
         source: "/api/(.*)",
         headers: [
