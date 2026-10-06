@@ -5,6 +5,7 @@
 - 网站：https://iw.vidocat.com；Vercel 跟随 GitHub 推送部署。用户已授权优化完成后先本地验证，再推送 GitHub。
 - 中英文路由：`/`、`/compress`、`/metadata`、`/en`、`/en/compress`、`/en/metadata`。图片在浏览器本地处理。
 - 文案入口 `src/app/lib/i18n.ts`；版本须同步 package.json、package-lock.json 和 `src/app/lib/site.ts`。
+- 项目文档使用英文 README.md 和中文 README_CN.md，顶部明确语言互链；中文版包含操作流程和元数据编辑边界。纯文档更新不升级应用版本。
 
 ## 2026-10-06 优化版 1.3.2
 - 本轮范围：布局、加载性能、元数据正确性和依赖维护；没有加入统计跟踪、预设、PWA 或新工具。

@@ -1,8 +1,10 @@
 # Image Watermark
 
+English | [简体中文](README_CN.md)
+
 Browser-based image tools for batch watermarking, image compression, and EXIF / metadata editing. Files are processed locally in the browser and are not uploaded to a server.
 
-[Live demo](https://iw.vidocat.com/) · [Chinese README](README_CN.md) · [Roadmap](ROADMAP.md) · [Report an issue](https://github.com/xyh9949/image-watermark/issues)
+[Live demo](https://iw.vidocat.com/) · [Roadmap](ROADMAP.md) · [Report an issue](https://github.com/xyh9949/image-watermark/issues)
 
 ![GitHub stars](https://img.shields.io/github/stars/xyh9949/image-watermark?style=flat-square)
 ![License](https://img.shields.io/github/license/xyh9949/image-watermark?style=flat-square)
@@ -40,6 +42,8 @@ Most quick image tools require uploads, accounts, or server-side processing. Ima
 - See original size, compressed size, saved space, and compression ratio.
 - Download individual files or a ZIP archive.
 
+GIF input is processed as a static image through Canvas; animation is not preserved and output may be PNG. Compression is not guaranteed to make an already optimized file smaller.
+
 ### EXIF / Metadata Tool
 
 - View metadata from JPG, JPEG, PNG, and WebP files.
@@ -47,6 +51,8 @@ Most quick image tools require uploads, accounts, or server-side processing. Ima
 - Browse advanced EXIF, IPTC, XMP, ICC, PNG, WebP, File, System, and Composite tags.
 - Clear all metadata, GPS metadata, or selected fields.
 - Batch clear metadata and download results as ZIP.
+
+File, System, ExifTool, and Composite fields are read-only. Other tags can be edited when supported by ExifTool and the target format; failed writes are reported in the UI. Clearing all metadata also removes orientation and color profiles, which may change how an image is displayed.
 
 ## Good Fit For
 
@@ -135,6 +141,7 @@ npm run build        # Build for production
 npm run start        # Start the production server
 npm run lint         # Run ESLint
 npm run type-check   # Run TypeScript checks
+npm run test:metadata # Run metadata regression tests with local WASM
 npm run smoke:html   # Check static HTML metadata and localized pages
 npm run verify       # Run the full local verification suite
 ```

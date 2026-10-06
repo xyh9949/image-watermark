@@ -1,8 +1,10 @@
 # Image Watermark 图片工具
 
+[English](README.md) | 简体中文
+
 一个浏览器端本地处理的图片工具，支持批量加水印、批量压缩、EXIF / 元数据查看编辑与清除。图片在用户浏览器中处理，不上传服务器。
 
-[在线体验](https://iw.vidocat.com/) · [English README](README.md) · [路线图](ROADMAP.md) · [反馈问题](https://github.com/xyh9949/image-watermark/issues)
+[在线体验](https://iw.vidocat.com/) · [路线图](ROADMAP.md) · [更新日志](CHANGELOG.md) · [反馈问题](https://github.com/xyh9949/image-watermark/issues)
 
 ![GitHub stars](https://img.shields.io/github/stars/xyh9949/image-watermark?style=flat-square)
 ![License](https://img.shields.io/github/license/xyh9949/image-watermark?style=flat-square)
@@ -22,6 +24,14 @@
 - 已支持中文和英文路由。
 - 已补充 SEO / GEO：sitemap、canonical、hreflang、FAQ 内容和 `llms.txt`。
 
+## 界面与操作
+
+- 桌面端采用文件列表、预览 / 结果、设置三栏布局，操作按钮固定在设置区底部。
+- 手机端顺排显示预览和设置，点击“图片”展开文件列表，折叠时保留编辑状态。
+- 中文 / 英文切换位于全局导航，切换后仍进入对应工具页。
+- 常用设置直接展示，旋转、描边、位置微调、导出设置和元数据高级字段按需展开。
+- 水印画布和元数据 WASM 引擎按需加载；元数据读取或写回期间锁定编辑，避免输入被覆盖。
+
 ## 功能
 
 ### 批量水印工具
@@ -40,6 +50,8 @@
 - 显示原始大小、压缩后大小、节省空间和压缩率。
 - 支持单文件下载和 ZIP 打包下载。
 
+GIF 通过 Canvas 作为静态图片处理，不保留动画，输出可能为 PNG。已优化的图片再次处理后不一定变小，结果区会如实显示体积变化。
+
 ### EXIF / 元数据工具
 
 - 查看 JPG、JPEG、PNG、WebP 图片元数据。
@@ -47,6 +59,30 @@
 - 查看高级 EXIF、IPTC、XMP、ICC、PNG、WebP、File、System、Composite 标签。
 - 支持清除全部元数据、清除 GPS、清除选中字段。
 - 支持批量清除元数据并打包下载。
+
+**编辑边界：** 展示 ExifTool 能识别的字段，但不保证所有信息都能修改。File、System、ExifTool、Composite 等系统或计算字段只读；其他标签受 ExifTool 和目标格式的写入能力限制，失败字段会显示错误。
+
+**清除提醒：** 清除全部元数据也会移除方向信息和色彩配置，可能改变图片的显示效果。只需要隐藏位置时，优先使用“清除 GPS”。处理结果另存为新文件，不覆盖原图。
+
+## 快速使用
+
+### 添加水印
+
+1. 打开[水印工具](https://iw.vidocat.com/)，上传一张或多张图片。
+2. 选择文字、图片或全屏水印，调整内容、位置、尺寸和透明度。
+3. 在预览区检查效果，使用预览工具栏导出当前图片，或点击“开始处理”批量处理并下载。
+
+### 压缩图片
+
+1. 打开[压缩工具](https://iw.vidocat.com/compress)，上传图片并选择质量预设。
+2. 按需开启“移除元数据”，然后开始压缩。
+3. 查看原始大小、输出大小和压缩率，单独下载或使用“下载全部”获取 ZIP。
+
+### 查看、编辑与清除元数据
+
+1. 打开[元数据工具](https://iw.vidocat.com/metadata)，上传 JPG、PNG 或 WebP，等待引擎初始化和读取完成。
+2. 从文件列表选择图片，通过搜索与分组查看标签，在右侧表单或高级表格中修改可编辑字段。
+3. 点击“应用修改”，检查成功提示或字段错误，再下载当前文件。也可以清除全部、GPS 或选中字段；多图勾选后可批量清除并下载 ZIP。
 
 ## 适合谁
 
@@ -60,11 +96,11 @@
 
 | 模块 | 技术 |
 | --- | --- |
-| 框架 | Next.js 16, React 19 |
+| 框架 | Next.js 16、React 19 |
 | 语言 | TypeScript |
 | 样式 | Tailwind CSS 4 |
-| Canvas | Fabric.js |
-| 元数据引擎 | ExifTool via `@uswriting/exiftool` WASM |
+| 画布 | Fabric.js |
+| 元数据引擎 | 通过 `@uswriting/exiftool` 在浏览器运行 ExifTool WASM |
 | ZIP 导出 | `fflate` |
 | UI 基础组件 | Radix UI |
 
@@ -135,6 +171,7 @@ npm run build        # 生产构建
 npm run start        # 启动生产服务
 npm run lint         # ESLint 检查
 npm run type-check   # TypeScript 检查
+npm run test:metadata # 使用本地 WASM 运行元数据回归测试
 npm run smoke:html   # HTML 和 SEO smoke 检查
 npm run verify       # 完整验证
 ```
@@ -155,6 +192,6 @@ npm run verify       # 完整验证
 
 安全相关问题请不要直接公开发 Issue，详见 [SECURITY.md](SECURITY.md)。
 
-## License
+## 开源许可
 
-MIT License. See [LICENSE](LICENSE).
+本项目采用 MIT 许可证，详见 [LICENSE](LICENSE)。
