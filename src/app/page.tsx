@@ -4,7 +4,7 @@ import { ToolWorkspace } from '@/components/ToolWorkspace';
 import { ImageUpload } from "@/app/components/upload/ImageUpload";
 import { LazyWatermarkCanvas } from '@/app/components/editor/LazyWatermarkCanvas';
 import { WatermarkControls } from "@/app/components/controls/WatermarkControls";
-import { TopNavigation } from '@/components/TopNavigation';
+import { useImageStore } from '@/app/lib/stores';
 import { getCopy, getLocaleFromPathname, type Locale } from '@/app/lib/i18n';
 import { usePathname } from 'next/navigation';
 
@@ -12,19 +12,13 @@ export default function Home() {
   const pathname = usePathname();
   const locale = getLocaleFromPathname(pathname);
   const copy = getCopy(locale).home;
+  const count = useImageStore((state) => state.images.length);
 
   return (
-    <div className="min-h-dvh flex flex-col overflow-x-hidden">
+    <div className="flex flex-col min-w-0">
       <h1 className="sr-only">{copy.srTitle}</h1>
 
-      {/* Top Navigation */}
-      <TopNavigation />
-
-      <div className="p-4 bg-background text-center">
-        <h2 className="text-2xl font-bold mb-1">{copy.title}</h2>
-        <p className="text-sm text-muted-foreground">{copy.description}</p>
-      </div>
-      <ToolWorkspace panels={[
+      <ToolWorkspace title={getCopy(locale).workspace.watermarkTitle} fileCount={count} locale={locale} panels={[
         { id: 'upload', label: copy.tabs.upload, content: <ImageUpload locale={locale} /> },
         { id: 'edit', label: copy.tabs.edit, content: <LazyWatermarkCanvas locale={locale} /> },
         { id: 'controls', label: copy.tabs.controls, content: <WatermarkControls locale={locale} /> },

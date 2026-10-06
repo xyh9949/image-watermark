@@ -6,15 +6,13 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { ToolWorkspace } from '@/components/ToolWorkspace';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { TopNavigation } from '@/components/TopNavigation';
 import { usePathname } from 'next/navigation';
-import { Upload, FileImage, Download, FileArchive, CheckCircle, XCircle, PackageOpen, Settings, Plus, X } from 'lucide-react';
+import { Upload, FileImage, Download, FileArchive, CheckCircle, XCircle, PackageOpen, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getCopy, getLocaleFromPathname, type Locale } from '@/app/lib/i18n';
 
@@ -190,14 +188,15 @@ function FileUploadPanel({
           {/* 拖拽上传区域 */}
           <div
             {...getRootProps()}
+            data-compact={files.length > 0}
             className={cn(
-              "border-2 border-dashed rounded-lg text-center transition-all duration-200 cursor-pointer",
+              "upload-dropzone border-2 border-dashed rounded-lg text-center transition-all duration-200 cursor-pointer",
               files.length > 0 ? 'p-4' : 'p-8',
               isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25',
               isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:border-muted-foreground/50'
             )}
           >
-            <input {...getInputProps()} />
+            <input {...getInputProps({ id: 'tool-upload-input' })} />
             <div className={files.length > 0 ? 'space-y-2' : 'space-y-4'}>
               <Upload className={`mx-auto text-muted-foreground ${files.length > 0 ? 'h-6 w-6' : 'h-12 w-12'}`} />
               <div className="space-y-2">
@@ -269,7 +268,9 @@ function FileUploadPanel({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                    className="flex-shrink-0"
+                    aria-label={`${getCopy(locale).workspace.removeFile}: ${file.name}`}
+                    title={getCopy(locale).workspace.removeFile}
                     onClick={(e) => {
                       e.stopPropagation();
                       onRemoveFile(index);
@@ -324,6 +325,8 @@ function CompressionControlPanel({
   isProcessing,
   progress,
   onStartCompression,
+  onDownloadAll,
+  isDownloading,
   locale
 }: {
   settings: CompressionSettings;
@@ -333,54 +336,29 @@ function CompressionControlPanel({
   isProcessing: boolean;
   progress: number;
   onStartCompression: () => void;
+  onDownloadAll: () => void;
+  isDownloading: boolean;
   locale: Locale;
 }) {
   const completedResults = results.filter(r => r.status === 'completed');
-  const totalSaved = completedResults.reduce((sum, r) => sum + (r.originalSize - r.compressedSize), 0);
-  // 总压缩率按字节加权，与“节省空间”使用同一口径。
-  const totalOriginal = completedResults.reduce((sum, r) => sum + r.originalSize, 0);
-  const averageCompression = totalOriginal > 0 ? totalSaved / totalOriginal : 0;
-
-  const formatFileSize = (bytes: number): string => {
-    if (!bytes || bytes === 0 || isNaN(bytes)) return '0 Bytes';
-    if (bytes < 0) return '-' + formatFileSize(-bytes);
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
   const labels = getCopy(locale).compress.controls;
 
   return (
-    <div className="space-y-4">
+    <div className="tool-control-panel">
+      <div className="tool-panel-heading"><h2>{labels.settings}</h2></div>
+      <div className="tool-control-body space-y-5">
       {/* 压缩设置 */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            {labels.settings}
-          </CardTitle>
-        </CardHeader>
         <CardContent className="space-y-4">
           {/* 压缩质量 */}
           <div className="space-y-2">
             <Label className="text-sm">{labels.quality}</Label>
-            <Select
-              value={settings.quality}
-              disabled={isProcessing}
-              onValueChange={(value: 'high' | 'medium' | 'low') =>
-                onSettingsChange({ ...settings, quality: value })
-              }
-            >
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="high">{labels.high}</SelectItem>
-                <SelectItem value="medium">{labels.medium}</SelectItem>
-                <SelectItem value="low">{labels.low}</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-3 gap-2" role="group" aria-label={labels.quality}>
+              {(['high', 'medium', 'low'] as const).map((quality) => <Button key={quality}
+                variant="outline" disabled={isProcessing} aria-pressed={settings.quality === quality}
+                className={cn('h-auto min-h-12 whitespace-normal px-2 text-xs', settings.quality === quality && 'border-primary bg-accent text-primary')}
+                onClick={() => onSettingsChange({ ...settings, quality })}>{labels[quality]}</Button>)}
+            </div>
           </div>
 
           {/* 选项开关 */}
@@ -415,12 +393,11 @@ function CompressionControlPanel({
           </div>
         </CardContent>
       </Card>
-
-      {/* 操作按钮 */}
-      <Card>
-        <CardContent className="pt-6">
+      </div>
+      <div className="tool-action-bar space-y-2">
           <Button
             className="w-full"
+            variant={completedResults.length > 0 && !isProcessing ? 'outline' : 'default'}
             size="lg"
             onClick={onStartCompression}
             disabled={isProcessing || files.length === 0}
@@ -444,39 +421,11 @@ function CompressionControlPanel({
               <Progress value={progress} className="h-2" />
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* 压缩统计 */}
-      {completedResults.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">{labels.stats}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="p-2 bg-green-500/10 rounded border border-green-500/20">
-                <div className="text-base font-bold text-green-600 dark:text-green-400">
-                  {(averageCompression * 100).toFixed(1)}%
-                </div>
-                <div className="text-xs text-muted-foreground">{labels.ratio}</div>
-              </div>
-              <div className="p-2 bg-blue-500/10 rounded border border-blue-500/20">
-                <div className="text-base font-bold text-blue-600 dark:text-blue-400">
-                  {formatFileSize(totalSaved)}
-                </div>
-                <div className="text-xs text-muted-foreground">{labels.saved}</div>
-              </div>
-              <div className="p-2 bg-purple-500/10 rounded border border-purple-500/20">
-                <div className="text-base font-bold text-purple-600 dark:text-purple-400">
-                  {completedResults.length}
-                </div>
-                <div className="text-xs text-muted-foreground">{labels.completed}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {completedResults.length > 0 && !isProcessing && <Button className="w-full" onClick={onDownloadAll} disabled={isDownloading}>
+          <Download className="size-4" />{isDownloading ? getCopy(locale).compress.results.packaging : getCopy(locale).compress.results.downloadAll}
+        </Button>}
+        <small>{getCopy(locale).workspace.originalSafe}</small>
+      </div>
     </div>
   );
 }
@@ -484,15 +433,11 @@ function CompressionControlPanel({
 // 处理结果预览组件
 function ResultsPreviewPanel({
   results,
-  isDownloading,
   onDownloadFile,
-  onDownloadAll,
   locale
 }: {
   results: CompressedFile[];
-  isDownloading: boolean;
   onDownloadFile: (result: CompressedFile) => void;
-  onDownloadAll: () => void;
   locale: Locale;
 }) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -508,6 +453,9 @@ function ResultsPreviewPanel({
 
   const completedResults = results.filter(r => r.status === 'completed');
   const labels = getCopy(locale).compress.results;
+  // 汇总沿用按原始字节加权的口径，避免大小不同的文件被等权计算。
+  const originalTotal = completedResults.reduce((sum, result) => sum + result.originalSize, 0);
+  const compressedTotal = completedResults.reduce((sum, result) => sum + result.compressedSize, 0);
 
   const formatFileSize = (bytes: number): string => {
     if (!bytes || bytes === 0 || isNaN(bytes)) return '0 Bytes';
@@ -536,46 +484,34 @@ function ResultsPreviewPanel({
   // 空状态
   if (results.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center">
+      <div className="tool-empty">
         <div className="text-center p-8">
           <FileArchive className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
           <h3 className="text-lg font-medium mb-2">{labels.waiting}</h3>
           <p className="text-sm text-muted-foreground max-w-sm">
             {labels.waitingDescription}
           </p>
+          <Button className="mt-5" onClick={() => document.getElementById('tool-upload-input')?.click()}>
+            <Plus className="size-4" />{getCopy(locale).compress.fileUpload.choose}
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="tool-preview-shell bg-background">
+      <div className="tool-result-stats">
+        <div><span>{labels.original}</span><strong>{formatFileSize(originalTotal)}</strong></div>
+        <div><span>{labels.compressed}</span><strong>{formatFileSize(compressedTotal)}</strong></div>
+        <div><span>{getCopy(locale).compress.controls.ratio}</span><strong className={originalTotal >= compressedTotal ? 'text-primary' : 'text-amber-700'}>{originalTotal ? ((1 - compressedTotal / originalTotal) * 100).toFixed(1) : '0'}%</strong></div>
+      </div>
       {/* 顶部操作栏 */}
       <div className="flex-shrink-0 p-4 border-b bg-background">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium">
             {labels.results} ({completedResults.length}/{results.length})
           </h3>
-          {completedResults.length > 0 && (
-            <Button
-              onClick={onDownloadAll}
-              disabled={isDownloading}
-              className="bg-green-600 hover:bg-green-700 text-white"
-              size="sm"
-            >
-              {isDownloading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                  {labels.packaging}
-                </>
-              ) : (
-                <>
-                  <PackageOpen className="w-4 h-4 mr-2" />
-                  {labels.downloadAll}
-                </>
-              )}
-            </Button>
-          )}
         </div>
       </div>
 
@@ -585,7 +521,7 @@ function ResultsPreviewPanel({
           {results.map((result) => (
             <div
               key={result.id}
-              className="flex items-center gap-3 p-2 bg-muted/30 border rounded-lg text-sm group hover:bg-muted/50 transition-colors"
+              className="tool-result-row text-sm group"
             >
               {/* 缩略图 */}
               <div
@@ -617,7 +553,7 @@ function ResultsPreviewPanel({
                 onClick={() => handlePreview(result)}
               >
                 <p className="font-medium truncate">{result.originalFile.name}</p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span>
                     {formatFileSize(result.originalSize)}
                     {result.status === 'completed' && (
@@ -642,7 +578,7 @@ function ResultsPreviewPanel({
 
               {/* 下载按钮 */}
               {result.status === 'completed' && result.compressedFile && (
-                <Button size="sm" variant="outline" onClick={() => onDownloadFile(result)}>
+                <Button size="icon" variant="ghost" title={getCopy(locale).watermarkCanvas.exportTitle} aria-label={`${getCopy(locale).watermarkCanvas.exportTitle}: ${result.originalFile.name}`} onClick={() => onDownloadFile(result)}>
                   <Download className="w-4 h-4" />
                 </Button>
               )}
@@ -860,17 +796,10 @@ export default function Compress() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col overflow-x-hidden">
+    <div className="flex flex-col min-w-0">
       <h1 className="sr-only">{pageCopy.srTitle}</h1>
 
-      {/* Top Navigation */}
-      <TopNavigation />
-
-      <div className="p-4 bg-background text-center">
-        <h2 className="text-2xl font-bold mb-1">{pageCopy.desktopTitle}</h2>
-        <p className="text-sm text-muted-foreground">{pageCopy.desktopDescription}</p>
-      </div>
-      <ToolWorkspace panels={[
+      <ToolWorkspace title={getCopy(locale).workspace.compressTitle} fileCount={files.length} locale={locale} busy={isProcessing} panels={[
         {
           id: 'upload', label: pageCopy.uploadTab,
           content: <FileUploadPanel files={files} onDrop={onDrop} onClear={clearFiles}
@@ -878,14 +807,13 @@ export default function Compress() {
         },
         {
           id: 'preview', label: pageCopy.resultsTab,
-          content: <ResultsPreviewPanel results={results} isDownloading={isDownloading}
-            onDownloadFile={downloadFile} onDownloadAll={downloadAllFiles} locale={locale} />,
+          content: <ResultsPreviewPanel results={results} onDownloadFile={downloadFile} locale={locale} />,
         },
         {
           id: 'controls', label: pageCopy.controlsTab,
           content: <CompressionControlPanel settings={settings} onSettingsChange={setSettings}
             files={files} results={results} isProcessing={isProcessing} progress={progress}
-            onStartCompression={startCompression} locale={locale} />,
+            onStartCompression={startCompression} onDownloadAll={downloadAllFiles} isDownloading={isDownloading} locale={locale} />,
         },
       ]} />
       <CompressGeoContent locale={locale} />

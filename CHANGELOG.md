@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.3 - 2026-10-06
+
+- Apply the approved light workspace design to watermark, compression, and metadata tools in Chinese and English.
+- Combine tool navigation with the site header while keeping language selection in the global header.
+- Use compact file rows, larger unframed previews, grouped settings, and persistent export controls.
+- Keep preview and settings visible together on mobile, with an expandable file list that retains drafts.
+- Move compression summaries into the result area and give metadata tables a responsive three-column layout.
+- Add a visible option for the existing default adaptive watermark mode; align Chinese and English compression layouts.
+- Lock metadata inputs while reading or writing so fresh edits cannot be overwritten by the refreshed draft.
+- Retain local image processing, all six routes, existing advanced controls, and SEO content.
+
 ## 1.3.2 - 2026-10-06
 
 - Share tool panels between desktop and mobile layouts, retaining edits when switching tabs and fixing mobile tab overflow.

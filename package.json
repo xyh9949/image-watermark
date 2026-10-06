@@ -1,6 +1,6 @@
 {
   "name": "image-watermark",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "private": true,
   "description": "Browser-based image toolkit for batch watermarking, compression, and EXIF metadata editing.",
   "keywords": [

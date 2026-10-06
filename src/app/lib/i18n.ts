@@ -23,6 +23,14 @@ export function getLanguageHref(pathname: string) {
 
 export const appCopy = {
   zh: {
+    workspace: {
+      navigation: '图片工具', local: '本地处理', files: '图片', addFiles: '添加图片',
+      fileCount: (count: number) => `${count} 张图片`,
+      watermarkTitle: '批量水印', compressTitle: '图片压缩', metadataTitle: '元数据',
+      appearance: '旋转与描边', exportSettings: '导出设置', capture: '拍摄信息', gps: 'GPS 位置',
+      chooseFirst: '添加你的第一张图片', emptySupport: 'JPG、PNG、WebP、SVG · 每张最大 50 MB',
+      originalSafe: '生成新文件 · 原图不会被覆盖', removeFile: '移除图片',
+    },
     site: {
       brandName: '图片水印工具',
       badge: '免费开源',
@@ -157,6 +165,7 @@ export const appCopy = {
       chooseMode: '选择水印模式',
       percentageMode: '比例模式',
       fixedMode: '固定尺寸',
+      adaptiveMode: '自动适配',
       percentageHelp: '水印大小为图片尺寸的百分比，支持位置微调',
       fixedHelp: '使用固定的像素尺寸，支持位置微调',
       watermarkRatio: '水印比例',
@@ -495,6 +504,14 @@ export const appCopy = {
     },
   },
   en: {
+    workspace: {
+      navigation: 'Image tools', local: 'Local processing', files: 'Images', addFiles: 'Add images',
+      fileCount: (count: number) => `${count} ${count === 1 ? 'image' : 'images'}`,
+      watermarkTitle: 'Batch watermark', compressTitle: 'Image compression', metadataTitle: 'Metadata',
+      appearance: 'Rotation & outline', exportSettings: 'Export settings', capture: 'Capture details', gps: 'GPS location',
+      chooseFirst: 'Add your first image', emptySupport: 'JPG, PNG, WebP, SVG · Up to 50 MB each',
+      originalSafe: 'New files · Originals stay unchanged', removeFile: 'Remove image',
+    },
     site: {
       brandName: 'Image Watermark',
       badge: 'Free open source',
@@ -629,6 +646,7 @@ export const appCopy = {
       chooseMode: 'Choose watermark mode',
       percentageMode: 'Percentage mode',
       fixedMode: 'Fixed size',
+      adaptiveMode: 'Auto fit',
       percentageHelp: 'Watermark size is a percentage of the image size, with position fine-tuning.',
       fixedHelp: 'Use a fixed pixel size, with position fine-tuning.',
       watermarkRatio: 'Watermark ratio',

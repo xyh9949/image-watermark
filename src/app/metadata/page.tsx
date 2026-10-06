@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { useDropzone } from 'react-dropzone';
 import {
   CheckCircle2,
+  ChevronDown,
   Download,
   Eraser,
   FileImage,
@@ -29,7 +30,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToolWorkspace } from '@/components/ToolWorkspace';
-import { TopNavigation } from '@/components/TopNavigation';
 import { cn } from '@/lib/utils';
 import { getCopy, getLocaleFromPathname, type Locale } from '@/app/lib/i18n';
 import {
@@ -381,23 +381,16 @@ export default function MetadataPage() {
   ));
 
   return (
-    <div className="min-h-dvh flex flex-col overflow-x-hidden">
+    <div className="flex flex-col min-w-0">
       <h1 className="sr-only">{copy.page.srTitle}</h1>
-      <TopNavigation />
-
-      <div className="p-4 bg-background text-center">
-        <h2 className="text-2xl font-bold mb-1">{copy.page.desktopTitle}</h2>
-        <p className="text-sm text-muted-foreground">{copy.page.desktopDescription}</p>
-      </div>
-      <div className="px-4" aria-live="polite">
+      <ToolWorkspace title={getCopy(locale).workspace.metadataTitle} fileCount={files.length} locale={locale} busy={isBusy} status={<>
         <StatusMessage notice={notice} error={error} copy={copy} />
         {files.some((file) => file.status === 'reading') && (
           <p className="flex items-center gap-2 text-sm text-muted-foreground py-2">
             <Loader2 className="h-4 w-4 shrink-0 animate-spin" />{copy.messages.reading}
           </p>
         )}
-      </div>
-      <ToolWorkspace panels={[
+      </>} panels={[
         {
           id: 'upload', label: copy.page.uploadTab,
           content: <UploadPanel copy={copy} files={files} activeId={activeId}
@@ -482,6 +475,7 @@ function UploadPanel({
       'image/webp': ['.webp'],
     },
     multiple: true,
+    disabled: isBusy,
   });
 
   return (
@@ -494,7 +488,7 @@ function UploadPanel({
               {copy.upload.title}
             </CardTitle>
             {files.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={onClear} disabled={isBusy}>
+              <Button variant="ghost" size="icon" onClick={onClear} disabled={isBusy} title={copy.upload.removeFile} aria-label={copy.upload.removeFile}>
                 <Trash2 className="w-4 h-4" />
               </Button>
             )}
@@ -503,14 +497,15 @@ function UploadPanel({
         <CardContent>
           <div
             {...getRootProps()}
+            data-compact={files.length > 0}
             className={cn(
-              'border-2 border-dashed rounded-lg text-center transition-all cursor-pointer',
+              'upload-dropzone border-2 border-dashed rounded-lg text-center transition-all cursor-pointer',
               files.length > 0 ? 'p-4' : 'p-8',
               isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25',
               isBusy ? 'opacity-60 cursor-not-allowed' : 'hover:border-muted-foreground/50'
             )}
           >
-            <input {...getInputProps()} />
+            <input {...getInputProps({ id: 'tool-upload-input' })} />
             <div className="space-y-3">
               <Upload className={cn('mx-auto text-muted-foreground', files.length > 0 ? 'w-7 h-7' : 'w-12 h-12')} />
               <div className="space-y-1">
@@ -536,7 +531,7 @@ function UploadPanel({
 
       {files.length > 0 && (
         <Card className="flex flex-col max-h-[68vh]">
-          <div className="flex-shrink-0 p-4 border-b">
+          <div className="flex-shrink-0 py-3 border-b">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-medium flex items-center gap-2">
                 <FileImage className="w-4 h-4" />
@@ -545,13 +540,13 @@ function UploadPanel({
               <Badge variant="secondary">{copy.upload.selected(selectedFileIds.length)}</Badge>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-3">
+          <div className="flex-1 overflow-y-auto py-2">
             <div className="space-y-2">
               {files.map((fileState) => (
                 <div
                   key={fileState.id}
                   className={cn(
-                    'w-full text-left flex items-center gap-3 p-2 rounded border transition-colors',
+                    'w-full text-left flex items-center gap-2 p-2 rounded border transition-colors',
                     activeId === fileState.id ? 'bg-primary/10 border-primary/40' : 'bg-muted/30 hover:bg-muted/50'
                   )}
                 >
@@ -573,7 +568,7 @@ function UploadPanel({
                     />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{fileState.currentFile.name}</p>
+                    <p className="text-xs font-medium break-all">{fileState.currentFile.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {formatFileSize(fileState.currentFile.size)}
                     </p>
@@ -588,7 +583,8 @@ function UploadPanel({
                   </button>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
+                    className="size-7"
                     onClick={(event) => {
                       event.stopPropagation();
                       onRemoveFile(fileState.id);
@@ -665,18 +661,21 @@ function MetadataViewerPanel({
 
   if (!fileState) {
     return (
-      <div className="h-full flex items-center justify-center p-8">
+      <div className="tool-empty">
         <div className="text-center max-w-sm">
           <Tags className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
           <h3 className="text-lg font-medium mb-2">{copy.viewer.emptyTitle}</h3>
           <p className="text-sm text-muted-foreground">{copy.viewer.emptyDescription}</p>
+          <Button className="mt-5" onClick={() => document.getElementById('tool-upload-input')?.click()}>
+            <Plus className="size-4" />{copy.upload.choose}
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="tool-preview-shell bg-background">
       <div className="flex-shrink-0 p-4 border-b bg-background space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -689,13 +688,14 @@ function MetadataViewerPanel({
           <Badge variant="secondary">{copy.viewer.tagCount(fileState.tags.length)}</Badge>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-[1fr_160px]">
+        <div className="grid grid-cols-[minmax(0,1fr)_120px] gap-2">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder={copy.viewer.search}
+              aria-label={copy.viewer.search}
               className="pl-9"
             />
           </div>
@@ -714,18 +714,17 @@ function MetadataViewerPanel({
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="min-h-0 flex-1 overflow-auto max-lg:max-h-[420px]">
         {visibleTags.length === 0 ? (
           <div className="h-full flex items-center justify-center p-8 text-center text-sm text-muted-foreground">
             {copy.viewer.noResults}
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="metadata-table">
             <thead className="sticky top-0 bg-background border-b z-10">
               <tr className="text-left">
-                <th className="w-10 p-3 font-medium">{copy.viewer.select}</th>
-                <th className="w-28 p-3 font-medium">{copy.viewer.group}</th>
-                <th className="w-48 p-3 font-medium">{copy.viewer.tag}</th>
+                <th><span className="sr-only">{copy.viewer.select}</span></th>
+                <th className="font-medium">{copy.viewer.tag}</th>
                 <th className="p-3 font-medium">{copy.viewer.value}</th>
               </tr>
             </thead>
@@ -737,31 +736,27 @@ function MetadataViewerPanel({
                       type="checkbox"
                       checked={fileState.selectedTagKeys.includes(tag.key)}
                       onChange={() => onToggleTagSelection(tag.key)}
-                      disabled={!tag.editable}
+                      disabled={!tag.editable || fileState.status !== 'ready'}
                       aria-label={copy.viewer.selectTag(tag.name)}
                       className="h-4 w-4"
                     />
                   </td>
                   <td className="p-3">
-                    <Badge variant="outline">{tag.group}</Badge>
-                  </td>
-                  <td className="p-3">
                     <div className="font-medium break-all">{tag.name}</div>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {tag.editable ? (
-                        <Badge variant="secondary">{copy.viewer.editable}</Badge>
-                      ) : (
-                        <Badge variant="outline">{copy.viewer.readonly}</Badge>
-                      )}
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                      <span className="font-mono">{tag.group}</span>
+                      {!tag.editable && <span>{copy.viewer.readonly}</span>}
                       {tag.changed && <Badge variant="outline">{copy.viewer.changed}</Badge>}
                     </div>
                   </td>
-                  <td className="p-3 min-w-[220px]">
+                  <td className="p-3">
                     {tag.editable ? (
                       <Input
                         value={tag.displayValue}
+                        disabled={fileState.status !== 'ready'}
                         onChange={(event) => onTagChange(tag.key, event.target.value)}
                         aria-invalid={Boolean(tag.error)}
+                        aria-label={tag.key}
                         className={cn(tag.error && 'border-destructive')}
                       />
                     ) : (
@@ -827,21 +822,21 @@ function EditPanel({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="tool-control-panel">
+      <div className="tool-panel-heading"><h2>{copy.editor.common}</h2></div>
+      <div className="tool-control-body space-y-4">
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <PencilLine className="w-4 h-4" />
-            {copy.editor.common}
-          </CardTitle>
-        </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-3">
+          {/* 读取与写回会重新生成草稿，期间锁定输入，避免用户的新输入被覆盖。 */}
+          <fieldset disabled={isWriting || fileState.status !== 'ready'} className="grid min-w-0 gap-3">
             <TextField label={copy.fields.title} value={fileState.draft.title} onChange={(value) => onDraftChange('title', value)} />
             <TextareaField label={copy.fields.description} value={fileState.draft.description} onChange={(value) => onDraftChange('description', value)} />
             <TextField label={copy.fields.keywords} value={fileState.draft.keywords} onChange={(value) => onDraftChange('keywords', value)} />
             <TextField label={copy.fields.author} value={fileState.draft.author} onChange={(value) => onDraftChange('author', value)} />
             <TextField label={copy.fields.copyright} value={fileState.draft.copyright} onChange={(value) => onDraftChange('copyright', value)} />
+            {/* 较少使用的拍摄和 GPS 字段折叠，所有字段的草稿仍保留在 fileState。 */}
+            <details className="tool-disclosure">
+              <summary>{getCopy(locale).workspace.capture}<ChevronDown className="size-4" aria-hidden="true" /></summary><div className="space-y-3">
             <TextField
               label={copy.fields.capturedAt}
               type="datetime-local"
@@ -858,12 +853,15 @@ function EditPanel({
               <TextField label={copy.fields.software} value={fileState.draft.software} onChange={(value) => onDraftChange('software', value)} />
             </div>
             <TextareaField label={copy.fields.comment} value={fileState.draft.comment} onChange={(value) => onDraftChange('comment', value)} />
-            <div className="grid grid-cols-3 gap-3">
+              </div></details>
+            <details className="tool-disclosure"><summary>{getCopy(locale).workspace.gps}<ChevronDown className="size-4" aria-hidden="true" /></summary>
+            <div className="grid gap-3">
               <TextField label={copy.fields.gpsLatitude} value={fileState.draft.gpsLatitude} onChange={(value) => onDraftChange('gpsLatitude', value)} />
               <TextField label={copy.fields.gpsLongitude} value={fileState.draft.gpsLongitude} onChange={(value) => onDraftChange('gpsLongitude', value)} />
               <TextField label={copy.fields.gpsAltitude} value={fileState.draft.gpsAltitude} onChange={(value) => onDraftChange('gpsAltitude', value)} />
             </div>
-          </div>
+            </details>
+          </fieldset>
         </CardContent>
       </Card>
 
@@ -872,25 +870,6 @@ function EditPanel({
           <CardTitle className="text-base">{copy.editor.actions}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Button
-            className="w-full"
-            onClick={onApplyEdits}
-            disabled={isWriting || !hasChangedFields || fileState.status !== 'ready'}
-          >
-            {operationMode === 'apply' ? <Loader2 className="w-4 h-4 animate-spin" /> : <PencilLine className="w-4 h-4" />}
-            {operationMode === 'apply' ? copy.editor.applying : copy.editor.apply}
-          </Button>
-
-          <Button
-            className="w-full"
-            variant="outline"
-            onClick={onDownload}
-            disabled={isWriting}
-          >
-            <Download className="w-4 h-4" />
-            {copy.editor.download}
-          </Button>
-
           <div className="grid grid-cols-2 gap-2">
             <Button variant="outline" className="h-auto min-h-9 whitespace-normal" onClick={onClearGps} disabled={isWriting}>
               {operationMode === 'clearGps' ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPinOff className="w-4 h-4" />}
@@ -902,7 +881,7 @@ function EditPanel({
             </Button>
           </div>
 
-          <Button variant="destructive" className="w-full" onClick={onClearAll} disabled={isWriting}>
+          <Button variant="outline" className="w-full text-destructive" onClick={onClearAll} disabled={isWriting}>
             {operationMode === 'clearAll' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
             {copy.editor.clearAll}
           </Button>
@@ -910,13 +889,8 @@ function EditPanel({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <PackageOpen className="w-4 h-4" />
-            {copy.editor.batch}
-          </CardTitle>
-        </CardHeader>
+      <details className="tool-disclosure">
+        <summary>{copy.editor.batch}<ChevronDown className="size-4" aria-hidden="true" /></summary><div>
         <CardContent className="space-y-2">
           <Badge variant="secondary">{copy.editor.selectedFiles(selectedFileCount)}</Badge>
           <div className="grid grid-cols-2 gap-2">
@@ -931,7 +905,20 @@ function EditPanel({
           </div>
           <p className="text-xs text-muted-foreground">{locale === 'en' ? getSupportedMetadataFormats() : 'JPG、JPEG、PNG、WebP'}</p>
         </CardContent>
-      </Card>
+        </div>
+      </details>
+      </div>
+      <div className="tool-action-bar">
+        <div className="flex gap-2">
+          <Button className="flex-1" onClick={onApplyEdits} disabled={isWriting || !hasChangedFields || fileState.status !== 'ready'}>
+            {operationMode === 'apply' ? <Loader2 className="size-4 animate-spin" /> : <PencilLine className="size-4" />}
+            {operationMode === 'apply' ? copy.editor.applying : copy.editor.apply}
+          </Button>
+          <Button variant="outline" size="icon" onClick={onDownload} disabled={isWriting}
+            title={copy.editor.download} aria-label={copy.editor.download}><Download className="size-4" /></Button>
+        </div>
+        <small>{getCopy(locale).workspace.originalSafe}</small>
+      </div>
     </div>
   );
 }

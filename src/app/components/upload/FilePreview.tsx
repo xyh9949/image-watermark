@@ -1,286 +1,67 @@
-// 文件预览组件
-
 'use client';
 
-import React from 'react';
 import Image from 'next/image';
+import { X, ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { 
-  X, 
-  Eye, 
-  Download, 
-  AlertCircle, 
-  CheckCircle,
-  Clock,
-  FileImage
-} from 'lucide-react';
-import { ImageInfo } from '@/app/types';
+import type { ImageInfo } from '@/app/types';
+import { useImageStore } from '@/app/lib/stores';
 import { formatFileSize } from '@/app/lib/utils/fileValidation';
 import { DEFAULT_LOCALE, getCopy, type Locale } from '@/app/lib/i18n';
 
 interface FilePreviewProps {
-  image: ImageInfo;
-  isSelected?: boolean;
-  showProgress?: boolean;
-  locale?: Locale;
-  onSelect?: (imageId: string) => void;
-  onRemove?: (imageId: string) => void;
-  onPreview?: (imageId: string) => void;
-  className?: string;
+  image: ImageInfo; isSelected?: boolean; showProgress?: boolean; locale?: Locale;
+  onSelect?: (id: string) => void; onRemove?: (id: string) => void;
+  onPreview?: (id: string) => void; className?: string;
 }
 
-// 状态图标映射
-const StatusIcon = {
-  uploading: Clock,
-  uploaded: CheckCircle,
-  processing: Clock,
-  completed: CheckCircle,
-  error: AlertCircle,
-};
-
-// 状态颜色映射
-const StatusColor = {
-  uploading: 'bg-blue-500',
-  uploaded: 'bg-green-500',
-  processing: 'bg-yellow-500',
-  completed: 'bg-green-500',
-  error: 'bg-red-500',
-};
-
-export function FilePreview({
-  image,
-  isSelected = false,
-  showProgress = false,
-  locale = DEFAULT_LOCALE,
-  onSelect,
-  onRemove,
-  onPreview,
-  className = ''
-}: FilePreviewProps) {
-  const StatusIconComponent = StatusIcon[image.status];
-  const copy = getCopy(locale).filePreview;
-  const statusText = copy.statusText;
-  
-  const handleSelect = () => {
-    onSelect?.(image.id);
-  };
-
-  const handleRemove = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onRemove?.(image.id);
-  };
-
-  const handlePreview = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onPreview?.(image.id);
-  };
-
+export function FilePreview({ image, isSelected = false, showProgress, locale = DEFAULT_LOCALE,
+  onSelect, onRemove, onPreview, className = '' }: FilePreviewProps) {
+  const currentId = useImageStore((state) => state.currentImageId);
+  const copy = getCopy(locale);
   return (
-    <Card 
-      className={`
-        relative overflow-hidden transition-all duration-200 cursor-pointer
-        ${isSelected ? 'ring-2 ring-primary ring-offset-2' : 'hover:shadow-md'}
-        ${className}
-      `}
-      onClick={handleSelect}
-    >
-      {/* 图片预览区域 */}
-      <div className="relative aspect-square bg-muted">
-        {image.url ? (
-          <Image
-            key={image.url}
-            src={image.url}
-            alt={image.name}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <FileImage className="h-8 w-8 text-muted-foreground" />
-          </div>
-        )}
-        
-        {/* 状态覆盖层 */}
-        {(image.status === 'uploading' || image.status === 'processing') && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <div className="text-white text-center">
-              <StatusIconComponent className="h-6 w-6 mx-auto mb-2 animate-spin" />
-              <p className="text-sm">{statusText[image.status]}</p>
-            </div>
-          </div>
-        )}
-        
-        {/* 错误覆盖层 */}
-        {image.status === 'error' && (
-          <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
-            <div className="text-center">
-              <AlertCircle className="h-6 w-6 mx-auto mb-2 text-red-500" />
-              <p className="text-sm text-red-700">{copy.uploadFailed}</p>
-            </div>
-          </div>
-        )}
-        
-        {/* 操作按钮 */}
-        <div className="absolute top-2 right-2 flex space-x-1">
-          {image.status === 'uploaded' && (
-            <Button
-              size="sm"
-              variant="secondary"
-              className="h-6 w-6 p-0 bg-white/80 hover:bg-white"
-              onClick={handlePreview}
-            >
-              <Eye className="h-3 w-3" />
-            </Button>
-          )}
-          <Button
-            size="sm"
-            variant="destructive"
-            className="h-6 w-6 p-0 bg-red-500/80 hover:bg-red-500"
-            onClick={handleRemove}
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        </div>
-        
-        {/* 选中指示器 */}
-        {isSelected && (
-          <div className="absolute top-2 left-2">
-            <div className="h-4 w-4 bg-primary rounded-full flex items-center justify-center">
-              <CheckCircle className="h-3 w-3 text-primary-foreground" />
-            </div>
-          </div>
-        )}
-      </div>
-      
-      {/* 文件信息 */}
-      <div className="p-3 space-y-2">
-        {/* 文件名 */}
-        <div className="space-y-1">
-          <p className="text-sm font-medium truncate" title={image.name}>
-            {image.name}
-          </p>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{formatFileSize(image.size)}</span>
-            <span>{image.width} × {image.height}</span>
-          </div>
-        </div>
-        
-        {/* 状态指示器 */}
-        <div className="flex items-center justify-between">
-          <Badge 
-            variant="secondary" 
-            className={`text-xs ${StatusColor[image.status]} text-white`}
-          >
-            <StatusIconComponent className="h-3 w-3 mr-1" />
-            {statusText[image.status]}
-          </Badge>
-          
-          {image.status === 'uploaded' && (
-            <Button size="sm" variant="ghost" className="h-6 text-xs">
-              <Download className="h-3 w-3 mr-1" />
-              {copy.download}
-            </Button>
-          )}
-        </div>
-        
-        {/* 进度条 */}
-        {showProgress && (image.status === 'uploading' || image.status === 'processing') && (
-          <div className="space-y-1">
-            <Progress value={image.uploadProgress} className="h-1" />
-            <p className="text-xs text-muted-foreground text-center">
-              {image.uploadProgress}%
-            </p>
-          </div>
-        )}
-        
-        {/* 错误信息 */}
-        {image.status === 'error' && image.error && (
-          <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
-            {image.error}
-          </div>
-        )}
-      </div>
-    </Card>
+    <div className={`tool-file-row ${className}`} data-active={currentId === image.id}>
+      <input type="checkbox" checked={isSelected} onChange={() => onSelect?.(image.id)} aria-label={image.name} />
+      <button className="tool-file-preview" type="button" onClick={() => (onPreview || onSelect)?.(image.id)} aria-pressed={currentId === image.id}>
+        <span className="tool-file-thumbnail">
+          {image.url ? <Image src={image.url} alt={image.name} fill sizes="48px" className="object-cover" /> : <ImageIcon className="m-3 size-5" />}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="tool-file-name">{image.name}</span>
+          <span className="tool-file-details">{formatFileSize(image.size)} · {image.width} × {image.height}</span>
+          {image.status === 'error' && <span className="text-xs text-destructive">{image.error || copy.filePreview.uploadFailed}</span>}
+          {showProgress && image.status === 'uploading' && <Progress value={image.uploadProgress} className="mt-2 h-1" />}
+          {image.status === 'processing' && <Loader2 className="size-3 animate-spin" aria-label={copy.filePreview.statusText.processing} />}
+        </span>
+      </button>
+      <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={() => onRemove?.(image.id)}
+        title={copy.workspace.removeFile} aria-label={`${copy.workspace.removeFile}: ${image.name}`}><X className="size-3.5" /></Button>
+    </div>
   );
 }
 
-// 文件预览列表组件
 interface FilePreviewListProps {
-  images: ImageInfo[];
-  selectedIds?: string[];
-  showProgress?: boolean;
-  locale?: Locale;
-  onSelect?: (imageId: string) => void;
-  onSelectMultiple?: (imageIds: string[]) => void;
-  onRemove?: (imageId: string) => void;
-  onPreview?: (imageId: string) => void;
-  className?: string;
+  images: ImageInfo[]; selectedIds?: string[]; showProgress?: boolean; locale?: Locale;
+  onSelect?: (id: string) => void; onSelectMultiple?: (ids: string[]) => void;
+  onRemove?: (id: string) => void; onPreview?: (id: string) => void; className?: string;
 }
 
-export function FilePreviewList({
-  images,
-  selectedIds = [],
-  showProgress = false,
-  locale = DEFAULT_LOCALE,
-  onSelect,
-  onSelectMultiple,
-  onRemove,
-  onPreview,
-  className = ''
-}: FilePreviewListProps) {
+export function FilePreviewList({ images, selectedIds = [], showProgress, locale = DEFAULT_LOCALE,
+  onSelect, onSelectMultiple, onRemove, onPreview, className = '' }: FilePreviewListProps) {
   const copy = getCopy(locale).filePreview;
-
-  const handleSelectAll = () => {
-    const allIds = images.map(img => img.id);
-    onSelectMultiple?.(selectedIds.length === images.length ? [] : allIds);
-  };
-
-  if (images.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        <FileImage className="h-12 w-12 mx-auto mb-2" />
-        <p>{copy.empty}</p>
-      </div>
-    );
-  }
-
+  // 文件预览和勾选各自独立；批量删除仍使用现有 selectedImageIds。
+  const toggleSelection = (id: string) => onSelectMultiple
+    ? onSelectMultiple(selectedIds.includes(id) ? selectedIds.filter((item) => item !== id) : [...selectedIds, id])
+    : onSelect?.(id);
   return (
-    <div className={`space-y-4 ${className}`}>
-      {/* 批量操作 */}
-      {images.length > 1 && (
-        <div className="flex items-center justify-between">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSelectAll}
-          >
-            {selectedIds.length === images.length ? copy.clearSelection : copy.selectAll}
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            {copy.selected(selectedIds.length, images.length)}
-          </span>
-        </div>
-      )}
-      
-      {/* 图片网格 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
-        {images.map((image) => (
-          <FilePreview
-            key={image.id}
-            image={image}
-            isSelected={selectedIds.includes(image.id)}
-            showProgress={showProgress}
-            onSelect={onSelect}
-            onRemove={onRemove}
-            onPreview={onPreview}
-            locale={locale}
-          />
-        ))}
-      </div>
+    <div className={`tool-file-list ${className}`}>
+      {images.length > 1 && <div className="flex flex-wrap items-center justify-between gap-2 py-2 text-xs text-muted-foreground">
+        <label className="flex items-center gap-2"><input type="checkbox" checked={selectedIds.length === images.length}
+          onChange={() => onSelectMultiple?.(selectedIds.length === images.length ? [] : images.map((image) => image.id))} />{copy.selectAll}</label>
+        <span>{selectedIds.length}/{images.length}</span>
+      </div>}
+      {images.map((image) => <FilePreview key={image.id} image={image} isSelected={selectedIds.includes(image.id)}
+        showProgress={showProgress} onSelect={toggleSelection} onRemove={onRemove} onPreview={onPreview} locale={locale} />)}
     </div>
   );
 }

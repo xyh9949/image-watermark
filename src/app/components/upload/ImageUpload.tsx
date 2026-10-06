@@ -180,8 +180,9 @@ export function ImageUpload({
           {/* 拖拽上传区域 */}
           <div
             {...getRootProps()}
+            data-compact={hasImages()}
             className={`
-              border-2 border-dashed rounded-lg text-center transition-all duration-200 cursor-pointer
+              upload-dropzone border-2 border-dashed rounded-lg text-center transition-all duration-200 cursor-pointer
               ${hasImages() ? 'p-4' : 'p-8'}
               ${isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'}
               ${isDragReject ? 'border-red-500 bg-red-50' : ''}
@@ -189,7 +190,7 @@ export function ImageUpload({
               ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:border-muted-foreground/50'}
             `}
           >
-            <input {...getInputProps()} />
+            <input {...getInputProps({ id: 'tool-upload-input' })} />
 
             <div className={hasImages() ? 'space-y-2' : 'space-y-4'}>
               {isUploading ? (
@@ -296,26 +297,27 @@ export function ImageUpload({
       {hasImages() && (
         <Card className="flex flex-col max-h-[60vh]">
           {/* 列表标题和操作 - 固定在顶部 */}
-          <div className="flex-shrink-0 p-4 border-b">
+          <div className="flex-shrink-0 py-3 border-b">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium">
                 {labels.uploaded} ({getImageCount()})
               </h3>
               {hasSelectedImages() && (
                 <Button
-                  variant="destructive"
-                  size="sm"
+                  variant="ghost"
+                  size="icon"
+                  title={labels.deleteSelected}
+                  aria-label={labels.deleteSelected}
                   onClick={handleRemoveSelected}
                 >
-                  <X className="h-4 w-4 mr-2" />
-                  {labels.deleteSelected} ({selectedImageIds.length})
+                  <X className="h-4 w-4" />
                 </Button>
               )}
             </div>
           </div>
 
           {/* 文件预览列表 - 内置滚动区域 */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto py-2">
             {/* {{ Shrimp-X: Modify - 修复图片切换问题，点击图片时同时选择和设置为当前图片. Approval: Cunzhi(ID:timestamp). }} */}
             <FilePreviewList
               images={images}

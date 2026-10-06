@@ -3,14 +3,13 @@
 'use client';
 
 import React, { useEffect, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   RotateCcw,
   Download,
   Eye,
-  AlertCircle,
+  ImageIcon,
+  Loader2,
   Maximize
 } from 'lucide-react';
 import { useCanvas } from '@/app/hooks/useCanvas';
@@ -36,7 +35,6 @@ export function WatermarkCanvas({
 
   const {
     canvasRef,
-    canvas,
     isReady,
     currentImage: canvasImage,
     watermarks,
@@ -69,6 +67,8 @@ export function WatermarkCanvas({
     const loadCurrentImage = async () => {
       try {
         await loadImage(currentImage);
+        // 图片解码会重设画布尺寸；重新适配新的工作区，避免保留上张图片的显示尺寸。
+        fitToContainer();
         // 图片加载（含适配）完成后，立即按当前配置刷新一次水印
         try {
           clearAllWatermarks();
@@ -84,7 +84,7 @@ export function WatermarkCanvas({
     };
 
     loadCurrentImage();
-  }, [isReady, currentImage, loadImage, clearAllWatermarks, addWatermark, currentConfig]);
+  }, [isReady, currentImage, loadImage, clearAllWatermarks, addWatermark, currentConfig, fitToContainer]);
 
   // {{ Shrimp-X: Modify - 修复图片切换后水印不显示问题，移除函数依赖避免无限循环. Approval: Cunzhi(ID:timestamp). }}
   // 当水印配置改变或图片改变时，更新Canvas
@@ -175,64 +175,63 @@ export function WatermarkCanvas({
   // 移除这个条件检查，让Canvas始终渲染
 
   return (
-    <Card className={`p-4 ${className}`}>
-      <div className="space-y-4">
+    <section className={`tool-preview-shell ${className}`}>
         {/* 控制栏 */}
         {showControls && (
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-medium">{labels.editor}</h3>
-              {currentImage && (
-                <span className="text-xs text-muted-foreground">
-                  {currentImage.width} × {currentImage.height}
-                </span>
-              )}
+          <div className="tool-preview-toolbar">
+            <div className="flex min-w-0 items-center gap-2 text-xs">
+              <ImageIcon className="size-4 shrink-0" />
+              <span className="truncate" title={currentImage?.name}>{currentImage?.name || labels.editor}</span>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-1">
               <Button
-                variant="outline"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 onClick={handleFitToWindow}
                 title={labels.fit}
+                aria-label={labels.fit}
               >
                 <Maximize className="h-4 w-4" />
               </Button>
 
               <Button
-                variant="outline"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 onClick={handlePreview}
                 title={labels.preview}
+                aria-label={labels.preview}
               >
                 <Eye className="h-4 w-4" />
               </Button>
 
               <Button
-                variant="outline"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 onClick={handleClearWatermarks}
                 title={labels.clear}
+                aria-label={labels.clear}
               >
                 <RotateCcw className="h-4 w-4" />
               </Button>
 
               <Button
-                variant="default"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 onClick={handleExport}
                 title={labels.exportTitle}
+                aria-label={labels.exportTitle}
+                disabled={!isReady}
               >
-                <Download className="h-4 w-4 mr-2" />
-                {labels.export}
+                <Download className="h-4 w-4" />
               </Button>
             </div>
           </div>
         )}
 
         {/* Canvas容器 */}
-        <div className="relative border rounded-lg overflow-hidden bg-gray-50">
-          <div data-canvas-container className="flex items-center justify-center h-96 min-w-0">
+        <div className="tool-preview-stage">
+          <div data-canvas-container>
             <canvas
               ref={canvasRef}
               className="max-w-full max-h-full touch-none"
@@ -256,27 +255,20 @@ export function WatermarkCanvas({
             {currentImage && !isReady && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">{labels.initializing}</p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* 水印信息覆盖层 */}
-          {isReady && watermarks.length > 0 && (
-            <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
-              {labels.watermarkCount}: {watermarks.length}
-            </div>
-          )}
         </div>
 
         {/* 状态信息 */}
         {isReady && (
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+          <div className="tool-preview-status">
             <div className="flex flex-wrap items-center gap-2">
-              <span>Canvas: {canvas?.getWidth()} × {canvas?.getHeight()}</span>
-              <span>{labels.zoom}: 100%</span>
+              <span>{currentImage?.width} × {currentImage?.height} px</span>
               <span>{labels.watermark}: {watermarks.length}</span>
             </div>
 
@@ -296,17 +288,7 @@ export function WatermarkCanvas({
           </div>
         )}
 
-        {/* 错误提示 */}
-        {!isReady && (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {labels.initializingAlert}
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
-    </Card>
+    </section>
   );
 }
 

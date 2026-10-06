@@ -3,7 +3,6 @@
 /* eslint-disable @next/next/no-img-element -- User-selected data URL previews cannot be optimized by next/image. */
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
@@ -11,7 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { Settings, Eye, EyeOff, Play, Square, AlertCircle, X } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { ChevronDown, ArrowUpLeft, ArrowUp, ArrowUpRight, ArrowLeft, Dot, ArrowRight, ArrowDownLeft, ArrowDown, ArrowDownRight, Play, Square, AlertCircle, X } from 'lucide-react';
 import { useWatermarkStore, useImageStore } from '@/app/lib/stores';
 import { WatermarkPosition } from '@/app/types';
 import type { BatchWatermarkProcessor, BatchProcessingResult } from '@/app/lib/watermark/batchProcessor';
@@ -73,6 +73,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
   // 文件命名设置
   const [fileNameTemplate, setFileNameTemplate] = useState(DEFAULT_FILENAME_TEMPLATE);
   const labels = getCopy(locale).watermarkControls;
+  const workspace = getCopy(locale).workspace;
   const usesEnglishDefaults = locale === 'en';
 
   useEffect(() => {
@@ -269,6 +270,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
     'bottom-right': labels.positions['bottom-right'],
     'custom': labels.positions.custom
   };
+  const positionIcons = [ArrowUpLeft, ArrowUp, ArrowUpRight, ArrowLeft, Dot, ArrowRight, ArrowDownLeft, ArrowDown, ArrowDownRight];
 
   // 处理文字内容变化
   const handleTextChange = (value: string) => {
@@ -389,34 +391,15 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
   };
 
   return (
-    <Card className={`p-6 h-full ${className}`}>
-      <div className="space-y-4">
+    <section className={`tool-control-panel ${className}`}>
         {/* 标题栏 */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Settings className="h-5 w-5" />
+        <div className="tool-panel-heading">
+          <div>
             <h2 className="text-lg font-semibold">{labels.settings}</h2>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleWatermark}
-            className="flex items-center space-x-1"
-          >
-            {currentConfig.enabled ? (
-              <>
-                <Eye className="h-4 w-4" />
-                <span>{labels.enabled}</span>
-              </>
-            ) : (
-              <>
-                <EyeOff className="h-4 w-4" />
-                <span>{labels.disabled}</span>
-              </>
-            )}
-          </Button>
+          <Switch checked={currentConfig.enabled} onCheckedChange={toggleWatermark} aria-label={labels.settings} />
         </div>
-
+      <div className="tool-control-body space-y-4">
         {controlError && (
           <div className="flex items-center space-x-2 text-sm text-destructive bg-destructive/10 p-2 rounded">
             <AlertCircle className="h-4 w-4" />
@@ -458,6 +441,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
             {/* 字体选择 */}
             <div className="space-y-2">
               <Label>{labels.font}</Label>
@@ -480,18 +464,35 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                 </SelectContent>
               </Select>
             </div>
-
+            <div className="space-y-2">
+              <Label>{labels.fontWeight}</Label>
+              <Select value={currentConfig.textStyle?.fontWeight || 'normal'} onValueChange={handleFontWeightChange}>
+                <SelectTrigger><SelectValue placeholder={labels.chooseWeight} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">{labels.normal}</SelectItem>
+                  <SelectItem value="bold">{labels.bold}</SelectItem>
+                  <SelectItem value="100">{labels.thin}</SelectItem>
+                  <SelectItem value="300">{labels.light}</SelectItem>
+                  <SelectItem value="500">{labels.medium}</SelectItem>
+                  <SelectItem value="700">{labels.heavy}</SelectItem>
+                  <SelectItem value="900">{labels.black}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            </div>
             {/* 水印模式 */}
             <div className="space-y-2">
               <Label>{labels.mode}</Label>
               <Select
                 value={currentConfig.scaleMode}
-                onValueChange={(value) => setScaleMode(value as 'percentage' | 'fixed')}
+                onValueChange={(value) => setScaleMode(value as 'percentage' | 'fixed' | 'adaptive')}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={labels.chooseMode} />
                 </SelectTrigger>
                 <SelectContent>
+                  {/* 默认和已保存配置可能是 adaptive，必须有对应选项，避免显示空值。 */}
+                  <SelectItem value="adaptive">{labels.adaptiveMode}</SelectItem>
                   <SelectItem value="percentage">{labels.percentageMode}</SelectItem>
                   <SelectItem value="fixed">{labels.fixedMode}</SelectItem>
                 </SelectContent>
@@ -579,28 +580,6 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               )}
             </div>
 
-            {/* 字重 */}
-            <div className="space-y-2">
-              <Label>{labels.fontWeight}</Label>
-              <Select
-                value={currentConfig.textStyle?.fontWeight || 'normal'}
-                onValueChange={handleFontWeightChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={labels.chooseWeight} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="normal">{labels.normal}</SelectItem>
-                  <SelectItem value="bold">{labels.bold}</SelectItem>
-                  <SelectItem value="100">{labels.thin}</SelectItem>
-                  <SelectItem value="300">{labels.light}</SelectItem>
-                  <SelectItem value="500">{labels.medium}</SelectItem>
-                  <SelectItem value="700">{labels.heavy}</SelectItem>
-                  <SelectItem value="900">{labels.black}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* 颜色选择 */}
             <div className="space-y-2">
               <Label htmlFor="watermark-color">{labels.color}</Label>
@@ -651,6 +630,10 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               />
             </div>
 
+            {/* 常用设置优先显示，旋转和描边展开后保留完整控制。 */}
+            <details className="tool-disclosure">
+              <summary>{workspace.appearance}<ChevronDown className="size-4" /></summary>
+              <div className="space-y-4">
             {/* 旋转角度 */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -756,6 +739,8 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                 </div>
               </div>
             )}
+              </div>
+            </details>
           </TabsContent>
 
           {/* {{ Shrimp-X: Add - 完整的图片水印控制界面. Approval: Cunzhi(ID:timestamp). }} */}
@@ -1240,8 +1225,10 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
         {currentConfig.type !== 'fullscreen' && (
           <div className="space-y-2">
             <Label>{labels.position}</Label>
-            <div className="grid grid-cols-3 gap-1">
-              {positionGrid.map((position) => (
+            <div className="tool-position-grid">
+              {positionGrid.map((position, index) => {
+                const Icon = positionIcons[index];
+                return (
                 <Button
                   key={position}
                   variant={currentConfig.position.position === position ? "default" : "outline"}
@@ -1249,18 +1236,21 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                   className="aspect-square p-0"
                   onClick={() => handlePositionSelect(position)}
                   title={positionLabels[position]}
+                  aria-label={positionLabels[position]}
+                  aria-pressed={currentConfig.position.position === position}
                 >
-                  <div className="w-2 h-2 bg-current rounded-full" />
+                  <Icon className="size-4" />
                 </Button>
-              ))}
+              );})}
             </div>
           </div>
         )}
 
         {/* 位置微调 - 全屏水印不需要位置微调 */}
         {currentConfig.type !== 'fullscreen' && (
-          <div className="space-y-3">
-            <Label>{labels.fineTune}</Label>
+          <details className="tool-disclosure">
+            <summary>{labels.fineTune}<ChevronDown className="size-4" /></summary>
+            <div className="space-y-3">
             <div className="text-xs text-gray-500 mb-2">
               {labels.fineTuneHelp}
             </div>
@@ -1336,11 +1326,14 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
             >
               {labels.resetOffset}
             </Button>
-          </div>
+            </div>
+          </details>
         )}
 
         {/* 处理按钮 */}
-        <div className="space-y-3 pt-4">
+        <details className="tool-disclosure">
+          <summary>{workspace.exportSettings}<ChevronDown className="size-4" /></summary>
+          <div className="space-y-3">
           {/* {{ Shrimp-X: Add - 文件命名规则设置. Approval: Cunzhi(ID:timestamp). }} */}
           {/* 文件命名设置 */}
           <div className="space-y-2">
@@ -1360,18 +1353,21 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
 
           {/* 水印模式信息 */}
           {hasImages() && (
-            <div className="p-3 bg-blue-50 rounded-lg text-sm">
-              <div className="font-medium text-blue-800 mb-1">{labels.batchMode}</div>
-              <div className="text-blue-700">
+            <div className="text-xs text-muted-foreground">
+              <div className="font-medium mb-1">{labels.batchMode}</div>
+              <div>
                 {currentConfig.scaleMode === 'percentage' && labels.batchPercentage}
                 {currentConfig.scaleMode === 'fixed' && labels.batchFixed}
               </div>
-              <div className="text-xs text-blue-600 mt-1">
+              <div className="text-xs mt-1">
                 {labels.willProcess(getImageCount(), currentConfig.scaleMode)}
               </div>
             </div>
           )}
-
+          </div>
+        </details>
+      </div>
+      <div className="tool-action-bar space-y-2">
           {/* 批量处理状态 */}
           {isProcessing && (
             <div className="space-y-2">
@@ -1437,17 +1433,9 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               </Button>
             )}
 
-            <Button
-              variant="outline"
-              className="w-full"
-              disabled={isProcessing || !hasImages()}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              {labels.previewResult}
-            </Button>
           </div>
-        </div>
+        <small>{workspace.originalSafe}</small>
       </div>
-    </Card>
+    </section>
   );
 }

@@ -1,7 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { Eye, Loader2 } from 'lucide-react';
+import { Plus, Upload, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useImageStore } from '@/app/lib/stores';
 import { getCopy, type Locale } from '@/app/lib/i18n';
 
@@ -17,11 +18,14 @@ export function LazyWatermarkCanvas({ locale }: { locale: Locale }) {
   if (hasImage) return <Editor locale={locale} />;
 
   return (
-    <div className="min-h-96 grid place-items-center text-center text-muted-foreground">
-      <div>
-        <Eye className="h-16 w-16 mx-auto mb-4" />
-        <p>{getCopy(locale).watermarkCanvas.selectImage}</p>
-      </div>
+    <div className="tool-empty">
+      <Upload aria-hidden="true" />
+      <h2>{getCopy(locale).workspace.chooseFirst}</h2>
+      <p>{getCopy(locale).workspace.emptySupport}</p>
+      <Button onClick={() => document.getElementById('tool-upload-input')?.click()}>
+        <Plus className="size-4" />{getCopy(locale).upload.choose}
+      </Button>
+      <p>{getCopy(locale).workspace.local}</p>
     </div>
   );
 }
