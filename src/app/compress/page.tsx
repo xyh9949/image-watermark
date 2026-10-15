@@ -391,10 +391,14 @@ function CompressionControlPanel({
 function ResultsPreviewPanel({
   results,
   onDownloadFile,
+  onDrop,
+  isProcessing,
   locale
 }: {
   results: CompressedFile[];
   onDownloadFile: (result: CompressedFile) => void;
+  onDrop: (files: File[]) => void;
+  isProcessing: boolean;
   locale: Locale;
 }) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -441,18 +445,20 @@ function ResultsPreviewPanel({
   // 空状态
   if (results.length === 0) {
     return (
-      <div className="tool-empty">
-        <div className="text-center p-8">
-          <FileArchive className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-          <h3 className="text-lg font-medium mb-2">{labels.waiting}</h3>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            {labels.waitingDescription}
-          </p>
-          <Button className="mt-5" onClick={() => document.getElementById('tool-upload-input')?.click()}>
-            <Plus className="size-4" />{getCopy(locale).compress.fileUpload.choose}
-          </Button>
+      <LocalUpload accept=".jpg,.jpeg,.png,.webp,.gif" empty inputId={null} disabled={isProcessing} onFiles={onDrop}>
+        <div className="tool-empty">
+          <div className="text-center p-8">
+            <FileArchive className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+            <h3 className="text-lg font-medium mb-2">{labels.waiting}</h3>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              {labels.waitingDescription}
+            </p>
+            <Button className="mt-5" disabled={isProcessing}>
+              <Plus className="size-4" />{getCopy(locale).compress.fileUpload.choose}
+            </Button>
+          </div>
         </div>
-      </div>
+      </LocalUpload>
     );
   }
 
@@ -745,7 +751,7 @@ export default function Compress() {
         },
         {
           id: 'preview', label: pageCopy.resultsTab,
-          content: <ResultsPreviewPanel results={results} onDownloadFile={downloadFile} locale={locale} />,
+          content: <ResultsPreviewPanel results={results} onDownloadFile={downloadFile} onDrop={onDrop} isProcessing={isProcessing} locale={locale} />,
         },
         {
           id: 'controls', label: pageCopy.controlsTab,

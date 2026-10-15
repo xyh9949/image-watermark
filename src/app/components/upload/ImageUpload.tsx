@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { LocalUpload } from '@/components/ui/local-upload';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -15,9 +15,9 @@ import {
   Plus
 } from 'lucide-react';
 import { useImageStore } from '@/app/lib/stores';
+import type { useImageUpload } from '@/app/hooks/useImageUpload';
 import { FilePreviewList } from './FilePreview';
 import {
-  validateFiles,
   SUPPORTED_IMAGE_TYPES,
   MAX_FILE_SIZE,
   formatFileSize
@@ -26,15 +26,13 @@ import { DEFAULT_LOCALE, getCopy, type Locale } from '@/app/lib/i18n';
 
 interface ImageUploadProps {
   className?: string;
-  maxFiles?: number;
-  disabled?: boolean;
+  upload: ReturnType<typeof useImageUpload>;
   locale?: Locale;
 }
 
 export function ImageUpload({
   className = '',
-  maxFiles = Infinity,
-  disabled = false,
+  upload,
   locale = DEFAULT_LOCALE
 }: ImageUploadProps) {
   const {
@@ -42,7 +40,6 @@ export function ImageUpload({
     selectedImageIds,
     isUploading,
     uploadProgress,
-    addImages,
     removeImage,
     removeImages,
     selectImage,
@@ -54,61 +51,8 @@ export function ImageUpload({
     getImageCount
   } = useImageStore();
 
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
+  const { handleFilesUpload, validationErrors, validationWarnings, clearMessages, disabled, maxFiles } = upload;
   const labels = getCopy(locale).upload;
-
-  // 处理文件上传
-  const handleFilesUpload = useCallback(async (files: File[]) => {
-    if (disabled || isUploading) return;
-
-    // 检查文件数量限制 (已解除限制)
-    const currentCount = getImageCount();
-    const totalCount = currentCount + files.length;
-
-    if (maxFiles !== Infinity && totalCount > maxFiles) {
-      setValidationErrors([labels.maxFiles(maxFiles, currentCount)]);
-      return;
-    }
-
-    // 验证文件
-    const validationResults = await validateFiles(files);
-    const errors: string[] = [];
-    const warnings: string[] = [];
-    const validFiles: File[] = [];
-
-    Object.entries(validationResults).forEach(([filename, result]) => {
-      if (result.isValid) {
-        const file = files.find(f => f.name === filename);
-        if (file) validFiles.push(file);
-        warnings.push(...result.warnings);
-      } else {
-        errors.push(`${filename}: ${result.errors.join(', ')}`);
-      }
-    });
-
-    setValidationErrors(errors);
-    setValidationWarnings(warnings);
-
-    // 上传有效文件
-    if (validFiles.length > 0) {
-      try {
-        await addImages(validFiles);
-
-        // 如果只上传了一张图片，自动选中
-        if (validFiles.length === 1 && !hasImages()) {
-          setTimeout(() => {
-            const newImages = useImageStore.getState().images;
-            if (newImages.length > 0) {
-              setCurrentImage(newImages[newImages.length - 1].id);
-            }
-          }, 100);
-        }
-      } catch (error) {
-        setValidationErrors([labels.uploadFailed(error instanceof Error ? error.message : labels.unknownError)]);
-      }
-    }
-  }, [disabled, isUploading, maxFiles, addImages, getImageCount, hasImages, setCurrentImage, labels]);
 
   // 移除选中的图片
   const handleRemoveSelected = useCallback(() => {
@@ -117,12 +61,6 @@ export function ImageUpload({
       clearSelection();
     }
   }, [hasSelectedImages, removeImages, selectedImageIds, clearSelection]);
-
-  // 清除错误和警告
-  const clearMessages = useCallback(() => {
-    setValidationErrors([]);
-    setValidationWarnings([]);
-  }, []);
 
   return (
     <div className={`flex flex-col h-full space-y-4 ${className}`}>

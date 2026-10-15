@@ -401,6 +401,7 @@ export default function MetadataPage() {
         {
           id: 'view', label: copy.page.viewTab,
           content: <MetadataViewerPanel copy={copy} fileState={activeFile}
+            onDrop={onDrop} isBusy={isBusy}
             onTagChange={updateTagValue} onToggleTagSelection={toggleTagSelection} />,
         },
         {
@@ -611,11 +612,15 @@ function FileStatusBadge({ copy, fileState }: { copy: MetadataCopy; fileState: M
 function MetadataViewerPanel({
   copy,
   fileState,
+  onDrop,
+  isBusy,
   onTagChange,
   onToggleTagSelection,
 }: {
   copy: MetadataCopy;
   fileState: MetadataFileState | null;
+  onDrop: (files: File[]) => void;
+  isBusy: boolean;
   onTagChange: (tagKey: string, value: string) => void;
   onToggleTagSelection: (tagKey: string) => void;
 }) {
@@ -639,16 +644,18 @@ function MetadataViewerPanel({
 
   if (!fileState) {
     return (
-      <div className="tool-empty">
-        <div className="text-center max-w-sm">
-          <Tags className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-          <h3 className="text-lg font-medium mb-2">{copy.viewer.emptyTitle}</h3>
-          <p className="text-sm text-muted-foreground">{copy.viewer.emptyDescription}</p>
-          <Button className="mt-5" onClick={() => document.getElementById('tool-upload-input')?.click()}>
-            <Plus className="size-4" />{copy.upload.choose}
-          </Button>
+      <LocalUpload accept=".jpg,.jpeg,.png,.webp" empty inputId={null} disabled={isBusy} onFiles={onDrop}>
+        <div className="tool-empty">
+          <div className="text-center max-w-sm">
+            <Tags className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+            <h3 className="text-lg font-medium mb-2">{copy.viewer.emptyTitle}</h3>
+            <p className="text-sm text-muted-foreground">{copy.viewer.emptyDescription}</p>
+            <Button className="mt-5" disabled={isBusy}>
+              <Plus className="size-4" />{copy.upload.choose}
+            </Button>
+          </div>
         </div>
-      </div>
+      </LocalUpload>
     );
   }
 

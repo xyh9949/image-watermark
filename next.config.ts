@@ -28,6 +28,8 @@ const nextConfig: NextConfig = {
   },
 
   experimental: {
+    // 曾复用旧的全局 CSS；生产构建重新编译，避免上传区域样式漏更新。
+    turbopackFileSystemCacheForBuild: false,
     optimizePackageImports: ["lucide-react"],
   },
 

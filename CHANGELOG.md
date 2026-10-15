@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.1 - 2026-10-15
+
+- Make the central empty upload area accept drag-and-drop files in all three tools and both languages, with hover and drag feedback.
+- Share watermark file validation between the sidebar and central upload area, retaining local-only processing and single-batch handling.
+- Keep file selection and toolbar shortcuts working without duplicate upload input IDs.
+- Disable the persistent Turbopack build cache after detecting stale global CSS in a production rebuild.
+- Add HTML smoke guards for the central upload areas, unique toolbar input IDs, and their referenced stylesheets.
+
 ## 1.4.0 - 2026-10-15
 
 - Replace the green theme with a neutral gray-and-white workspace and blue primary actions, configured through Ant Design 6.

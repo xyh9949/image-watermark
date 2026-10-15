@@ -6,6 +6,7 @@ import { ImageUpload } from "@/app/components/upload/ImageUpload";
 import { LazyWatermarkCanvas } from '@/app/components/editor/LazyWatermarkCanvas';
 import { WatermarkControls } from "@/app/components/controls/WatermarkControls";
 import { useImageStore } from '@/app/lib/stores';
+import { useImageUpload } from '@/app/hooks/useImageUpload';
 import { getCopy, getLocaleFromPathname, type Locale } from '@/app/lib/i18n';
 import { usePathname } from 'next/navigation';
 
@@ -14,14 +15,15 @@ export default function Home() {
   const locale = getLocaleFromPathname(pathname);
   const copy = getCopy(locale).home;
   const count = useImageStore((state) => state.images.length);
+  const upload = useImageUpload(locale);
 
   return (
     <div className="flex flex-col min-w-0">
       <h1 className="sr-only">{copy.srTitle}</h1>
 
-      <ToolWorkspace title={getCopy(locale).workspace.watermarkTitle} fileCount={count} locale={locale} panels={[
-        { id: 'upload', label: copy.tabs.upload, content: <ImageUpload locale={locale} /> },
-        { id: 'edit', label: copy.tabs.edit, content: <LazyWatermarkCanvas locale={locale} /> },
+      <ToolWorkspace title={getCopy(locale).workspace.watermarkTitle} fileCount={count} locale={locale} busy={upload.disabled} panels={[
+        { id: 'upload', label: copy.tabs.upload, content: <ImageUpload locale={locale} upload={upload} /> },
+        { id: 'edit', label: copy.tabs.edit, content: <LazyWatermarkCanvas locale={locale} onFiles={upload.handleFilesUpload} disabled={upload.disabled} /> },
         { id: 'controls', label: copy.tabs.controls, content: <WatermarkControls locale={locale} /> },
       ]} />
       <HomeGeoContent locale={locale} />

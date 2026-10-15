@@ -151,6 +151,24 @@ for (const page of htmlPages) {
     fail(`${page.route} missing visible version ${version}`);
   }
 
+  // 中央上传入口和任务栏输入必须同时存在，避免主题调整后再次丢失拖放能力。
+  if (!html.includes('class="upload-empty"')) {
+    fail(`${page.route} missing central upload area`);
+  }
+  const uploadInputs = [...html.matchAll(/<input\b[^>]*>/gi)]
+    .filter(([tag]) => getAttr(tag, 'id') === 'tool-upload-input');
+  if (uploadInputs.length !== 1) {
+    fail(`${page.route} expected exactly one toolbar upload input, got ${uploadInputs.length}`);
+  }
+  // 只检查 HTML 实际引用的样式，捕获生产构建错误复用旧 CSS 的情况。
+  const styles = getLinkTags(html).filter((tag) => getAttr(tag, 'rel') === 'stylesheet')
+    .map((tag) => new URL(getAttr(tag, 'href'), siteUrl).pathname)
+    .filter((href) => href.startsWith('/_next/static/'))
+    .map((href) => readRequired(path.join(root, '.next', href.slice('/_next/'.length)), `${page.route} stylesheet`));
+  if (!styles.some((css) => css.includes('.upload-empty'))) {
+    fail(`${page.route} missing central upload styles`);
+  }
+
   if (!hasCanonical(html, page.canonical)) {
     fail(`${page.route} missing canonical ${page.canonical}`);
   }

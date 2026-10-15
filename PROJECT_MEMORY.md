@@ -35,6 +35,13 @@
 - 本地验收：verify、最终构建及 HTML smoke 通过；六页 × 五档宽度无溢出，英文导航在 320px 下可完整显示，横屏和减少动效模式通过。水印单张/批量、两种 Logo 上传、三格式压缩、弹窗 Escape、GPS 编辑回读和批量清除通过；测试未发现 POST 上传请求。
 - 下载文件已验证尺寸、非空像素、ZIP 三文件数量、标题/GPS 写入及清除结果。生产依赖以 npm 官方审计端点检查为 0 漏洞；本机默认 npm 镜像不提供审计端点。
 
+## 2026-10-15 中央拖放修复 1.4.1
+- 三个工具的中间空白上传区均使用 LocalUpload / Ant Design Upload.Dragger；中英文入口复用同一回调，拖放整块区域可用并显示高亮，不改变已有编辑或结果视图。
+- 水印的共享校验和消息状态移至 `src/app/hooks/useImageUpload.ts`；侧栏与中间区域必须调用同一处理函数，不能直接绕过校验调用 store。
+- 中间 LocalUpload 使用 `empty` 和 `inputId={null}`，不重复注册 `tool-upload-input`；原任务栏隐藏输入与 Logo 输入保持原约定。
+- 本地发现 Turbopack 持久构建缓存复用了更新前的 globals.css；生产构建关闭 `turbopackFileSystemCacheForBuild`，开发缓存不变。HTML smoke 同时检查中央上传入口、隐藏输入唯一性及实际引用的 CSS，避免只验证 HTML 而遗漏旧样式。
+- 本地浏览器覆盖六路由 × 桌面/手机共 12 个批量拖入场景，检查整块接收范围、高亮、每批只添加一次、无效及损坏文件校验、三个中心按钮选图、水印导出与两文件压缩 ZIP；未捕获页面异常或 POST 上传。
+
 ## 2026-10-06 UI 1.3.3 实施
 - 用户指定使用 `ui-ux-pro-max`，已认可 A 版草图并授权实施，沿用本地验证后推送发布的流程。
 - A 版“轻量图片工作台”保存在 `output/playwright/ui-concept/index.html`；同目录含设计说明、三页桌面/手机截图及初始状态。此目录被 Git 忽略，仅在本机。
