@@ -165,7 +165,7 @@ for (const page of htmlPages) {
     .map((tag) => new URL(getAttr(tag, 'href'), siteUrl).pathname)
     .filter((href) => href.startsWith('/_next/static/'))
     .map((href) => readRequired(path.join(root, '.next', href.slice('/_next/'.length)), `${page.route} stylesheet`));
-  if (!styles.some((css) => css.includes('.upload-empty'))) {
+  if (!styles.some((css) => css.includes('.upload-empty') && css.includes('.upload-preview'))) {
     fail(`${page.route} missing central upload styles`);
   }
 

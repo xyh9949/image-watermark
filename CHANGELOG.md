@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.2 - 2026-10-15
+
+- Keep drag-and-drop enabled over loaded watermark previews, compression results, and metadata tables in both languages.
+- Append dropped files without replacing the active image, drafts, or existing results; retain validation and processing locks.
+- Disable click-to-upload in loaded previews so canvas controls, result dialogs, downloads, and metadata inputs remain interactive.
+
 ## 1.4.1 - 2026-10-15
 
 - Make the central empty upload area accept drag-and-drop files in all three tools and both languages, with hover and drag feedback.

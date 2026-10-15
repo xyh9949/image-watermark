@@ -19,7 +19,11 @@ export function LazyWatermarkCanvas({ locale, onFiles, disabled }: {
   const hasImage = useImageStore((state) => state.images.some((image) => image.id === state.currentImageId));
 
   // 用户选择图片后才下载 Fabric，空白首页无需初始化画布。
-  if (hasImage) return <Editor locale={locale} />;
+  if (hasImage) return (
+    <LocalUpload accept={SUPPORTED_IMAGE_TYPES.join(',')} preview inputId={null} disabled={disabled} onFiles={onFiles}>
+      <Editor locale={locale} />
+    </LocalUpload>
+  );
 
   return (
     <LocalUpload accept={SUPPORTED_IMAGE_TYPES.join(',')} empty inputId={null} disabled={disabled} onFiles={onFiles}>

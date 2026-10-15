@@ -463,6 +463,7 @@ function ResultsPreviewPanel({
   }
 
   return (
+    <LocalUpload accept=".jpg,.jpeg,.png,.webp,.gif" preview inputId={null} disabled={isProcessing} onFiles={onDrop}>
     <div className="tool-preview-shell bg-background">
       <div className="tool-result-stats">
         <div><span>{labels.original}</span><strong>{formatFileSize(originalTotal)}</strong></div>
@@ -558,6 +559,7 @@ function ResultsPreviewPanel({
         </Modal>
       )}
     </div>
+    </LocalUpload>
   );
 }
 

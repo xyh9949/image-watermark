@@ -660,6 +660,7 @@ function MetadataViewerPanel({
   }
 
   return (
+    <LocalUpload accept=".jpg,.jpeg,.png,.webp" preview inputId={null} disabled={isBusy} onFiles={onDrop}>
     <div className="tool-preview-shell bg-background">
       <div className="flex-shrink-0 p-4 border-b bg-background space-y-3">
         <div className="flex items-start justify-between gap-3">
@@ -715,6 +716,7 @@ function MetadataViewerPanel({
           ]} />
       </div>
     </div>
+    </LocalUpload>
   );
 }
 
