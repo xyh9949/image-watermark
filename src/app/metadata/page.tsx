@@ -3,11 +3,12 @@
 /* eslint-disable @next/next/no-img-element -- Local object URL previews cannot be optimized by next/image. */
 
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { Select, Checkbox, Table, Input as AntInput } from 'antd';
+import { Disclosure } from '@/components/ui/disclosure';
 import { usePathname } from 'next/navigation';
-import { useDropzone } from 'react-dropzone';
+import { LocalUpload } from '@/components/ui/local-upload';
 import {
   CheckCircle2,
-  ChevronDown,
   Download,
   Eraser,
   FileImage,
@@ -28,7 +29,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToolWorkspace } from '@/components/ToolWorkspace';
 import { cn } from '@/lib/utils';
 import { getCopy, getLocaleFromPathname, type Locale } from '@/app/lib/i18n';
@@ -467,17 +467,6 @@ function UploadPanel({
   onSelectFile: (id: string) => void;
   onToggleFileSelection: (id: string) => void;
 }) {
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/jpeg': ['.jpg', '.jpeg'],
-      'image/png': ['.png'],
-      'image/webp': ['.webp'],
-    },
-    multiple: true,
-    disabled: isBusy,
-  });
-
   return (
     <div className="flex flex-col h-full space-y-4">
       <Card>
@@ -495,26 +484,15 @@ function UploadPanel({
           </div>
         </CardHeader>
         <CardContent>
-          <div
-            {...getRootProps()}
-            data-compact={files.length > 0}
-            className={cn(
-              'upload-dropzone border-2 border-dashed rounded-lg text-center transition-all cursor-pointer',
-              files.length > 0 ? 'p-4' : 'p-8',
-              isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25',
-              isBusy ? 'opacity-60 cursor-not-allowed' : 'hover:border-muted-foreground/50'
-            )}
-          >
-            <input {...getInputProps({ id: 'tool-upload-input' })} />
+          <LocalUpload accept=".jpg,.jpeg,.png,.webp" compact={files.length > 0} disabled={isBusy} onFiles={onDrop}>
+
             <div className="space-y-3">
               <Upload className={cn('mx-auto text-muted-foreground', files.length > 0 ? 'w-7 h-7' : 'w-12 h-12')} />
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">
-                  {isDragActive
-                    ? copy.upload.release
-                    : files.length > 0
+                  {(files.length > 0
                       ? copy.upload.addMoreHint
-                      : copy.upload.emptyHint}
+                      : copy.upload.emptyHint)}
                 </p>
                 {files.length === 0 && (
                   <p className="text-xs text-muted-foreground">{copy.upload.support}</p>
@@ -525,7 +503,7 @@ function UploadPanel({
                 {files.length > 0 ? copy.upload.addMore : copy.upload.choose}
               </Button>
             </div>
-          </div>
+          </LocalUpload>
         </CardContent>
       </Card>
 
@@ -550,8 +528,8 @@ function UploadPanel({
                     activeId === fileState.id ? 'bg-primary/10 border-primary/40' : 'bg-muted/30 hover:bg-muted/50'
                   )}
                 >
-                  <input
-                    type="checkbox"
+                  <Checkbox
+
                     checked={selectedFileIds.includes(fileState.id)}
                     onChange={() => onToggleFileSelection(fileState.id)}
                     onClick={(event) => event.stopPropagation()}
@@ -699,78 +677,35 @@ function MetadataViewerPanel({
               className="pl-9"
             />
           </div>
-          <Select value={group} onValueChange={setGroup}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {GROUP_OPTIONS.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option === 'all' ? copy.viewer.allGroups : option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Select aria-label={copy.viewer.allGroups} value={group} onChange={setGroup} options={[...GROUP_OPTIONS.map((option) => (
+                { value: option, label: option === 'all' ? copy.viewer.allGroups : option }
+              ))]} />
         </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto max-lg:max-h-[420px]">
-        {visibleTags.length === 0 ? (
-          <div className="h-full flex items-center justify-center p-8 text-center text-sm text-muted-foreground">
-            {copy.viewer.noResults}
-          </div>
-        ) : (
-          <table className="metadata-table">
-            <thead className="sticky top-0 bg-background border-b z-10">
-              <tr className="text-left">
-                <th><span className="sr-only">{copy.viewer.select}</span></th>
-                <th className="font-medium">{copy.viewer.tag}</th>
-                <th className="p-3 font-medium">{copy.viewer.value}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleTags.map((tag) => (
-                <tr key={tag.key} className="border-b bg-background/50 align-top">
-                  <td className="p-3">
-                    <input
-                      type="checkbox"
-                      checked={fileState.selectedTagKeys.includes(tag.key)}
-                      onChange={() => onToggleTagSelection(tag.key)}
-                      disabled={!tag.editable || fileState.status !== 'ready'}
-                      aria-label={copy.viewer.selectTag(tag.name)}
-                      className="h-4 w-4"
-                    />
-                  </td>
-                  <td className="p-3">
-                    <div className="font-medium break-all">{tag.name}</div>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                      <span className="font-mono">{tag.group}</span>
-                      {!tag.editable && <span>{copy.viewer.readonly}</span>}
-                      {tag.changed && <Badge variant="outline">{copy.viewer.changed}</Badge>}
-                    </div>
-                  </td>
-                  <td className="p-3">
-                    {tag.editable ? (
-                      <Input
-                        value={tag.displayValue}
-                        disabled={fileState.status !== 'ready'}
-                        onChange={(event) => onTagChange(tag.key, event.target.value)}
-                        aria-invalid={Boolean(tag.error)}
-                        aria-label={tag.key}
-                        className={cn(tag.error && 'border-destructive')}
-                      />
-                    ) : (
-                      <p className="break-all text-muted-foreground leading-6">{tag.displayValue || '-'}</p>
-                    )}
-                    {tag.error && (
-                      <p className="mt-1 text-xs text-destructive">{tag.error}</p>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        <Table<MetadataTag> rowKey="key" dataSource={visibleTags} pagination={false} size="small" tableLayout="fixed"
+          locale={{ emptyText: copy.viewer.noResults }} columns={[
+            { key: 'select', width: 40, title: <span className="sr-only">{copy.viewer.select}</span>, render: (_, tag) => (
+              <Checkbox checked={fileState.selectedTagKeys.includes(tag.key)} onChange={() => onToggleTagSelection(tag.key)}
+                disabled={!tag.editable || fileState.status !== 'ready'} aria-label={copy.viewer.selectTag(tag.name)} />
+            ) },
+            { key: 'tag', title: copy.viewer.tag, width: '40%', render: (_, tag) => <>
+              <div className="font-medium">{tag.name}</div>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span className="font-mono">{tag.group}</span>
+                {!tag.editable && <span>{copy.viewer.readonly}</span>}
+                {tag.changed && <Badge variant="outline">{copy.viewer.changed}</Badge>}
+              </div>
+            </> },
+            { key: 'value', title: copy.viewer.value, render: (_, tag) => <>
+              {tag.editable ? <Input value={tag.displayValue} disabled={fileState.status !== 'ready'}
+                onChange={(event) => onTagChange(tag.key, event.target.value)} status={tag.error ? 'error' : undefined}
+                aria-invalid={Boolean(tag.error)} aria-label={tag.key} />
+                : <p className="text-muted-foreground leading-6">{tag.displayValue || '-'}</p>}
+              {tag.error && <p className="mt-1 text-xs text-destructive">{tag.error}</p>}
+            </> },
+          ]} />
       </div>
     </div>
   );
@@ -835,8 +770,8 @@ function EditPanel({
             <TextField label={copy.fields.author} value={fileState.draft.author} onChange={(value) => onDraftChange('author', value)} />
             <TextField label={copy.fields.copyright} value={fileState.draft.copyright} onChange={(value) => onDraftChange('copyright', value)} />
             {/* 较少使用的拍摄和 GPS 字段折叠，所有字段的草稿仍保留在 fileState。 */}
-            <details className="tool-disclosure">
-              <summary>{getCopy(locale).workspace.capture}<ChevronDown className="size-4" aria-hidden="true" /></summary><div className="space-y-3">
+            <Disclosure  title={<>{getCopy(locale).workspace.capture}</>} className="tool-disclosure">
+              <div className="space-y-3">
             <TextField
               label={copy.fields.capturedAt}
               type="datetime-local"
@@ -853,14 +788,14 @@ function EditPanel({
               <TextField label={copy.fields.software} value={fileState.draft.software} onChange={(value) => onDraftChange('software', value)} />
             </div>
             <TextareaField label={copy.fields.comment} value={fileState.draft.comment} onChange={(value) => onDraftChange('comment', value)} />
-              </div></details>
-            <details className="tool-disclosure"><summary>{getCopy(locale).workspace.gps}<ChevronDown className="size-4" aria-hidden="true" /></summary>
+              </div></Disclosure>
+            <Disclosure  title={<>{getCopy(locale).workspace.gps}</>} className="tool-disclosure">
             <div className="grid gap-3">
               <TextField label={copy.fields.gpsLatitude} value={fileState.draft.gpsLatitude} onChange={(value) => onDraftChange('gpsLatitude', value)} />
               <TextField label={copy.fields.gpsLongitude} value={fileState.draft.gpsLongitude} onChange={(value) => onDraftChange('gpsLongitude', value)} />
               <TextField label={copy.fields.gpsAltitude} value={fileState.draft.gpsAltitude} onChange={(value) => onDraftChange('gpsAltitude', value)} />
             </div>
-            </details>
+            </Disclosure>
           </fieldset>
         </CardContent>
       </Card>
@@ -889,8 +824,8 @@ function EditPanel({
         </CardContent>
       </Card>
 
-      <details className="tool-disclosure">
-        <summary>{copy.editor.batch}<ChevronDown className="size-4" aria-hidden="true" /></summary><div>
+      <Disclosure  title={<>{copy.editor.batch}</>} className="tool-disclosure">
+        <div>
         <CardContent className="space-y-2">
           <Badge variant="secondary">{copy.editor.selectedFiles(selectedFileCount)}</Badge>
           <div className="grid grid-cols-2 gap-2">
@@ -906,7 +841,7 @@ function EditPanel({
           <p className="text-xs text-muted-foreground">{locale === 'en' ? getSupportedMetadataFormats() : 'JPG、JPEG、PNG、WebP'}</p>
         </CardContent>
         </div>
-      </details>
+      </Disclosure>
       </div>
       <div className="tool-action-bar">
         <div className="flex gap-2">
@@ -956,11 +891,11 @@ function TextareaField({
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id} className="text-xs">{label}</Label>
-      <textarea
+      <AntInput.TextArea
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 min-h-20 w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
+        rows={3}
       />
     </div>
   );
@@ -1055,10 +990,10 @@ function MetadataGeoContent({ locale }: { locale: Locale }) {
           <h2 className="text-xl font-semibold">{copy.faqHeading}</h2>
           <div className="divide-y rounded border bg-background">
             {copy.faqs.map((item) => (
-              <details key={item.question} className="group p-4">
-                <summary className="cursor-pointer font-medium">{item.question}</summary>
+              <Disclosure key={item.question} title={<>{item.question}</>} className="faq-collapse">
+
                 <p className="mt-3 text-sm text-muted-foreground leading-6">{item.answer}</p>
-              </details>
+              </Disclosure>
             ))}
           </div>
         </div>

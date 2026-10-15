@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { GITHUB_URL, OG_IMAGE_URL, SITE_NAME, SITE_URL } from './lib/site';
 import { SiteChrome } from '@/components/SiteChrome';
+import { AntdRegistry } from '@ant-design/nextjs-registry';
+import { AntdProvider } from '@/components/AntdProvider';
 
 // 基础metadata用于SSR
 export const metadata: Metadata = {
@@ -134,7 +136,7 @@ export default function RootLayout({
 })();`
           }}
         />
-        <SiteChrome>{children}</SiteChrome>
+        <AntdRegistry><AntdProvider><SiteChrome>{children}</SiteChrome></AntdProvider></AntdRegistry>
       </body>
     </html>
   );

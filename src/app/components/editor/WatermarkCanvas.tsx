@@ -274,8 +274,8 @@ export function WatermarkCanvas({
 
             <div className="flex items-center space-x-2">
               {currentConfig.enabled ? (
-                <span className="flex items-center text-green-600">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                <span className="flex items-center text-primary">
+                  <div className="w-2 h-2 bg-primary rounded-full mr-1"></div>
                   {labels.enabled}
                 </span>
               ) : (

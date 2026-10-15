@@ -21,11 +21,11 @@ export function ToolWorkspace({ title, fileCount, locale, busy = false, status, 
           <h2 className="text-base font-semibold lg:text-lg">{title}</h2>
           <span className="text-xs text-muted-foreground tabular-nums">{copy.fileCount(fileCount)}</span>
         </div>
-        <Button variant="ghost" className="hidden lg:inline-flex" disabled={busy}
+        <Button variant="ghost" className="tool-add-desktop" disabled={busy}
           onClick={() => document.getElementById('tool-upload-input')?.click()}>
           <Plus className="size-4" />{copy.addFiles}
         </Button>
-        <Button variant="outline" className="lg:hidden" aria-expanded={filesOpen} aria-controls="tool-files"
+        <Button variant="outline" className="tool-files-toggle" aria-expanded={filesOpen} aria-controls="tool-files"
           onClick={() => setFilesOpen(!filesOpen)}>
           <Images className="size-4" />{copy.files}<span className="tabular-nums">{fileCount}</span>
           <ChevronDown className={`size-4 transition-transform ${filesOpen ? 'rotate-180' : ''}`} />

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.0 - 2026-10-15
+
+- Replace the green theme with a neutral gray-and-white workspace and blue primary actions, configured through Ant Design 6.
+- Migrate navigation, buttons, inputs, sliders, switches, tabs, color pickers, uploads, metadata tables, collapsible sections, alerts, tags, progress indicators, and image preview dialogs to Ant Design.
+- Extract initial component styles with the official Next.js registry and provide Chinese / English component locales.
+- Respect reduced-motion preferences through Ant Design motion tokens instead of overriding popup animation lifecycles.
+- Keep file processing local, retain all six tool routes and advanced settings, and preserve drafts when collapsing panels.
+- Remove unused Radix UI components and dependencies, the old dropzone dependency, and manual fullscreen image drag event emulation.
+
 ## 1.3.3 - 2026-10-06
 
 - Apply the approved light workspace design to watermark, compression, and metadata tools in Chinese and English.

@@ -3,7 +3,9 @@
 /* eslint-disable @next/next/no-img-element -- Local object URL previews cannot be optimized by next/image. */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { Disclosure } from '@/components/ui/disclosure';
+import { LocalUpload } from '@/components/ui/local-upload';
+import { Segmented, Modal } from 'antd';
 import { ToolWorkspace } from '@/components/ToolWorkspace';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -128,18 +130,6 @@ function FileUploadPanel({
     };
   }, [previewImage]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/jpeg': ['.jpg', '.jpeg'],
-      'image/png': ['.png'],
-      'image/webp': ['.webp'],
-      'image/gif': ['.gif']
-    },
-    multiple: true,
-    disabled: isProcessing,
-  });
-
   const formatFileSize = (bytes: number): string => {
     if (!bytes || bytes === 0 || isNaN(bytes)) return '0 Bytes';
     if (bytes < 0) return '-' + formatFileSize(-bytes);
@@ -186,26 +176,15 @@ function FileUploadPanel({
           </div>
 
           {/* 拖拽上传区域 */}
-          <div
-            {...getRootProps()}
-            data-compact={files.length > 0}
-            className={cn(
-              "upload-dropzone border-2 border-dashed rounded-lg text-center transition-all duration-200 cursor-pointer",
-              files.length > 0 ? 'p-4' : 'p-8',
-              isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25',
-              isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:border-muted-foreground/50'
-            )}
-          >
-            <input {...getInputProps({ id: 'tool-upload-input' })} />
+          <LocalUpload accept=".jpg,.jpeg,.png,.webp,.gif" compact={files.length > 0} disabled={isProcessing} onFiles={onDrop}>
+
             <div className={files.length > 0 ? 'space-y-2' : 'space-y-4'}>
               <Upload className={`mx-auto text-muted-foreground ${files.length > 0 ? 'h-6 w-6' : 'h-12 w-12'}`} />
               <div className="space-y-2">
                 <p className={`text-muted-foreground ${files.length > 0 ? 'text-xs' : 'text-sm'}`}>
-                  {isDragActive
-                    ? labels.release
-                    : files.length > 0
+                  {(files.length > 0
                       ? labels.addMoreHint
-                      : labels.emptyHint
+                      : labels.emptyHint)
                   }
                 </p>
                 {files.length === 0 && (
@@ -221,7 +200,7 @@ function FileUploadPanel({
                 </Button>
               </div>
             </div>
-          </div>
+          </LocalUpload>
         </div>
       </Card>
 
@@ -288,29 +267,10 @@ function FileUploadPanel({
 
       {/* 图片预览模态框 */}
       {previewImage && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
-          onClick={closePreview}
-        >
-          <div className="relative max-w-[90vw] max-h-[90vh]">
-            <img
-              src={previewImage}
-              alt={previewName}
-              className="max-w-full max-h-[85vh] object-contain rounded-lg"
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-sm p-2 rounded-b-lg text-center truncate">
-              {previewName}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute top-2 right-2 text-white hover:bg-white/20"
-              onClick={closePreview}
-            >
-              <X className="h-6 w-6" />
-            </Button>
-          </div>
-        </div>
+        <Modal open centered title={previewName} onCancel={closePreview} footer={null} destroyOnHidden
+          width="min(1000px, calc(100vw - 32px))">
+          <img src={previewImage} alt={previewName} className="mx-auto max-h-[70vh] max-w-full object-contain" />
+        </Modal>
       )}
     </div>
   );
@@ -353,12 +313,9 @@ function CompressionControlPanel({
           {/* 压缩质量 */}
           <div className="space-y-2">
             <Label className="text-sm">{labels.quality}</Label>
-            <div className="grid grid-cols-3 gap-2" role="group" aria-label={labels.quality}>
-              {(['high', 'medium', 'low'] as const).map((quality) => <Button key={quality}
-                variant="outline" disabled={isProcessing} aria-pressed={settings.quality === quality}
-                className={cn('h-auto min-h-12 whitespace-normal px-2 text-xs', settings.quality === quality && 'border-primary bg-accent text-primary')}
-                onClick={() => onSettingsChange({ ...settings, quality })}>{labels[quality]}</Button>)}
-            </div>
+            <Segmented block className="quality-selector" aria-label={labels.quality} disabled={isProcessing}
+              value={settings.quality} onChange={(quality) => onSettingsChange({ ...settings, quality })}
+              options={(['high', 'medium', 'low'] as const).map((quality) => ({ value: quality, label: labels[quality] }))} />
           </div>
 
           {/* 选项开关 */}
@@ -536,7 +493,7 @@ function ResultsPreviewPanel({
                 {/* 状态图标覆盖层 */}
                 <div className="absolute bottom-0 right-0 p-0.5 bg-background rounded-tl">
                   {result.status === 'completed' && (
-                    <CheckCircle className="w-3 h-3 text-green-500" />
+                    <CheckCircle className="w-3 h-3 text-primary" />
                   )}
                   {result.status === 'error' && (
                     <XCircle className="w-3 h-3 text-red-500" />
@@ -562,7 +519,7 @@ function ResultsPreviewPanel({
                   </span>
                   {result.status === 'completed' && (
                     <Badge variant="secondary" className={cn('text-xs', result.compressionRatio >= 0
-                      ? 'bg-green-500/20 text-green-700 dark:text-green-400'
+                      ? 'bg-blue-50 text-blue-700'
                       : 'bg-amber-500/20 text-amber-800 dark:text-amber-300')}>
                       {result.compressionRatio >= 0 ? '-' : '+'}{Math.abs(result.compressionRatio * 100).toFixed(1)}%
                     </Badge>
@@ -589,29 +546,10 @@ function ResultsPreviewPanel({
 
       {/* 图片预览模态框 */}
       {previewImage && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
-          onClick={closePreview}
-        >
-          <div className="relative max-w-[90vw] max-h-[90vh]">
-            <img
-              src={previewImage}
-              alt={previewName}
-              className="max-w-full max-h-[85vh] object-contain rounded-lg"
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-sm p-2 rounded-b-lg text-center truncate">
-              {previewName}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute top-2 right-2 text-white hover:bg-white/20"
-              onClick={closePreview}
-            >
-              <X className="h-6 w-6" />
-            </Button>
-          </div>
-        </div>
+        <Modal open centered title={previewName} onCancel={closePreview} footer={null} destroyOnHidden
+          width="min(1000px, calc(100vw - 32px))">
+          <img src={previewImage} alt={previewName} className="mx-auto max-h-[70vh] max-w-full object-contain" />
+        </Modal>
       )}
     </div>
   );
@@ -867,10 +805,10 @@ function CompressGeoContent({ locale }: { locale: Locale }) {
           <h2 className="text-xl font-semibold">{copy.faqHeading}</h2>
           <div className="divide-y rounded border bg-background">
             {copy.faqs.map((item) => (
-              <details key={item.question} className="group p-4">
-                <summary className="cursor-pointer font-medium">{item.question}</summary>
+              <Disclosure key={item.question} title={<>{item.question}</>} className="faq-collapse">
+
                 <p className="mt-3 text-sm text-muted-foreground leading-6">{item.answer}</p>
-              </details>
+              </Disclosure>
             ))}
           </div>
         </div>

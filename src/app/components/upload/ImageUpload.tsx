@@ -3,24 +3,24 @@
 'use client';
 
 import React, { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { LocalUpload } from '@/components/ui/local-upload';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Upload, 
-  AlertCircle, 
+import {
+  Upload,
+  AlertCircle,
   X,
   Plus
 } from 'lucide-react';
 import { useImageStore } from '@/app/lib/stores';
 import { FilePreviewList } from './FilePreview';
-import { 
-  validateFiles, 
+import {
+  validateFiles,
   SUPPORTED_IMAGE_TYPES,
   MAX_FILE_SIZE,
-  formatFileSize 
+  formatFileSize
 } from '@/app/lib/utils/fileValidation';
 import { DEFAULT_LOCALE, getCopy, type Locale } from '@/app/lib/i18n';
 
@@ -42,7 +42,6 @@ export function ImageUpload({
     selectedImageIds,
     isUploading,
     uploadProgress,
-    dragOver,
     addImages,
     removeImage,
     removeImages,
@@ -50,7 +49,6 @@ export function ImageUpload({
     selectImages,
     clearSelection,
     setCurrentImage,
-    setDragOver,
     hasImages,
     hasSelectedImages,
     getImageCount
@@ -96,7 +94,7 @@ export function ImageUpload({
     if (validFiles.length > 0) {
       try {
         await addImages(validFiles);
-        
+
         // 如果只上传了一张图片，自动选中
         if (validFiles.length === 1 && !hasImages()) {
           setTimeout(() => {
@@ -111,38 +109,6 @@ export function ImageUpload({
       }
     }
   }, [disabled, isUploading, maxFiles, addImages, getImageCount, hasImages, setCurrentImage, labels]);
-
-  // react-dropzone 配置
-  const {
-    getRootProps,
-    getInputProps,
-    isDragActive,
-    isDragReject
-  } = useDropzone({
-    onDrop: handleFilesUpload,
-    onDragEnter: () => setDragOver(true),
-    onDragLeave: () => setDragOver(false),
-    accept: {
-      'image/jpeg': ['.jpg', '.jpeg'],
-      'image/png': ['.png'],
-      'image/svg+xml': ['.svg'],
-      'image/webp': ['.webp']
-    },
-    maxSize: MAX_FILE_SIZE,
-    maxFiles,
-    disabled: disabled || isUploading,
-    multiple: true
-  });
-
-  // 处理文件选择
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    if (files.length > 0) {
-      handleFilesUpload(files);
-    }
-    // 清空input值，允许重复选择同一文件
-    event.target.value = '';
-  }, [handleFilesUpload]);
 
   // 移除选中的图片
   const handleRemoveSelected = useCallback(() => {
@@ -178,19 +144,8 @@ export function ImageUpload({
 
           {/* {{ Shrimp-X: Modify - 优化拖拽上传区域，支持紧凑模式. Approval: Cunzhi(ID:timestamp). }} */}
           {/* 拖拽上传区域 */}
-          <div
-            {...getRootProps()}
-            data-compact={hasImages()}
-            className={`
-              upload-dropzone border-2 border-dashed rounded-lg text-center transition-all duration-200 cursor-pointer
-              ${hasImages() ? 'p-4' : 'p-8'}
-              ${isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'}
-              ${isDragReject ? 'border-red-500 bg-red-50' : ''}
-              ${dragOver ? 'border-primary bg-primary/5' : ''}
-              ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:border-muted-foreground/50'}
-            `}
-          >
-            <input {...getInputProps({ id: 'tool-upload-input' })} />
+          <LocalUpload accept={SUPPORTED_IMAGE_TYPES.join(',')} compact={hasImages()} disabled={disabled || isUploading} onFiles={handleFilesUpload}>
+
 
             <div className={hasImages() ? 'space-y-2' : 'space-y-4'}>
               {isUploading ? (
@@ -207,11 +162,9 @@ export function ImageUpload({
                   <Upload className={`mx-auto text-muted-foreground ${hasImages() ? 'h-6 w-6' : 'h-12 w-12'}`} />
                   <div className="space-y-2">
                     <p className={`text-muted-foreground ${hasImages() ? 'text-xs' : 'text-sm'}`}>
-                      {isDragActive
-                        ? labels.release
-                        : hasImages()
+                      {(hasImages()
                           ? labels.addMoreHint
-                          : labels.emptyHint
+                          : labels.emptyHint)
                       }
                     </p>
                     {!hasImages() && (
@@ -230,18 +183,8 @@ export function ImageUpload({
                 </>
               )}
             </div>
-          </div>
+          </LocalUpload>
 
-          {/* 隐藏的文件输入 */}
-          <input
-            type="file"
-            multiple
-            accept={SUPPORTED_IMAGE_TYPES.join(',')}
-            onChange={handleFileSelect}
-            className="hidden"
-            id="file-upload"
-            disabled={disabled || isUploading}
-          />
         </div>
       </Card>
 
@@ -268,7 +211,7 @@ export function ImageUpload({
               </Button>
             </Alert>
           )}
-          
+
           {validationWarnings.length > 0 && (
             <Alert>
               <AlertCircle className="h-4 w-4" />

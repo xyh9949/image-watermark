@@ -326,7 +326,7 @@ export function WatermarkPreview({ isOpen, onClose }: WatermarkPreviewProps) {
                   <p>图片: {currentImage.name}</p>
                   <p>尺寸: {currentImage.width} × {currentImage.height}</p>
                   {currentConfig.enabled ? (
-                    <p className="text-green-600">水印已启用</p>
+                    <p className="text-primary">水印已启用</p>
                   ) : (
                     <p className="text-orange-600">水印未启用</p>
                   )}

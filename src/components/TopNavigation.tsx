@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Minimize2, Stamp, Tags } from 'lucide-react';
+import { Menu } from 'antd';
 import { getCopy, getLocaleFromPathname } from '@/app/lib/i18n';
 
 export function TopNavigation() {
@@ -17,11 +18,10 @@ export function TopNavigation() {
   ];
   return (
     <nav className="tool-navigation" aria-label={getCopy(locale).workspace.navigation}>
-      {items.map(({ href, label, icon: Icon }) => (
-        <Link key={href} href={href} aria-current={pathname === href ? 'page' : undefined}>
-          <Icon className="size-4 shrink-0" aria-hidden="true" />{label}
-        </Link>
-      ))}
+      <Menu mode="horizontal" selectedKeys={[pathname]} disabledOverflow items={items.map(({ href, label, icon: Icon }) => ({
+        key: href, icon: <Icon aria-hidden="true" />,
+        label: <Link href={href} aria-current={pathname === href ? 'page' : undefined}>{label}</Link>,
+      }))} />
     </nav>
   );
 }

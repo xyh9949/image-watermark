@@ -102,7 +102,7 @@ GIF 通过 Canvas 作为静态图片处理，不保留动画，输出可能为 P
 | 画布 | Fabric.js |
 | 元数据引擎 | 通过 `@uswriting/exiftool` 在浏览器运行 ExifTool WASM |
 | ZIP 导出 | `fflate` |
-| UI 基础组件 | Radix UI |
+| UI 组件与主题 | Ant Design 6，灰白底色与蓝色主操作 |
 
 ## 本地运行
 

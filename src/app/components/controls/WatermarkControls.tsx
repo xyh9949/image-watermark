@@ -3,15 +3,16 @@
 /* eslint-disable @next/next/no-img-element -- User-selected data URL previews cannot be optimized by next/image. */
 
 import React, { useEffect, useState, useRef } from 'react';
+import { Select, Tabs, Checkbox, ColorPicker, Alert as AntAlert } from 'antd';
+import { Disclosure } from '@/components/ui/disclosure';
+import { LocalUpload } from '@/components/ui/local-upload';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
-import { ChevronDown, ArrowUpLeft, ArrowUp, ArrowUpRight, ArrowLeft, Dot, ArrowRight, ArrowDownLeft, ArrowDown, ArrowDownRight, Play, Square, AlertCircle, X } from 'lucide-react';
+import { ArrowUpLeft, ArrowUp, ArrowUpRight, ArrowLeft, Dot, ArrowRight, ArrowDownLeft, ArrowDown, ArrowDownRight, Play, Square, Plus, X } from 'lucide-react';
 import { useWatermarkStore, useImageStore } from '@/app/lib/stores';
 import { WatermarkPosition } from '@/app/types';
 import type { BatchWatermarkProcessor, BatchProcessingResult } from '@/app/lib/watermark/batchProcessor';
@@ -178,9 +179,9 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
 
 
   // {{ Shrimp-X: Add - 图片水印上传处理函数. Approval: Cunzhi(ID:timestamp). }}
-  // 处理水印图片上传
-  const handleWatermarkImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  // Ant Design 仅传入本地文件；沿用 5MB 校验与原水印图片解码流程。
+  const handleWatermarkImageUpload = async (files: File[]) => {
+    const file = files[0];
     if (!file) return;
     setControlError(null);
 
@@ -314,8 +315,8 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
 
   // {{ Shrimp-X: Add - 全屏水印图片上传处理函数. Approval: Cunzhi(ID:timestamp). }}
   // 处理全屏水印图片上传
-  const handleFullscreenImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFullscreenImageUpload = async (files: File[]) => {
+    const file = files[0];
     if (!file) return;
     setControlError(null);
 
@@ -382,10 +383,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
       setControlError(labels.imageUploadFailed);
       setIsUploadingFullscreenImage(false);
     } finally {
-      // 重置文件输入
-      if (event.target) {
-        event.target.value = '';
-      }
+      // 文件输入由 LocalUpload 统一重置，允许重复选择同一张图片。
       setTimeout(() => setIsUploadingFullscreenImage(false), 500);
     }
   };
@@ -401,34 +399,13 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
         </div>
       <div className="tool-control-body space-y-4">
         {controlError && (
-          <div className="flex items-center space-x-2 text-sm text-destructive bg-destructive/10 p-2 rounded">
-            <AlertCircle className="h-4 w-4" />
-            <span className="flex-1">{controlError}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 px-2"
-              onClick={() => setControlError(null)}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
+          <AntAlert type="error" title={controlError} showIcon closable={{ onClose: () => setControlError(null) }} />
         )}
 
         {/* 水印类型选择 */}
-        <Tabs
-          value={currentConfig.type}
-          onValueChange={(value) => setWatermarkType(value as 'text' | 'image' | 'fullscreen')}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="text">{labels.text}</TabsTrigger>
-            <TabsTrigger value="image">{labels.image}</TabsTrigger>
-            <TabsTrigger value="fullscreen">{labels.fullscreen}</TabsTrigger>
-          </TabsList>
-
-          {/* 文字水印控制 */}
-          <TabsContent value="text" className="space-y-4 mt-4">
+        <Tabs activeKey={currentConfig.type}
+          onChange={(value) => setWatermarkType(value as 'text' | 'image' | 'fullscreen')}
+          className="w-full" items={[{ key: "text", label: labels.text, children: <div className="space-y-4">
             {/* 水印文字 */}
             <div className="space-y-2">
               <Label htmlFor="watermark-text">{labels.watermarkText}</Label>
@@ -445,58 +422,19 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
             {/* 字体选择 */}
             <div className="space-y-2">
               <Label>{labels.font}</Label>
-              <Select
-                value={currentConfig.textStyle?.fontFamily || 'Arial'}
-                onValueChange={handleFontFamilyChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={labels.chooseFont} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Arial">Arial</SelectItem>
-                  <SelectItem value="Helvetica">Helvetica</SelectItem>
-                  <SelectItem value="Times New Roman">Times New Roman</SelectItem>
-                  <SelectItem value="Georgia">Georgia</SelectItem>
-                  <SelectItem value="Verdana">Verdana</SelectItem>
-                  <SelectItem value="Microsoft YaHei">{labels.microsoftYaHei}</SelectItem>
-                  <SelectItem value="SimHei">{labels.simHei}</SelectItem>
-                  <SelectItem value="SimSun">{labels.simSun}</SelectItem>
-                </SelectContent>
-              </Select>
+              <Select aria-label={labels.font} value={currentConfig.textStyle?.fontFamily || 'Arial'}
+                onChange={handleFontFamilyChange} placeholder={labels.chooseFont} options={[{ value: "Arial", label: "Arial" }, { value: "Helvetica", label: "Helvetica" }, { value: "Times New Roman", label: "Times New Roman" }, { value: "Georgia", label: "Georgia" }, { value: "Verdana", label: "Verdana" }, { value: "Microsoft YaHei", label: labels.microsoftYaHei }, { value: "SimHei", label: labels.simHei }, { value: "SimSun", label: labels.simSun }]} />
             </div>
             <div className="space-y-2">
               <Label>{labels.fontWeight}</Label>
-              <Select value={currentConfig.textStyle?.fontWeight || 'normal'} onValueChange={handleFontWeightChange}>
-                <SelectTrigger><SelectValue placeholder={labels.chooseWeight} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="normal">{labels.normal}</SelectItem>
-                  <SelectItem value="bold">{labels.bold}</SelectItem>
-                  <SelectItem value="100">{labels.thin}</SelectItem>
-                  <SelectItem value="300">{labels.light}</SelectItem>
-                  <SelectItem value="500">{labels.medium}</SelectItem>
-                  <SelectItem value="700">{labels.heavy}</SelectItem>
-                  <SelectItem value="900">{labels.black}</SelectItem>
-                </SelectContent>
-              </Select>
+              <Select aria-label={labels.fontWeight} value={currentConfig.textStyle?.fontWeight || 'normal'} onChange={handleFontWeightChange} placeholder={labels.chooseWeight} options={[{ value: "normal", label: labels.normal }, { value: "bold", label: labels.bold }, { value: "100", label: labels.thin }, { value: "300", label: labels.light }, { value: "500", label: labels.medium }, { value: "700", label: labels.heavy }, { value: "900", label: labels.black }]} />
             </div>
             </div>
             {/* 水印模式 */}
             <div className="space-y-2">
               <Label>{labels.mode}</Label>
-              <Select
-                value={currentConfig.scaleMode}
-                onValueChange={(value) => setScaleMode(value as 'percentage' | 'fixed' | 'adaptive')}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={labels.chooseMode} />
-                </SelectTrigger>
-                <SelectContent>
-                  {/* 默认和已保存配置可能是 adaptive，必须有对应选项，避免显示空值。 */}
-                  <SelectItem value="adaptive">{labels.adaptiveMode}</SelectItem>
-                  <SelectItem value="percentage">{labels.percentageMode}</SelectItem>
-                  <SelectItem value="fixed">{labels.fixedMode}</SelectItem>
-                </SelectContent>
-              </Select>
+              <Select aria-label={labels.mode} value={currentConfig.scaleMode}
+                onChange={(value) => setScaleMode(value as 'percentage' | 'fixed' | 'adaptive')} placeholder={labels.chooseMode} options={[{ value: "adaptive", label: labels.adaptiveMode }, { value: "percentage", label: labels.percentageMode }, { value: "fixed", label: labels.fixedMode }]} />
               <div className="text-xs text-gray-500">
                 {currentConfig.scaleMode === 'percentage' && labels.percentageHelp}
                 {currentConfig.scaleMode === 'fixed' && labels.fixedHelp}
@@ -509,7 +447,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                 <div className="flex items-center justify-between">
                   <Label>{labels.watermarkRatio}</Label>
                   <div className="flex items-center space-x-2">
-                    <input
+                    <Input aria-label={labels.watermarkRatio}
                       type="number"
                       value={(currentConfig.adaptive.scaleRatio * 100).toFixed(1)}
                       onChange={(e) => {
@@ -524,7 +462,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                     <span className="text-sm text-gray-500">%</span>
                   </div>
                 </div>
-                <Slider
+                <Slider aria-label={labels.watermarkRatio}
                   value={[currentConfig.adaptive.scaleRatio * 100]}
                   onValueChange={(value) => updateAdaptive({ scaleRatio: value[0] / 100 })}
                   min={0.1}
@@ -549,7 +487,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               <div className="flex items-center justify-between">
                 <Label>{labels.fontSize}</Label>
                 <div className="flex items-center space-x-2">
-                  <input
+                  <Input aria-label={labels.fontSize}
                     type="number"
                     value={currentConfig.textStyle?.fontSize || 24}
                     onChange={(e) => {
@@ -564,7 +502,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                   <span className="text-sm text-gray-500">px</span>
                 </div>
               </div>
-              <Slider
+              <Slider aria-label={labels.fontSize}
                 value={[currentConfig.textStyle?.fontSize || 24]}
                 onValueChange={handleFontSizeChange}
                 min={8}
@@ -584,14 +522,14 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
             <div className="space-y-2">
               <Label htmlFor="watermark-color">{labels.color}</Label>
               <div className="flex items-center space-x-2">
-                <Input
-                  id="watermark-color"
-                  type="color"
+                <ColorPicker
                   value={currentConfig.textStyle?.color || '#000000'}
-                  onChange={(e) => handleColorChange(e.target.value)}
-                  className="w-12 h-8 p-1 border rounded"
-                />
-                <Input
+                  onChange={(_, hex) => handleColorChange(hex)}
+                  disabledAlpha
+                ><Button id="watermark-color" variant="outline" size="icon" title={labels.color} aria-label={labels.color}>
+                  <span className="color-swatch" style={{ backgroundColor: currentConfig.textStyle?.color || '#000000' }} />
+                </Button></ColorPicker>
+                <Input aria-label={labels.color}
                   type="text"
                   value={currentConfig.textStyle?.color || '#000000'}
                   onChange={(e) => handleColorChange(e.target.value)}
@@ -606,7 +544,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               <div className="flex items-center justify-between">
                 <Label>{labels.opacity}</Label>
                 <div className="flex items-center space-x-2">
-                  <input
+                  <Input aria-label={labels.opacity}
                     type="number"
                     value={Math.round((currentConfig.textStyle?.opacity || 0.5) * 100)}
                     onChange={(e) => {
@@ -620,7 +558,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                   <span className="text-sm text-gray-500">%</span>
                 </div>
               </div>
-              <Slider
+              <Slider aria-label={labels.opacity}
                 value={[Math.round((currentConfig.textStyle?.opacity || 0.5) * 100)]}
                 onValueChange={handleOpacityChange}
                 min={0}
@@ -631,15 +569,15 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
             </div>
 
             {/* 常用设置优先显示，旋转和描边展开后保留完整控制。 */}
-            <details className="tool-disclosure">
-              <summary>{workspace.appearance}<ChevronDown className="size-4" /></summary>
+            <Disclosure  title={<>{workspace.appearance}</>} className="tool-disclosure">
+
               <div className="space-y-4">
             {/* 旋转角度 */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>{labels.rotation}</Label>
                 <div className="flex items-center space-x-2">
-                  <input
+                  <Input aria-label={labels.rotation}
                     type="number"
                     value={currentConfig.textStyle?.rotation || 0}
                     onChange={(e) => {
@@ -653,7 +591,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                   <span className="text-sm text-gray-500">°</span>
                 </div>
               </div>
-              <Slider
+              <Slider aria-label={labels.rotation}
                 value={[currentConfig.textStyle?.rotation || 0]}
                 onValueChange={(value) => updateTextStyle({ rotation: value[0] })}
                 min={-180}
@@ -668,7 +606,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               <div className="flex items-center justify-between">
                 <Label>{labels.strokeWidth}</Label>
                 <div className="flex items-center space-x-2">
-                  <input
+                  <Input aria-label={labels.strokeWidth}
                     type="number"
                     value={Math.round(((currentConfig.textStyle?.stroke?.widthRatio || 0) * 100) * 10) / 10}
                     onChange={(e) => {
@@ -689,7 +627,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                   <span className="text-sm text-gray-500">%</span>
                 </div>
               </div>
-              <Slider
+              <Slider aria-label={labels.strokeWidth}
                 value={[Math.round(((currentConfig.textStyle?.stroke?.widthRatio || 0) * 100))]}
                 onValueChange={(value) => updateTextStyle({
                   stroke: {
@@ -710,20 +648,20 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               <div className="space-y-2">
                 <Label htmlFor="stroke-color">{labels.strokeColor}</Label>
                 <div className="flex items-center space-x-2">
-                  <Input
-                    id="stroke-color"
-                    type="color"
+                  <ColorPicker
                     value={currentConfig.textStyle?.stroke?.color || '#ffffff'}
-                    onChange={(e) => updateTextStyle({
+                    onChange={(_, hex) => updateTextStyle({
                       stroke: {
                         ...currentConfig.textStyle?.stroke,
                         width: currentConfig.textStyle?.stroke?.width || 1,
-                        color: e.target.value
+                        color: hex
                       }
                     })}
-                    className="w-12 h-8 p-1 border rounded"
-                  />
-                  <Input
+                    disabledAlpha
+                  ><Button id="stroke-color" variant="outline" size="icon" title={labels.strokeColor} aria-label={labels.strokeColor}>
+                    <span className="color-swatch" style={{ backgroundColor: currentConfig.textStyle?.stroke?.color || '#ffffff' }} />
+                  </Button></ColorPicker>
+                  <Input aria-label={labels.strokeColor}
                     type="text"
                     value={currentConfig.textStyle?.stroke?.color || '#ffffff'}
                     onChange={(e) => updateTextStyle({
@@ -740,33 +678,19 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               </div>
             )}
               </div>
-            </details>
-          </TabsContent>
-
-          {/* {{ Shrimp-X: Add - 完整的图片水印控制界面. Approval: Cunzhi(ID:timestamp). }} */}
-          {/* 图片水印控制 */}
-          <TabsContent value="image" className="space-y-4 mt-4">
+            </Disclosure>
+          </div> },
+{ key: "image", label: labels.image, children: <div className="space-y-4">
             {/* 图片上传 */}
             <div className="space-y-2">
               <Label>{labels.watermarkImage}</Label>
               {!watermarkImageUrl ? (
                 <div className="space-y-2">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleWatermarkImageUpload}
-                    className="hidden"
-                    id="watermark-image-upload"
-                    disabled={isUploadingWatermark}
-                  />
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => document.getElementById('watermark-image-upload')?.click()}
-                    disabled={isUploadingWatermark}
-                  >
+                  <LocalUpload accept="image/*" inputId="watermark-image-upload" multiple={false}
+                    disabled={isUploadingWatermark} onFiles={handleWatermarkImageUpload}>
+                    <Plus className="mx-auto mb-2 size-5 text-muted-foreground" />
                     {isUploadingWatermark ? labels.uploading : labels.chooseImage}
-                  </Button>
+                  </LocalUpload>
                   <p className="text-xs text-muted-foreground">
                     {labels.supportWatermarkImage}
                   </p>
@@ -785,8 +709,9 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                       size="sm"
                       className="absolute top-1 right-1"
                       onClick={handleRemoveWatermarkImage}
+                      title={labels.removeImage} aria-label={labels.removeImage}
                     >
-                      ×
+                      <X className="size-4" />
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -803,7 +728,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                 {/* 缩放比例控制 */}
                 <div className="space-y-2">
                   <Label>{labels.imageScale} ({Math.round(currentConfig.imageStyle.scale * 100)}%)</Label>
-                  <Slider
+                  <Slider aria-label={labels.imageScale}
                     value={[currentConfig.imageStyle.scale * 100]}
                     onValueChange={([scale]) => updateImageStyle({ scale: scale / 100 })}
                     min={10}
@@ -819,7 +744,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                 {/* 透明度控制 */}
                 <div className="space-y-2">
                   <Label>{labels.opacity} ({Math.round(currentConfig.imageStyle.opacity * 100)}%)</Label>
-                  <Slider
+                  <Slider aria-label={labels.opacity}
                     value={[currentConfig.imageStyle.opacity * 100]}
                     onValueChange={([opacity]) => updateImageStyle({ opacity: opacity / 100 })}
                     min={10}
@@ -832,7 +757,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                 {/* 旋转角度控制 */}
                 <div className="space-y-2">
                   <Label>{labels.rotation} ({currentConfig.imageStyle.rotation}°)</Label>
-                  <Slider
+                  <Slider aria-label={labels.rotation}
                     value={[currentConfig.imageStyle.rotation]}
                     onValueChange={([rotation]) => updateImageStyle({ rotation })}
                     min={-180}
@@ -857,25 +782,13 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                 </Button>
               </>
             )}
-          </TabsContent>
-
-          {/* 全屏水印控制 */}
-          <TabsContent value="fullscreen" className="space-y-4 mt-4">
+          </div> },
+{ key: "fullscreen", label: labels.fullscreen, children: <div className="space-y-4">
             {/* 水印模式选择 */}
             <div className="space-y-2">
               <Label>{labels.mode}</Label>
-              <Select
-                value={currentConfig.fullscreenStyle?.mode || 'text'}
-                onValueChange={(value: 'text' | 'image') => updateFullscreenStyle({ mode: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="text">{labels.fullscreenModeText}</SelectItem>
-                  <SelectItem value="image">{labels.fullscreenModeImage}</SelectItem>
-                </SelectContent>
-              </Select>
+              <Select aria-label={labels.mode} value={currentConfig.fullscreenStyle?.mode || 'text'}
+                onChange={(value: 'text' | 'image') => updateFullscreenStyle({ mode: value })}  options={[{ value: "text", label: labels.fullscreenModeText }, { value: "image", label: labels.fullscreenModeImage }]} />
             </div>
 
             {/* 文字模式控制 */}
@@ -884,7 +797,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                 {/* 水印内容 */}
                 <div className="space-y-2">
                   <Label>{labels.watermarkContent}</Label>
-                  <Input
+                  <Input aria-label={labels.watermarkContent}
                     value={currentConfig.fullscreenStyle?.content || ''}
                     onChange={(e) => updateFullscreenStyle({ content: e.target.value })}
                     placeholder={labels.watermarkTextPlaceholder}
@@ -895,27 +808,14 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>{labels.font}</Label>
-                    <Select
-                      value={currentConfig.fullscreenStyle?.fontFamily || 'Arial'}
-                      onValueChange={(value) => updateFullscreenStyle({ fontFamily: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Arial">Arial</SelectItem>
-                        <SelectItem value="Helvetica">Helvetica</SelectItem>
-                        <SelectItem value="Times New Roman">Times New Roman</SelectItem>
-                        <SelectItem value="Georgia">Georgia</SelectItem>
-                        <SelectItem value="Verdana">Verdana</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Select aria-label={labels.font} value={currentConfig.fullscreenStyle?.fontFamily || 'Arial'}
+                      onChange={(value) => updateFullscreenStyle({ fontFamily: value })}  options={[{ value: "Arial", label: "Arial" }, { value: "Helvetica", label: "Helvetica" }, { value: "Times New Roman", label: "Times New Roman" }, { value: "Georgia", label: "Georgia" }, { value: "Verdana", label: "Verdana" }]} />
                   </div>
 
                   <div className="space-y-2">
                     <Label>{labels.fontSize}</Label>
                     <div className="flex items-center space-x-2">
-                      <Slider
+                      <Slider aria-label={labels.fontSize}
                         value={[currentConfig.fullscreenStyle?.fontSize || 48]}
                         onValueChange={([value]) => updateFullscreenStyle({ fontSize: value })}
                         min={12}
@@ -923,7 +823,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                         step={1}
                         className="flex-1"
                       />
-                      <Input
+                      <Input aria-label={labels.fontSize}
                         type="number"
                         value={currentConfig.fullscreenStyle?.fontSize || 48}
                         onChange={(e) => {
@@ -942,12 +842,14 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                 {/* 颜色 */}
                 <div className="space-y-2">
                   <Label>{labels.color}</Label>
-                  <Input
-                    type="color"
+                  <ColorPicker
                     value={currentConfig.fullscreenStyle?.color || '#000000'}
-                    onChange={(e) => updateFullscreenStyle({ color: e.target.value })}
-                    className="w-full h-10"
-                  />
+                    onChange={(_, hex) => updateFullscreenStyle({ color: hex })}
+                    disabledAlpha
+                  ><Button variant="outline" className="w-full" aria-label={labels.color}>
+                    <span className="color-swatch" style={{ backgroundColor: currentConfig.fullscreenStyle?.color || '#000000' }} />
+                    {currentConfig.fullscreenStyle?.color || '#000000'}
+                  </Button></ColorPicker>
                 </div>
               </>
             )}
@@ -958,78 +860,12 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                 {/* 图片上传 */}
                 <div className="space-y-2">
                   <Label>{labels.uploadFullscreenImage}</Label>
-                  <div
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors"
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.classList.add('border-blue-400', 'bg-blue-50');
-                    }}
-                    onDragLeave={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50');
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50');
-                      const files = e.dataTransfer.files;
-                      if (files.length > 0) {
-                        // {{ Shrimp-X: Modify - 修复TypeScript类型错误，创建完整的ChangeEvent对象. Approval: Cunzhi(ID:timestamp). }}
-                        // 创建一个符合 React.ChangeEvent<HTMLInputElement> 接口的事件对象
-                        const input = document.createElement('input');
-                        input.type = 'file';
-                        input.files = files;
-
-                        const fakeEvent = {
-                          target: input,
-                          currentTarget: input,
-                          nativeEvent: new Event('change'),
-                          bubbles: false,
-                          cancelable: false,
-                          defaultPrevented: false,
-                          eventPhase: 0,
-                          isTrusted: false,
-                          preventDefault: () => { },
-                          isDefaultPrevented: () => false,
-                          stopPropagation: () => { },
-                          isPropagationStopped: () => false,
-                          persist: () => { },
-                          timeStamp: Date.now(),
-                          type: 'change'
-                        } as React.ChangeEvent<HTMLInputElement>;
-
-                        handleFullscreenImageUpload(fakeEvent);
-                      }
-                    }}
-                  >
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFullscreenImageUpload}
-                      className="hidden"
-                      id="fullscreen-image-upload"
-                    />
-                    <label
-                      htmlFor="fullscreen-image-upload"
-                      className="cursor-pointer flex flex-col items-center space-y-2"
-                    >
-                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {isUploadingFullscreenImage
-                          ? labels.uploading
-                          : currentConfig.fullscreenStyle?.imageUrl
-                            ? labels.replaceImage
-                            : labels.dragImage
-                        }
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        {labels.supportFullscreenImage}
-                      </div>
-                    </label>
-                  </div>
+                  <LocalUpload accept="image/*" inputId="fullscreen-image-upload" multiple={false}
+                    disabled={isUploadingFullscreenImage} onFiles={handleFullscreenImageUpload}>
+                    <Plus className="mx-auto mb-2 size-5 text-muted-foreground" />
+                    <p className="text-sm">{isUploadingFullscreenImage ? labels.uploading : currentConfig.fullscreenStyle?.imageUrl ? labels.replaceImage : labels.dragImage}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">{labels.supportFullscreenImage}</p>
+                  </LocalUpload>
 
                   {/* 图片预览 */}
                   {currentConfig.fullscreenStyle?.imageUrl && (
@@ -1060,7 +896,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                 <div className="space-y-2">
                   <Label>{labels.imageScale}</Label>
                   <div className="flex items-center space-x-2">
-                    <Slider
+                    <Slider aria-label={labels.imageScale}
                       value={[currentConfig.fullscreenStyle?.imageScale || 1.0]}
                       onValueChange={([value]) => updateFullscreenStyle({ imageScale: value })}
                       min={0.01}
@@ -1068,7 +904,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                       step={0.01}
                       className="flex-1"
                     />
-                    <Input
+                    <Input aria-label={labels.imageScale}
                       type="number"
                       value={((currentConfig.fullscreenStyle?.imageScale || 1.0) * 100).toFixed(1)}
                       onChange={(e) => {
@@ -1099,7 +935,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
             <div className="space-y-2">
               <Label>{labels.opacity}</Label>
               <div className="flex items-center space-x-2">
-                <Slider
+                <Slider aria-label={labels.opacity}
                   value={[currentConfig.fullscreenStyle?.opacity || 0.1]}
                   onValueChange={([value]) => updateFullscreenStyle({ opacity: value })}
                   min={0.01}
@@ -1107,7 +943,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                   step={0.01}
                   className="flex-1"
                 />
-                <Input
+                <Input aria-label={labels.opacity}
                   type="number"
                   value={Math.round((currentConfig.fullscreenStyle?.opacity || 0.1) * 100)}
                   onChange={(e) => {
@@ -1127,7 +963,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
             <div className="space-y-2">
               <Label>{labels.rotation}</Label>
               <div className="flex items-center space-x-2">
-                <Slider
+                <Slider aria-label={labels.rotation}
                   value={[currentConfig.fullscreenStyle?.rotation || -45]}
                   onValueChange={([value]) => updateFullscreenStyle({ rotation: value })}
                   min={-180}
@@ -1135,7 +971,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                   step={1}
                   className="flex-1"
                 />
-                <Input
+                <Input aria-label={labels.rotation}
                   type="number"
                   value={currentConfig.fullscreenStyle?.rotation || -45}
                   onChange={(e) => {
@@ -1155,7 +991,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               <div className="space-y-2">
                 <Label>{labels.tileSpacing}</Label>
                 <div className="flex items-center space-x-2">
-                  <Slider
+                  <Slider aria-label={labels.tileSpacing}
                     value={[currentConfig.fullscreenStyle?.tileSpacing || 200]}
                     onValueChange={([value]) => updateFullscreenStyle({ tileSpacing: value })}
                     min={1}
@@ -1163,7 +999,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                     step={1}
                     className="flex-1"
                   />
-                  <Input
+                  <Input aria-label={labels.tileSpacing}
                     type="number"
                     value={currentConfig.fullscreenStyle?.tileSpacing || 200}
                     onChange={(e) => {
@@ -1181,7 +1017,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               <div className="space-y-2">
                 <Label>{labels.tileDensity}</Label>
                 <div className="flex items-center space-x-2">
-                  <Slider
+                  <Slider aria-label={labels.tileDensity}
                     value={[currentConfig.fullscreenStyle?.tileDensity || 0.5]}
                     onValueChange={([value]) => updateFullscreenStyle({ tileDensity: value })}
                     min={0.1}
@@ -1189,7 +1025,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                     step={0.1}
                     className="flex-1"
                   />
-                  <Input
+                  <Input aria-label={labels.tileDensity}
                     type="number"
                     value={(currentConfig.fullscreenStyle?.tileDensity || 0.5).toFixed(1)}
                     onChange={(e) => {
@@ -1207,8 +1043,8 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
 
             {/* 对角线模式 */}
             <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
+              <Checkbox
+
                 id="diagonalMode"
                 checked={currentConfig.fullscreenStyle?.diagonalMode || false}
                 onChange={(e) => updateFullscreenStyle({ diagonalMode: e.target.checked })}
@@ -1216,8 +1052,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               />
               <Label htmlFor="diagonalMode">{labels.diagonalMode}</Label>
             </div>
-          </TabsContent>
-        </Tabs>
+          </div> }]} />
 
 
 
@@ -1248,8 +1083,8 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
 
         {/* 位置微调 - 全屏水印不需要位置微调 */}
         {currentConfig.type !== 'fullscreen' && (
-          <details className="tool-disclosure">
-            <summary>{labels.fineTune}<ChevronDown className="size-4" /></summary>
+          <Disclosure  title={<>{labels.fineTune}</>} className="tool-disclosure">
+
             <div className="space-y-3">
             <div className="text-xs text-gray-500 mb-2">
               {labels.fineTuneHelp}
@@ -1260,7 +1095,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               <div className="flex items-center justify-between">
                 <Label className="text-sm text-muted-foreground">{labels.horizontalOffset}</Label>
                 <div className="flex items-center space-x-2">
-                  <input
+                  <Input aria-label={labels.horizontalOffset}
                     type="number"
                     value={((currentConfig.position.offsetX || 0) / 10).toFixed(1)}
                     onChange={(e) => {
@@ -1276,7 +1111,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                   <span className="text-sm text-gray-500">%</span>
                 </div>
               </div>
-              <Slider
+              <Slider aria-label={labels.horizontalOffset}
                 value={[(currentConfig.position.offsetX || 0) / 10]}
                 onValueChange={(value) => updatePosition({ offsetX: value[0] * 10 })}
                 min={-50}
@@ -1291,7 +1126,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               <div className="flex items-center justify-between">
                 <Label className="text-sm text-muted-foreground">{labels.verticalOffset}</Label>
                 <div className="flex items-center space-x-2">
-                  <input
+                  <Input aria-label={labels.verticalOffset}
                     type="number"
                     value={((currentConfig.position.offsetY || 0) / 10).toFixed(1)}
                     onChange={(e) => {
@@ -1307,7 +1142,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
                   <span className="text-sm text-gray-500">%</span>
                 </div>
               </div>
-              <Slider
+              <Slider aria-label={labels.verticalOffset}
                 value={[(currentConfig.position.offsetY || 0) / 10]}
                 onValueChange={(value) => updatePosition({ offsetY: value[0] * 10 })}
                 min={-50}
@@ -1327,18 +1162,18 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
               {labels.resetOffset}
             </Button>
             </div>
-          </details>
+          </Disclosure>
         )}
 
         {/* 处理按钮 */}
-        <details className="tool-disclosure">
-          <summary>{workspace.exportSettings}<ChevronDown className="size-4" /></summary>
+        <Disclosure  title={<>{workspace.exportSettings}</>} className="tool-disclosure">
+
           <div className="space-y-3">
           {/* {{ Shrimp-X: Add - 文件命名规则设置. Approval: Cunzhi(ID:timestamp). }} */}
           {/* 文件命名设置 */}
           <div className="space-y-2">
             <Label>{labels.filenameRule}</Label>
-            <Input
+            <Input aria-label={labels.filenameRule}
               type="text"
               placeholder="watermarked-{name}"
               value={fileNameTemplate}
@@ -1365,7 +1200,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
             </div>
           )}
           </div>
-        </details>
+        </Disclosure>
       </div>
       <div className="tool-action-bar space-y-2">
           {/* 批量处理状态 */}
@@ -1386,10 +1221,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
 
           {/* 错误信息 */}
           {processingError && (
-            <div className="flex items-center space-x-2 text-sm text-destructive bg-destructive/10 p-2 rounded">
-              <AlertCircle className="h-4 w-4" />
-              <span className="flex-1">{processingError}</span>
-            </div>
+            <AntAlert type="error" title={processingError} showIcon />
           )}
 
           {/* 处理结果 */}
@@ -1397,7 +1229,7 @@ export function WatermarkControls({ className = '', locale = DEFAULT_LOCALE }: W
             <div className="text-sm space-y-1">
               <div className="flex items-center justify-between">
                 <span>{labels.completed}</span>
-                <span className="text-green-600">
+                <span className="text-primary">
                   {processingResults.filter(r => r.success).length}/{processingResults.length}
                 </span>
               </div>

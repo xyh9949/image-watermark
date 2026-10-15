@@ -25,6 +25,16 @@
 ## 后续候选（未实施）
 - 长文字自动换行、隐私检查、本地预设、PWA 和 Worker。需按用户下一次明确目标独立确定范围。
 
+## 2026-10-15 Ant Design 1.4.0
+- 用户要求使用 Ant Design 重写主题，简洁美观、不要绿色；本轮以灰白底色、蓝色操作和中性品牌标记替代 1.3.3 的绿色方向。
+- 全局主题与中英文组件语言入口为 `src/components/AntdProvider.tsx`，根布局使用 `@ant-design/nextjs-registry` 提取首屏样式。新增界面优先使用 Ant Design，不再新增 Radix 组件。
+- 保留图片引擎与路由；公共 UI 入口薄适配既有事件接口，实际控件使用 Ant Design。高级折叠使用 Collapse，元数据用 Table，上传用 Upload.Dragger。
+- `LocalUpload` 的 `beforeUpload` 必须返回 `Upload.LIST_IGNORE`，且每批文件只处理一次，禁止发起服务器上传；隐藏输入 ID 仍支持现有上传快捷入口。
+- 后续修改需注意：Ant Design 样式可能覆盖 Tailwind 的 display 工具类；响应式主操作入口使用 tool-add-desktop / tool-files-toggle 语义类管理。
+- 系统减少动效偏好由 AntdProvider 监听并设置 motion token；禁止全局把组件动画时长压缩至 0.01ms，这会让弹层停留在定位前的屏幕外位置。
+- 本地验收：verify、最终构建及 HTML smoke 通过；六页 × 五档宽度无溢出，英文导航在 320px 下可完整显示，横屏和减少动效模式通过。水印单张/批量、两种 Logo 上传、三格式压缩、弹窗 Escape、GPS 编辑回读和批量清除通过；测试未发现 POST 上传请求。
+- 下载文件已验证尺寸、非空像素、ZIP 三文件数量、标题/GPS 写入及清除结果。生产依赖以 npm 官方审计端点检查为 0 漏洞；本机默认 npm 镜像不提供审计端点。
+
 ## 2026-10-06 UI 1.3.3 实施
 - 用户指定使用 `ui-ux-pro-max`，已认可 A 版草图并授权实施，沿用本地验证后推送发布的流程。
 - A 版“轻量图片工作台”保存在 `output/playwright/ui-concept/index.html`；同目录含设计说明、三页桌面/手机截图及初始状态。此目录被 Git 忽略，仅在本机。

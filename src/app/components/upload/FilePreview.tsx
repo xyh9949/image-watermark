@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { Checkbox } from 'antd';
 import { X, ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -21,7 +22,7 @@ export function FilePreview({ image, isSelected = false, showProgress, locale = 
   const copy = getCopy(locale);
   return (
     <div className={`tool-file-row ${className}`} data-active={currentId === image.id}>
-      <input type="checkbox" checked={isSelected} onChange={() => onSelect?.(image.id)} aria-label={image.name} />
+      <Checkbox  checked={isSelected} onChange={() => onSelect?.(image.id)} aria-label={image.name} />
       <button className="tool-file-preview" type="button" onClick={() => (onPreview || onSelect)?.(image.id)} aria-pressed={currentId === image.id}>
         <span className="tool-file-thumbnail">
           {image.url ? <Image src={image.url} alt={image.name} fill sizes="48px" className="object-cover" /> : <ImageIcon className="m-3 size-5" />}
@@ -56,8 +57,8 @@ export function FilePreviewList({ images, selectedIds = [], showProgress, locale
   return (
     <div className={`tool-file-list ${className}`}>
       {images.length > 1 && <div className="flex flex-wrap items-center justify-between gap-2 py-2 text-xs text-muted-foreground">
-        <label className="flex items-center gap-2"><input type="checkbox" checked={selectedIds.length === images.length}
-          onChange={() => onSelectMultiple?.(selectedIds.length === images.length ? [] : images.map((image) => image.id))} />{copy.selectAll}</label>
+        <Checkbox checked={selectedIds.length === images.length}
+          onChange={() => onSelectMultiple?.(selectedIds.length === images.length ? [] : images.map((image) => image.id))}>{copy.selectAll}</Checkbox>
         <span>{selectedIds.length}/{images.length}</span>
       </div>}
       {images.map((image) => <FilePreview key={image.id} image={image} isSelected={selectedIds.includes(image.id)}

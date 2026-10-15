@@ -72,7 +72,7 @@ File, System, ExifTool, and Composite fields are read-only. Other tags can be ed
 | Canvas | Fabric.js |
 | Metadata engine | ExifTool via `@uswriting/exiftool` WASM |
 | ZIP export | `fflate` |
-| UI primitives | Radix UI |
+| UI components and theme | Ant Design 6 |
 
 ## Getting Started
 

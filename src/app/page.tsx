@@ -1,6 +1,7 @@
 'use client';
 
 import { ToolWorkspace } from '@/components/ToolWorkspace';
+import { Disclosure } from '@/components/ui/disclosure';
 import { ImageUpload } from "@/app/components/upload/ImageUpload";
 import { LazyWatermarkCanvas } from '@/app/components/editor/LazyWatermarkCanvas';
 import { WatermarkControls } from "@/app/components/controls/WatermarkControls";
@@ -74,10 +75,10 @@ function HomeGeoContent({ locale }: { locale: Locale }) {
           <h2 className="text-xl font-semibold">{copy.faqHeading}</h2>
           <div className="divide-y rounded border bg-background">
             {copy.faqs.map((item) => (
-              <details key={item.question} className="group p-4">
-                <summary className="cursor-pointer font-medium">{item.question}</summary>
+              <Disclosure key={item.question} title={<>{item.question}</>} className="faq-collapse">
+
                 <p className="mt-3 text-sm text-muted-foreground leading-6">{item.answer}</p>
-              </details>
+              </Disclosure>
             ))}
           </div>
         </div>
