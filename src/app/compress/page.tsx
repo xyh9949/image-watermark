@@ -290,6 +290,17 @@ function CompressionControlPanel({
           <p id="compression-metadata-policy" className="text-xs leading-5 text-muted-foreground">
             {settings.removeMetadata ? labels.metadataPolicy : labels.metadataKeepPolicy}
           </p>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="deep-compression" className="text-sm">{labels.deepCompression}</Label>
+              <Switch id="deep-compression" aria-describedby="deep-compression-policy"
+                disabled={isProcessing} checked={settings.deepCompression}
+                onCheckedChange={(checked) => onSettingsChange({ ...settings, deepCompression: checked })} />
+            </div>
+            <p id="deep-compression-policy" className="text-xs leading-5 text-muted-foreground">
+              {labels.deepCompressionPolicy}
+            </p>
+          </div>
         </CardContent>
       </Card>
       </div>
@@ -517,7 +528,8 @@ export default function Compress() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [settings, setSettings] = useState<CompressionSettings>({
     quality: 'medium',
-    removeMetadata: true
+    removeMetadata: true,
+    deepCompression: false,
   });
 
   const onDrop = useCallback((acceptedFiles: File[]) => {

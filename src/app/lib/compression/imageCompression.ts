@@ -3,14 +3,16 @@ import { getCopy, type Locale } from '@/app/lib/i18n';
 export interface CompressionSettings {
   quality: 'high' | 'medium' | 'low';
   removeMetadata: boolean;
+  deepCompression: boolean;
 }
 
 export interface CodecRequest {
   file: File;
   quality: CompressionSettings['quality'];
+  deepCompression: boolean;
 }
 
-export type CodecResult = { kind: 'encoded'; bytes: ArrayBuffer }
+export type CodecResult = { kind: 'encoded'; bytes: ArrayBuffer; deepBytes?: ArrayBuffer }
   | { kind: 'invalid' } | { kind: 'animation' } | { kind: 'fallback' };
 
 // 每批串行复用一个 Worker，按格式懒加载 WASM，批次结束释放编码器内存。
@@ -45,7 +47,9 @@ export function createImageCompressor(locale: Locale) {
       if (originalEncoding.size > original.size) throw new Error(copy.metadataFailed);
     }
 
-    const result = await encode({ file: originalEncoding, quality: settings.quality });
+    const result = await encode({
+      file: originalEncoding, quality: settings.quality, deepCompression: settings.deepCompression,
+    });
     if (result.kind === 'invalid') throw new Error(copy.imageLoadFailed);
     if (result.kind === 'animation') return { file: originalEncoding, notice: copy.animationPreserved };
     if (result.kind === 'fallback') return { file: originalEncoding, warning: copy.encoderFallback };
@@ -60,6 +64,22 @@ export function createImageCompressor(locale: Locale) {
       if (!metadata?.success || !metadata.file) return { file: originalEncoding, warning: copy.metadataFallback };
       candidate = new File([metadata.file], original.name, outputs);
       if (metadata.failedTags.length) warning = copy.metadataPartial;
+      if (result.deepBytes) {
+        // 同时比较元数据写回后的文件，深度候选不能丢失基线已保留的字段。
+        const deep = new File([result.deepBytes], original.name, outputs);
+        const restored = await copyWritableMetadata(original, deep, 'compressed').catch(() => null);
+        const baselineFailures = new Set(metadata.failedTags.map(({ key }) => key));
+        if (restored?.success && restored.file && restored.file.size < Math.min(candidate.size, originalEncoding.size) &&
+            restored.failedTags.every(({ key }) => baselineFailures.has(key))) {
+          return {
+            file: new File([restored.file], original.name, outputs),
+            warning: restored.failedTags.length ? copy.metadataPartial : undefined,
+            notice: copy.deepApplied,
+          };
+        }
+      }
+    } else if (result.deepBytes && settings.removeMetadata) {
+      return { file: new File([result.deepBytes], original.name, outputs), notice: copy.deepApplied };
     }
 
     // 以最终可下载文件作比较，避免重新编码增大体积或给已优化图片带来额外损失。

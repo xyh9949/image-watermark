@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0 - 2026-11-18
+
+- Add optional deep compression for JPEG screenshots and product images with detected text. It tries one additional MozJPEG encode and compares overall and original-resolution text samples before using a smaller result.
+- Keep the switch off by default and use the normal result when the candidate fails size, quality, or time checks.
+
 ## 1.5.0 - 2026-11-18
 
 - Encode JPEG and still WebP with MozJPEG and libwebp in a local Web Worker. Optimize PNG/APNG losslessly with OxiPNG.

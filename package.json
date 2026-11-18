@@ -1,6 +1,6 @@
 {
   "name": "image-watermark",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "private": true,
   "description": "Browser-based image toolkit for batch watermarking, compression, and EXIF metadata editing.",
   "keywords": [
@@ -45,6 +45,7 @@
     "@jsquash/webp": "1.5.0",
     "@uswriting/exiftool": "^1.0.9",
     "antd": "^6.6.6",
+    "bytecut-ssimulacra2": "0.1.0",
     "clsx": "^2.1.1",
     "fabric": "^7.4.0",
     "fflate": "^0.8.3",

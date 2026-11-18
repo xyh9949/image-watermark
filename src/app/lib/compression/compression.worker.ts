@@ -1,4 +1,5 @@
 import type { CodecRequest, CodecResult } from './imageCompression';
+import { findTextRegions } from './textRegions';
 
 const jpegQuality = { high: 95, medium: 85, low: 72 };
 const webpQuality = { high: 93, medium: 82, low: 68 };
@@ -8,7 +9,7 @@ function matches(bytes: Uint8Array, offset: number, signature: string) {
   return [...signature].every((character, index) => bytes[offset + index] === character.charCodeAt(0));
 }
 
-async function encode({ file, quality }: CodecRequest): Promise<CodecResult> {
+async function encode({ file, quality, deepCompression }: CodecRequest): Promise<CodecResult> {
   const header = new Uint8Array(await file.slice(0, 21).arrayBuffer());
   const jpeg = file.type === 'image/jpeg' && header[0] === 0xff && header[1] === 0xd8;
   const png = (file.type === 'image/png' || file.type === 'image/apng') && matches(header, 0, '\x89PNG\r\n\x1a\n');
@@ -45,11 +46,23 @@ async function encode({ file, quality }: CodecRequest): Promise<CodecResult> {
     if (jpeg) {
       const { default: encodeJpeg } = await import('@jsquash/jpeg/encode.js');
       // 画质优先使用 4:4:4，减少彩色文字和高对比边缘的色度模糊。
-      const bytes = await encodeJpeg(pixels, {
-        quality: jpegQuality[quality],
+      const encodeAtQualityOffset = (offset: number) => encodeJpeg(pixels, {
+        quality: jpegQuality[quality] - offset,
         auto_subsample: quality !== 'high',
         chroma_subsample: quality === 'high' ? 1 : 2,
       });
+      const bytes = await encodeAtQualityOffset(0);
+      // 普通模式、原文件已较小及尺寸过大的图像均不进入深度分支。
+      if (deepCompression && bytes.byteLength < file.size &&
+          Math.min(image.width, image.height) >= 96 && image.width * image.height <= 2_000_000) {
+        const regions = findTextRegions(pixels);
+        if (regions.length) {
+          const deepBytes = await import('./deepJpeg').then(({ tryDeepJpeg }) =>
+            tryDeepJpeg(image, bytes, regions, () => encodeAtQualityOffset(1)),
+          ).catch(() => undefined);
+          if (deepBytes) return { kind: 'encoded', bytes, deepBytes };
+        }
+      }
       return { kind: 'encoded', bytes };
     }
 
@@ -68,5 +81,7 @@ async function encode({ file, quality }: CodecRequest): Promise<CodecResult> {
 
 self.addEventListener('message', async (event: MessageEvent<CodecRequest>) => {
   const result = await encode(event.data).catch((): CodecResult => ({ kind: 'invalid' }));
-  self.postMessage(result, { transfer: result.kind === 'encoded' ? [result.bytes] : [] });
+  const transfer = result.kind === 'encoded' ? [result.bytes] : [];
+  if (result.kind === 'encoded' && result.deepBytes) transfer.push(result.deepBytes);
+  self.postMessage(result, { transfer });
 });

@@ -38,6 +38,7 @@ Most quick image tools require uploads, accounts, or server-side processing. Ima
 
 - Compress JPEG, PNG, WebP, and GIF files in the browser.
 - Choose high, balanced, or high-compression quality presets.
+- Turn on Deep compression to try one extra pass on JPEG screenshots and product images with detected text. It can take longer and keeps the standard result when the extra pass does not qualify.
 - Remove image metadata when needed.
 - See original size, compressed size, saved space, and compression ratio.
 - Download individual files or a ZIP archive.
