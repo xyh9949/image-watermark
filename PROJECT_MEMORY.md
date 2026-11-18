@@ -48,6 +48,13 @@
 - 预览的 Dragger 内部改为块布局，覆盖整栏，保留画布高度及表格滚动；拖入仅显示蓝色轮廓，普通悬停不改变预览样式。处理中仍沿用各页 disabled 状态，drop 阻止浏览器默认文件导航。
 - 本地已通过 verify；六路由 × 桌面/手机的连续三批上传从 1 张追加到 4 张，无重复，当前图片、水印配置、常用及高级元数据草稿、已有压缩结果均保留。预览弹窗、下载和图片尺寸验证通过，没有 POST 上传或误触文件选择器。压缩及元数据处理期间拒绝拖入且阻止默认文件导航，结束后可恢复添加。
 
+## 2026-11-18 本地压缩引擎 1.5.0
+- 压缩入口仍为 `/compress` 与 `/en/compress`。编码逻辑在 `src/app/lib/compression/`，每批复用一个 Worker，按格式加载 MozJPEG、libwebp、OxiPNG，批次结束释放 Worker。
+- npm 锁定 `@jsquash/jpeg@1.6.0`、`@jsquash/webp@1.5.0`、`@jsquash/oxipng@2.3.0`，未修改包源码。OxiPNG 从包内单线程入口加载，默认入口的 Rayon 子 Worker 会使当前 Turbopack 构建停在编译阶段；升级后先检查该入口及 WASM 产物，再复测 PNG/APNG。许可归属在 `public/compression-licenses.txt`。
+- PNG/APNG 直接无损重压缩，保留透明像素 RGB。GIF 和动态 WebP 保留帧及延时，仅处理元数据。比较最终成品大小后选择较小结果；无收益时保留原始编码。隐私清理失败禁止下载，清理原始编码时保留影响显示的方向和 ICC。
+- 升级验证跑 `npm ci`、`npm run verify`，再用浏览器批量测 JPEG/PNG/WebP/GIF/APNG、三档质量、旋转和透明像素、元数据开关、ZIP、WASM 懒加载。生产回滚可重新部署 Vercel 的 1.4.2 构建，或撤销压缩引擎发布提交后按相同步骤重建。
+- 2026-11-18 官方 npm 审计仍标记 16.3.8 的 Next.js 公告；当前 sharp 为 0.35.5，源码未使用 Server Actions 或 `use cache`。框架升级作为独立维护项评估，勿沿用 10 月的零告警记录。
+
 ## 2026-10-06 UI 1.3.3 实施
 - 用户指定使用 `ui-ux-pro-max`，已认可 A 版草图并授权实施，沿用本地验证后推送发布的流程。
 - A 版“轻量图片工作台”保存在 `output/playwright/ui-concept/index.html`；同目录含设计说明、三页桌面/手机截图及初始状态。此目录被 Git 忽略，仅在本机。

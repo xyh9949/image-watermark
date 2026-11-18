@@ -121,4 +121,14 @@ test('clearing canvas JPEG removes ICC without treating the expected warning as 
   assert.equal(roundTrip.author, draft.author);
   assert.equal(roundTrip.gpsLatitude, draft.gpsLatitude);
   assert.equal(roundTrip.gpsAltitude, '-12');
+
+  // 压缩回退可以保留原始像素编码，清理隐私字段时保留方向和 ICC。
+  const rotated = await engine.writeMetadataEntries(written.file, { 'IFD0:Orientation#': 6 });
+  assert.equal(rotated.success, true, rotated.error);
+  const stripped = await engine.stripCompressionMetadata(rotated.file);
+  assert.equal(stripped.success, true, stripped.error);
+  const strippedTags = await engine.readMetadata(stripped.file);
+  assert.ok(strippedTags.some((tag) => tag.group === 'ICC'));
+  assert.equal(strippedTags.find((tag) => tag.name === 'Orientation')?.displayValue, 'Rotate 90 CW');
+  assert.equal(strippedTags.some((tag) => /^(GPS|Title|Artist|Creator|Author)/.test(tag.name)), false);
 });

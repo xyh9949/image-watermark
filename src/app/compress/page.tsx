@@ -17,6 +17,10 @@ import { usePathname } from 'next/navigation';
 import { Upload, FileImage, Download, FileArchive, CheckCircle, XCircle, PackageOpen, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getCopy, getLocaleFromPathname, type Locale } from '@/app/lib/i18n';
+import { createImageCompressor, type CompressionSettings } from '@/app/lib/compression/imageCompression';
+
+const COMPRESS_ACCEPT = '.jpg,.jpeg,.png,.apng,.webp,.gif';
+const COMPRESS_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/apng', 'image/webp', 'image/gif']);
 
 interface CompressedFile {
   id: string;
@@ -28,58 +32,7 @@ interface CompressedFile {
   status: 'pending' | 'processing' | 'completed' | 'error';
   error?: string;
   warning?: string;
-}
-
-interface CompressionSettings {
-  quality: 'high' | 'medium' | 'low';
-  removeMetadata: boolean;
-}
-
-const COMPRESS_METADATA_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-
-function getOutputFileName(fileName: string, mimeType: string) {
-  const currentExtension = fileName.split('.').pop()?.toLowerCase() ?? '';
-
-  if (mimeType === 'image/jpeg' && ['jpg', 'jpeg'].includes(currentExtension)) {
-    return fileName;
-  }
-
-  const nextExtension = mimeType === 'image/jpeg'
-    ? 'jpg'
-    : mimeType === 'image/png'
-      ? 'png'
-      : mimeType === 'image/webp'
-        ? 'webp'
-        : '';
-
-  if (!nextExtension || currentExtension === nextExtension) return fileName;
-
-  return fileName.includes('.')
-    ? fileName.replace(/\.[^.]+$/, `.${nextExtension}`)
-    : `${fileName}.${nextExtension}`;
-}
-
-async function finalizeCompressedFile(sourceFile: File, compressedFile: File, removeMetadata: boolean, locale: Locale) {
-  const copy = getCopy(locale).compress.page;
-  if (!COMPRESS_METADATA_MIME_TYPES.has(sourceFile.type) || !COMPRESS_METADATA_MIME_TYPES.has(compressedFile.type)) {
-    return { file: compressedFile, warning: copy.staticFrameOnly };
-  }
-
-  try {
-    const metadataEngine = await import('@/app/lib/metadata/exifToolEngine');
-    const result = removeMetadata
-      ? await metadataEngine.clearMetadata(compressedFile, 'compressed')
-      : await metadataEngine.copyWritableMetadata(sourceFile, compressedFile, 'compressed');
-
-    // 元数据清理失败必须阻止下载，不能把未确认清理的文件标记为成功。
-    if (!result.success || !result.file) throw new Error(copy.metadataFailed);
-    return {
-      file: new File([result.file], compressedFile.name, { type: compressedFile.type, lastModified: compressedFile.lastModified }),
-      warning: result.failedTags.length ? copy.metadataPartial : undefined,
-    };
-  } catch {
-    throw new Error(copy.metadataFailed);
-  }
+  notice?: string;
 }
 
 function ObjectUrlImage({
@@ -176,7 +129,7 @@ function FileUploadPanel({
           </div>
 
           {/* 拖拽上传区域 */}
-          <LocalUpload accept=".jpg,.jpeg,.png,.webp,.gif" compact={files.length > 0} disabled={isProcessing} onFiles={onDrop}>
+          <LocalUpload accept={COMPRESS_ACCEPT} compact={files.length > 0} disabled={isProcessing} onFiles={onDrop}>
 
             <div className={files.length > 0 ? 'space-y-2' : 'space-y-4'}>
               <Upload className={`mx-auto text-muted-foreground ${files.length > 0 ? 'h-6 w-6' : 'h-12 w-12'}`} />
@@ -324,6 +277,7 @@ function CompressionControlPanel({
               <Label htmlFor="remove-metadata" className="text-sm">{labels.removeMetadata}</Label>
               <Switch
                 id="remove-metadata"
+                aria-describedby="compression-metadata-policy"
                 disabled={isProcessing}
                 checked={settings.removeMetadata}
                 onCheckedChange={(checked) =>
@@ -333,21 +287,9 @@ function CompressionControlPanel({
             </div>
           </div>
 
-          {/* 质量预览 */}
-          <div className="p-3 bg-muted/30 rounded text-xs">
-            <div className="grid grid-cols-2 gap-2 text-muted-foreground">
-              <div>JPEG: {
-                settings.quality === 'high' ? '95%' :
-                  settings.quality === 'medium' ? '85%' : '70%'
-              }</div>
-              <div>WebP: {
-                settings.quality === 'high' ? '92%' :
-                  settings.quality === 'medium' ? '80%' : '65%'
-              }</div>
-              <div>PNG: {labels.lossless}</div>
-              <div>{labels.metadata}: {settings.removeMetadata ? labels.remove : labels.keep}</div>
-            </div>
-          </div>
+          <p id="compression-metadata-policy" className="text-xs leading-5 text-muted-foreground">
+            {settings.removeMetadata ? labels.metadataPolicy : labels.metadataKeepPolicy}
+          </p>
         </CardContent>
       </Card>
       </div>
@@ -445,7 +387,7 @@ function ResultsPreviewPanel({
   // 空状态
   if (results.length === 0) {
     return (
-      <LocalUpload accept=".jpg,.jpeg,.png,.webp,.gif" empty inputId={null} disabled={isProcessing} onFiles={onDrop}>
+      <LocalUpload accept={COMPRESS_ACCEPT} empty inputId={null} disabled={isProcessing} onFiles={onDrop}>
         <div className="tool-empty">
           <div className="text-center p-8">
             <FileArchive className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
@@ -463,7 +405,7 @@ function ResultsPreviewPanel({
   }
 
   return (
-    <LocalUpload accept=".jpg,.jpeg,.png,.webp,.gif" preview inputId={null} disabled={isProcessing} onFiles={onDrop}>
+    <LocalUpload accept={COMPRESS_ACCEPT} preview inputId={null} disabled={isProcessing} onFiles={onDrop}>
     <div className="tool-preview-shell bg-background">
       <div className="tool-result-stats">
         <div><span>{labels.original}</span><strong>{formatFileSize(originalTotal)}</strong></div>
@@ -528,7 +470,7 @@ function ResultsPreviewPanel({
                     <Badge variant="secondary" className={cn('text-xs', result.compressionRatio >= 0
                       ? 'bg-blue-50 text-blue-700'
                       : 'bg-amber-500/20 text-amber-800 dark:text-amber-300')}>
-                      {result.compressionRatio >= 0 ? '-' : '+'}{Math.abs(result.compressionRatio * 100).toFixed(1)}%
+                      {(-result.compressionRatio * 100).toFixed(1)}%
                     </Badge>
                   )}
                 </div>
@@ -538,6 +480,7 @@ function ResultsPreviewPanel({
                 {result.warning && (
                   <p className="text-xs text-amber-700 mt-1" role="status">{result.warning}</p>
                 )}
+                {result.notice && <p className="text-xs text-muted-foreground mt-1">{result.notice}</p>}
               </div>
 
               {/* 下载按钮 */}
@@ -578,62 +521,30 @@ export default function Compress() {
   });
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const imageFiles = acceptedFiles.filter(file =>
-      file.type.startsWith('image/') &&
-      ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)
-    );
+    const imageFiles = acceptedFiles.filter(file => COMPRESS_MIME_TYPES.has(file.type));
     setFiles(prev => [...prev, ...imageFiles]);
   }, []);
 
-  const compressFile = async (file: File): Promise<CompressedFile> => {
-    const canvas = document.createElement('canvas');
-    const objectUrl = URL.createObjectURL(file);
+  const compressFile = async (file: File, compressor: ReturnType<typeof createImageCompressor>): Promise<CompressedFile> => {
     const baseResult = {
       id: crypto.randomUUID(),
       originalFile: file,
       originalSize: file.size,
     };
 
-    // 统一捕获解码、编码和元数据失败，确保每个文件结束后都能继续处理队列。
+    // 单张失败只影响该文件，批次继续处理其余图片。
     try {
-      const img = new Image();
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error(pageCopy.imageLoadFailed));
-        img.src = objectUrl;
-      });
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error(pageCopy.compressionFailed);
-      ctx.drawImage(img, 0, 0);
-
-      const quality = file.type === 'image/jpeg'
-        ? { high: 0.95, medium: 0.85, low: 0.7 }[settings.quality]
-        : file.type === 'image/webp'
-          ? { high: 0.92, medium: 0.8, low: 0.65 }[settings.quality]
-          : 1;
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob((output) => output ? resolve(output) : reject(new Error(pageCopy.compressionFailed)), file.type, quality);
-      });
-      const outputType = blob.type || file.type;
-      const compressedFile = new File([blob], getOutputFileName(file.name, outputType), {
-        type: outputType, lastModified: file.lastModified,
-      });
-      const finalized = await finalizeCompressedFile(file, compressedFile, settings.removeMetadata, locale);
+      const finalized = await compressor.compress(file, settings);
       return {
         ...baseResult, compressedFile: finalized.file, compressedSize: finalized.file.size,
-        compressionRatio: 1 - finalized.file.size / file.size, status: 'completed', warning: finalized.warning,
+        compressionRatio: 1 - finalized.file.size / file.size, status: 'completed',
+        warning: finalized.warning, notice: finalized.notice,
       };
     } catch (error) {
       return {
         ...baseResult, compressedFile: null, compressedSize: 0, compressionRatio: 0, status: 'error',
         error: error instanceof Error ? error.message : pageCopy.compressionFailed,
       };
-    } finally {
-      URL.revokeObjectURL(objectUrl);
-      canvas.width = 0;
-      canvas.height = 0;
     }
   };
 
@@ -644,20 +555,18 @@ export default function Compress() {
     setProgress(0);
     setResults([]);
 
-    const newResults: CompressedFile[] = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      setProgress(((i + 0.5) / files.length) * 100);
-
-      const result = await compressFile(file);
-      newResults.push(result);
-      setResults([...newResults]);
-
-      setProgress(((i + 1) / files.length) * 100);
+    const compressor = createImageCompressor(locale);
+    try {
+      const newResults: CompressedFile[] = [];
+      for (const [index, file] of files.entries()) {
+        newResults.push(await compressFile(file, compressor));
+        setResults([...newResults]);
+        setProgress(((index + 1) / files.length) * 100);
+      }
+    } finally {
+      compressor.dispose();
+      setIsProcessing(false);
     }
-
-    setIsProcessing(false);
   };
 
   const downloadFile = (result: CompressedFile) => {

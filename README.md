@@ -42,7 +42,7 @@ Most quick image tools require uploads, accounts, or server-side processing. Ima
 - See original size, compressed size, saved space, and compression ratio.
 - Download individual files or a ZIP archive.
 
-GIF input is processed as a static image through Canvas; animation is not preserved and output may be PNG. Compression is not guaranteed to make an already optimized file smaller.
+JPEG and still WebP use MozJPEG and libwebp. OxiPNG optimizes PNG and APNG losslessly. GIF and animated WebP retain their frames and support optional metadata removal. Outputs keep their format and dimensions, and the original encoding is retained when recompression would increase the download size.
 
 ### EXIF / Metadata Tool
 
@@ -165,3 +165,5 @@ Please do not open public issues for security-sensitive reports. See [SECURITY.m
 ## License
 
 MIT License. See [LICENSE](LICENSE).
+
+See [compression codec licenses](public/compression-licenses.txt) for third-party notices.

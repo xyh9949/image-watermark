@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0 - 2026-11-18
+
+- Encode JPEG and still WebP with MozJPEG and libwebp in a local Web Worker. Optimize PNG/APNG losslessly with OxiPNG.
+- Preserve GIF and animated WebP frames, format, and timing during optional metadata cleanup.
+- Compare final output sizes and retain the original encoding when it is smaller. Preserve display-related metadata when stripping private tags from that encoding.
+
 ## 1.4.2 - 2026-10-15
 
 - Keep drag-and-drop enabled over loaded watermark previews, compression results, and metadata tables in both languages.

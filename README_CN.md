@@ -50,7 +50,7 @@
 - 显示原始大小、压缩后大小、节省空间和压缩率。
 - 支持单文件下载和 ZIP 打包下载。
 
-GIF 通过 Canvas 作为静态图片处理，不保留动画，输出可能为 PNG。已优化的图片再次处理后不一定变小，结果区会如实显示体积变化。
+JPEG 和静态 WebP 分别由 MozJPEG、libwebp 编码，PNG 和 APNG 由 OxiPNG 无损优化。GIF 和动态 WebP 保留原始帧，可按设置移除元数据。输出保持原格式和尺寸，重编码无法缩小文件时保留原始编码。
 
 ### EXIF / 元数据工具
 
@@ -195,3 +195,5 @@ npm run verify       # 完整验证
 ## 开源许可
 
 本项目采用 MIT 许可证，详见 [LICENSE](LICENSE)。
+
+第三方压缩编码器的许可见 [压缩编码器许可](public/compression-licenses.txt)。

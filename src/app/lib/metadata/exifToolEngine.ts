@@ -212,6 +212,14 @@ export async function clearMetadata(file: File, outputSuffix = 'clean'): Promise
   return writeWithRawArgs(file, ['-all=', '-q', '-q'], outputSuffix);
 }
 
+export function stripCompressionMetadata(file: File): Promise<MetadataWriteResult> {
+  // 压缩回退可能直接使用原像素编码。仅保留影响显示的色彩和旋转信息，删除隐私字段及文件尾数据。
+  return writeWithRawArgs(file, [
+    '-all=', '--icc_profile:all', '-Trailer:All=', '-tagsFromFile', '@',
+    '-IFD0:Orientation', '-ExifIFD:ColorSpace', '-InteropIFD:InteropIndex', '-q', '-q',
+  ], 'compressed');
+}
+
 export async function clearGps(file: File, outputSuffix = 'nogps'): Promise<MetadataWriteResult> {
   // 同时移除 EXIF 和 XMP 中的 GPS 字段，避免另一份坐标残留。
   return writeWithRawArgs(file, ['-gps:all=', '-gps*=', '-xmp:geotag=', '-xmp:geotime='], outputSuffix);
@@ -449,7 +457,8 @@ function buildWritableMetadataEntries(tags: MetadataTag[]): ExifTags {
 
   for (const tag of tags) {
     if (!tag.editable) continue;
-    // Canvas 已应用方向并重新编码像素，不能拷回旧方向或旧像素尺寸。
+    // 重编码已应用方向并转换为 sRGB，不能写回旧图的编码结构、色彩配置或像素尺寸。
+    if (['RIFF', 'WebP', 'ICC'].includes(tag.group)) continue;
     if (['orientation', 'exifimagewidth', 'exifimageheight', 'pixelxdimension', 'pixelydimension'].includes(normalizeTagName(tag.name))) continue;
 
     const value = toWritableTagValue(tag.value);

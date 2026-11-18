@@ -15,7 +15,7 @@ Image Watermark, also known as 图片水印工具, is a free browser-based image
 ## What the site does
 
 - Adds text watermarks, image watermarks, and full-screen tiled watermarks to images.
-- Compresses JPEG, PNG, WebP, and GIF images in batches.
+- Uses MozJPEG and libwebp for JPEG and still WebP, and OxiPNG for lossless PNG/APNG optimization. GIF and animated WebP retain their frames with optional metadata removal.
 - Views, edits, and removes EXIF, IPTC, XMP, ICC, GPS, PNG, and WebP metadata from images.
 - Processes files locally in the user's browser; images are not uploaded to a server.
 - Supports batch export and ZIP downloads.
